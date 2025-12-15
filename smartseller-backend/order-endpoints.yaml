@@ -1,0 +1,1145 @@
+paths:
+  /api/v1/orders:
+    post:
+      tags:
+        - Orders
+      summary: Create new order
+      description: Create a new order from the current user's shopping cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './cart-order-schemas.yaml#/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+        '400':
+          description: Invalid request data or empty cart
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Cart not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '409':
+          description: Insufficient stock for one or more items
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Orders
+      summary: List user's orders
+      description: Retrieve a paginated list of the current user's orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by order status
+          schema:
+            type: string
+            enum: [pending, confirmed, processing, shipped, delivered, completed, cancelled, refunded]
+        - name: payment_status
+          in: query
+          description: Filter by payment status
+          schema:
+            type: string
+            enum: [pending, paid, failed, refunded]
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, updated_at, total_amount, order_number]
+            default: created_at
+        - name: sort_desc
+          in: query
+          description: Sort in descending order
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/orders/{id}:
+    get:
+      tags:
+        - Orders
+      summary: Get order details
+      description: Retrieve detailed information about a specific order
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Access denied - order belongs to another user
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/orders/{id}/status:
+    put:
+      tags:
+        - Orders
+      summary: Update order status
+      description: Update the status of a specific order (limited customer actions)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [cancelled]
+                  description: Only cancellation is allowed for customers
+                notes:
+                  type: string
+                  nullable: true
+                  description: Optional cancellation reason
+                  example: "Changed my mind"
+      responses:
+        '200':
+          description: Order status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+        '400':
+          description: Invalid status transition or request data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Access denied - order belongs to another user or action not allowed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '409':
+          description: Order cannot be cancelled in current status
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/orders/{id}/cancel:
+    post:
+      tags:
+        - Orders
+      summary: Cancel order
+      description: Cancel a specific order (alternative endpoint for cancellation)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  nullable: true
+                  description: Optional cancellation reason
+                  example: "Changed my mind"
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Access denied - order belongs to another user
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '409':
+          description: Order cannot be cancelled in current status
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  # Admin Order Management Endpoints
+  /api/v1/admin/orders:
+    post:
+      tags:
+        - Admin Orders
+      summary: Create new order (Admin)
+      description: Create a new order within a specific storefront context (admin only). All items are created atomically; failures roll back the entire order. For admin-created orders, the order source defaults to `api`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './cart-order-schemas.yaml#/schemas/AdminCreateOrderRequest'
+            examples:
+              sample:
+                summary: Basic admin order creation (identified by customer_id)
+                value:
+                  storefront_id: "456e7890-e89b-12d3-a456-426614174000"
+                  customer_id: "789e0123-e89b-12d3-a456-426614174000"
+                  customer_phone: "+6281234567890"
+                  payment_method: "bank_transfer"
+                  currency: "IDR"
+                  shipping_address:
+                    id: "123e4567-e89b-12d3-a456-426614174000"
+                    name: "John Doe"
+                    phone: "+6281234567890"
+                    email: "john.doe@example.com"
+                    address_line_1: "Jl. Sudirman No. 123"
+                    address_line_2: "Apt 4B"
+                    city: "Jakarta"
+                    state: "DKI Jakarta"
+                    postal_code: "12190"
+                    country: "Indonesia"
+                    is_default: true
+                  billing_address:
+                    id: "223e4567-e89b-12d3-a456-426614174000"
+                    name: "John Doe"
+                    phone: "+6281234567890"
+                    email: "john.doe@example.com"
+                    address_line_1: "Jl. Sudirman No. 123"
+                    city: "Jakarta"
+                    state: "DKI Jakarta"
+                    postal_code: "12190"
+                    country: "Indonesia"
+                    is_default: false
+                  items:
+                    - product_id: "789e0123-e89b-12d3-a456-426614174000"
+                      variant_id: "012e3456-e89b-12d3-a456-426614174000"
+                      quantity: 2
+                      unit_price: 50000.00
+                    - product_id: "889e0123-e89b-12d3-a456-426614174111"
+                      quantity: 1
+                      unit_price: 75000.00
+                  shipping_cost: 15000.00
+                  tax_amount: 13500.00
+                  discount_amount: 30000.00
+                  coupon_code: "SAVE20"
+                  notes: "Create order for VIP customer"
+              guest_by_email:
+                summary: Admin order creation for guest using customer_email (oneOf)
+                value:
+                  storefront_id: "456e7890-e89b-12d3-a456-426614174000"
+                  customer_email: "guest.buyer@example.com"
+                  customer_phone: "+62 812-3456-7890"
+                  payment_method: "e_wallet"
+                  currency: "IDR"
+                  shipping_address:
+                    id: "323e4567-e89b-12d3-a456-426614174000"
+                    name: "Guest Buyer"
+                    phone: "+62 812-3456-7890"
+                    email: "guest.buyer@example.com"
+                    address_line_1: "Jl. Thamrin No. 45"
+                    city: "Jakarta"
+                    state: "DKI Jakarta"
+                    postal_code: "10230"
+                    country: "Indonesia"
+                    is_default: false
+                  billing_address:
+                    id: "423e4567-e89b-12d3-a456-426614174000"
+                    name: "Guest Buyer"
+                    phone: "+62 812-3456-7890"
+                    email: "guest.buyer@example.com"
+                    address_line_1: "Jl. Thamrin No. 45"
+                    city: "Jakarta"
+                    state: "DKI Jakarta"
+                    postal_code: "10230"
+                    country: "Indonesia"
+                    is_default: false
+                  items:
+                    - product_id: "999e0123-e89b-12d3-a456-426614174222"
+                      quantity: 1
+                      unit_price: 125000.00
+                  notes: "Guest order created via admin API"
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+              examples:
+                created:
+                  summary: Created order response
+                  value:
+                    success: true
+                    message: "Order created successfully"
+                    data:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      order_number: "ORD-2025-000123"
+                      storefront_id: "456e7890-e89b-12d3-a456-426614174000"
+                      customer_id: "789e0123-e89b-12d3-a456-426614174000"
+                      status: "pending"
+                      payment_status: "pending"
+                      payment_method: "bank_transfer"
+                      subtotal: 175000.00
+                      discount_amount: 30000.00
+                      shipping_cost: 15000.00
+                      tax_amount: 13500.00
+                      total_amount: 173500.00
+                      currency: "IDR"
+                      shipping_address:
+                        id: "123e4567-e89b-12d3-a456-426614174000"
+                        name: "John Doe"
+                        phone: "+6281234567890"
+                        email: "john.doe@example.com"
+                        address_line_1: "Jl. Sudirman No. 123"
+                        city: "Jakarta"
+                        state: "DKI Jakarta"
+                        postal_code: "12190"
+                        country: "Indonesia"
+                        is_default: true
+                      billing_address:
+                        id: "223e4567-e89b-12d3-a456-426614174000"
+                        name: "John Doe"
+                        phone: "+6281234567890"
+                        email: "john.doe@example.com"
+                        address_line_1: "Jl. Sudirman No. 123"
+                        city: "Jakarta"
+                        state: "DKI Jakarta"
+                        postal_code: "12190"
+                        country: "Indonesia"
+                        is_default: false
+                      items:
+                        - id: "323e4567-e89b-12d3-a456-426614174000"
+                          order_id: "123e4567-e89b-12d3-a456-426614174000"
+                          product_id: "789e0123-e89b-12d3-a456-426614174000"
+                          product_variant_id: "012e3456-e89b-12d3-a456-426614174000"
+                          quantity: 2
+                          unit_price: 50000.00
+                          total_price: 100000.00
+                        - id: "423e4567-e89b-12d3-a456-426614174000"
+                          order_id: "123e4567-e89b-12d3-a456-426614174000"
+                          product_id: "889e0123-e89b-12d3-a456-426614174111"
+                          quantity: 1
+                          unit_price: 75000.00
+                          total_price: 75000.00
+                      notes: "Create order for VIP customer"
+                      created_at: "2025-11-05T10:00:00Z"
+                      updated_at: "2025-11-05T10:00:00Z"
+                    meta:
+                      http_status: 201
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Related resource not found (storefront/customer/product)
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '409':
+          description: Conflict (e.g., insufficient stock or duplicate order number)
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+    get:
+      tags:
+        - Admin Orders
+      summary: List orders (Admin)
+      description: |
+        Retrieve a paginated list of orders (admin only).
+        If `storefront_id` is omitted, the system resolves the admin's storefront and uses it as a fallback.
+        All queries are tenant-scoped and sanitized to prevent injection.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storefront_id
+          in: query
+          description: |
+            Storefront ID filter (optional). When omitted, the admin's storefront is resolved automatically.
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page (alias of `page_size`)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: page_size
+          in: query
+          description: Items per page (alias of `limit`)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: query
+          in: query
+          description: Free-text search across order fields
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by order status
+          schema:
+            type: string
+            enum: [pending, confirmed, processing, packed, shipped, delivered, completed, cancelled, refunded, failed, on_hold, returned, exchanged]
+        - name: payment_status
+          in: query
+          description: Filter by payment status
+          schema:
+            type: string
+            enum: [pending, paid, partially_paid, refunded, failed]
+        - name: fulfillment_status
+          in: query
+          description: Filter by fulfillment workflow status
+          schema:
+            type: string
+            enum: [pending, processing, picking, picked, packing, packed, ready_to_ship, shipped, delivered, cancelled, returned]
+        - name: customer_id
+          in: query
+          description: Filter by customer ID
+          schema:
+            type: string
+            format: uuid
+        - name: customer_email
+          in: query
+          description: Filter by customer email
+          schema:
+            type: string
+        - name: order_number
+          in: query
+          description: Filter by order number
+          schema:
+            type: string
+        - name: created_after
+          in: query
+          description: Include orders created after this timestamp (RFC3339)
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          description: Include orders created before this timestamp (RFC3339)
+          schema:
+            type: string
+            format: date-time
+        - name: min_amount
+          in: query
+          description: Minimum total amount filter (decimal string)
+          schema:
+            type: string
+            example: "100000.00"
+        - name: max_amount
+          in: query
+          description: Maximum total amount filter (decimal string)
+          schema:
+            type: string
+            example: "5000000.00"
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, updated_at, total_amount, order_number]
+            default: created_at
+        - name: sort_order
+          in: query
+          description: Sort order direction
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: include_items
+          in: query
+          description: Include order items in the response
+          schema:
+            type: boolean
+            default: false
+        - name: include_customer
+          in: query
+          description: Include customer info in the response
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/admin/orders/{orderID}:
+    get:
+      tags:
+        - Admin Orders
+      summary: Get order details (Admin)
+      description: Retrieve detailed information about any order (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/admin/orders/{orderID}/items:
+    get:
+      tags:
+        - Admin Orders
+      summary: List order items (Admin)
+      description: Retrieve all items for the given order (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Order items retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: './cart-order-schemas.yaml#/schemas/OrderItemDTO'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Admin Orders
+      summary: Add order item (Admin)
+      description: Add a new item to the specified order (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './cart-order-schemas.yaml#/schemas/AddOrderItemRequest'
+      responses:
+        '201':
+          description: Order item added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Order item added successfully"
+                  data:
+                    $ref: './cart-order-schemas.yaml#/schemas/OrderItemDTO'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order or product not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/admin/orders/{orderID}/items/{itemID}:
+    put:
+      tags:
+        - Admin Orders
+      summary: Update order item (Admin)
+      description: Update quantity/price/notes of an order item (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+        - name: itemID
+          in: path
+          required: true
+          description: Item ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './cart-order-schemas.yaml#/schemas/UpdateOrderItemRequest'
+      responses:
+        '200':
+          description: Order item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Order item updated successfully"
+                  data:
+                    $ref: './cart-order-schemas.yaml#/schemas/OrderItemDTO'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order or item not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Admin Orders
+      summary: Remove order item (Admin)
+      description: Remove an item from the specified order (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+        - name: itemID
+          in: path
+          required: true
+          description: Item ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order item removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Order item removed successfully"
+                  data:
+                    type: object
+                    properties:
+                      item_id:
+                        type: string
+                        format: uuid
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order or item not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/admin/orders/{orderID}/recalculate:
+    post:
+      tags:
+        - Admin Orders
+      summary: Recalculate order totals (Admin)
+      description: |
+        Recalculate order totals (subtotal, tax, shipping, discounts, total).
+        When items are updated in the same request, totals are recomputed atomically within the order transaction to prevent stale values.
+        Subtotal is aggregated from current item `total_price` values; tax and final total recomputed from order fields.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order totals recalculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/admin/orders/{orderID}/status:
+    put:
+      tags:
+        - Admin Orders
+      summary: Update order status (Admin)
+      description: Update the status of an order by admin, recording status history and optional notes.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [confirmed, processing, shipped, delivered, completed, cancelled]
+                notes:
+                  type: string
+                  nullable: true
+                reason:
+                  type: string
+                  nullable: true
+                notify_customer:
+                  type: boolean
+                  default: false
+              required: [status]
+      responses:
+        '200':
+          description: Order status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/OrderResponse'
+        '400':
+          description: Invalid request data or transition
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/admin/orders/{orderID}/history:
+    get:
+      tags:
+        - Admin Orders
+      summary: Get order status history (Admin)
+      description: Retrieve the status transition history for an order.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order status history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Order status history retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        from_status:
+                          type: string
+                        to_status:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                        user_id:
+                          type: string
+                          format: uuid
+                        reason:
+                          type: string
+                          nullable: true
+                        notes:
+                          type: string
+                          nullable: true
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '403':
+          description: Admin access required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'

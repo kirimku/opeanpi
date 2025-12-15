@@ -1,0 +1,1075 @@
+paths:
+  # Customer/Public Endpoints
+  /api/v1/storefront/{slug}/sections:
+    get:
+      tags: [Storefront Sections]
+      summary: List active sections (Customer view)
+      description: |
+        List all active sections for a storefront. Public endpoint for customer/guest access.
+        Returns sections in display order with enriched product and category data.
+        
+        Tenant scoping: Sections are filtered by storefront slug.
+        Authentication: Optional - works for guests and authenticated users.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Storefront slug
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional page filter (e.g. 'home', 'category', 'all')
+      responses:
+        '200':
+          description: Active sections retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Active sections retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListSectionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefront/{slug}/sections/{id}:
+    get:
+      tags: [Storefront Sections]
+      summary: Get section by ID (Customer view)
+      description: |
+        Retrieve a specific section with enriched product and category data.
+        Public endpoint for customer/guest access.
+        
+        Product enrichment includes:
+        - Manual product IDs
+        - Dynamic sources (featured, new_arrivals, best_sellers, on_sale, category)
+        
+        Category enrichment includes batch fetching with product counts.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Storefront slug
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Section ID
+      responses:
+        '200':
+          description: Section retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefront/{slug}/sections/slug/{section_slug}:
+    get:
+      tags: [Storefront Sections]
+      summary: Get section by slug (Customer view)
+      description: |
+        Retrieve a section using its slug instead of ID. Useful for SEO-friendly URLs.
+        Public endpoint for customer/guest access.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Storefront slug
+        - name: section_slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Section slug
+      responses:
+        '200':
+          description: Section retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Admin Endpoints
+  /api/v1/storefronts/{id}/sections:
+    post:
+      tags: [Admin Sections]
+      summary: Create section
+      description: |
+        Create a new storefront section with custom content.
+        
+        Business rules:
+        - Maximum 10 sections per storefront
+        - Slug must be unique per storefront
+        - Section type determines content structure
+        - Display order is auto-assigned (appended to end)
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './storefront-section-schemas.yaml#/components/schemas/CreateSectionRequest'
+            examples:
+              imageSlider:
+                summary: Image Slider Section
+                value:
+                  section_type: image_slider
+                  title: Summer Sale Banner
+                  slug: summer-sale-banner
+                  content:
+                    images:
+                      - url: https://cdn.example.com/banner1.jpg
+                        alt: Summer Sale
+                        link: /products/sale
+                        order: 0
+                  settings:
+                    autoplay: true
+                    interval_ms: 5000
+                    show_arrows: true
+                    show_dots: true
+                  is_active: true
+                  tags: [homepage, promotional]
+              productList:
+                summary: Product List Section (Manual)
+                value:
+                  section_type: product_list
+                  title: Featured Products
+                  slug: featured-products
+                  content:
+                    source: manual
+                    product_ids:
+                      - 550e8400-e29b-41d4-a716-446655440001
+                      - 550e8400-e29b-41d4-a716-446655440002
+                  settings:
+                    layout: grid
+                    columns: 4
+                    show_prices: true
+                  is_active: true
+              productListDynamic:
+                summary: Product List Section (Best Sellers)
+                value:
+                  section_type: product_list
+                  title: Best Sellers
+                  slug: best-sellers
+                  content:
+                    source: best_sellers
+                    limit: 8
+                  settings:
+                    layout: grid
+                    columns: 4
+                  is_active: true
+      responses:
+        '201':
+          description: Section created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section created successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+        '400':
+          description: Bad request (validation error, limit reached, slug conflict)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: section limit reached: maximum 10 sections allowed per storefront
+                  error:
+                    type: object
+                    nullable: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '409':
+          description: Conflict (slug already exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: section with slug 'hero-banner' already exists for this storefront
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags: [Admin Sections]
+      summary: List sections with filters (Admin view)
+      description: |
+        List all sections for a storefront with optional filters.
+        Admin endpoint showing all sections including inactive and deleted (if filter allows).
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [image_slider, product_list, hero_banner, text_block, video_embed, category_grid, testimonial, countdown_timer, menu_navigation, loyalty_widget]
+          description: Filter by section type
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Filter by tag
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Filter by active status
+      responses:
+        '200':
+          description: Sections retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Sections retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListSectionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefronts/{id}/sections/from-template:
+    post:
+      tags: [Admin Sections]
+      summary: Create section from template
+      description: |
+        Create a new section using a predefined template.
+        Template provides default content and settings which can be customized later.
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './storefront-section-schemas.yaml#/components/schemas/CreateSectionFromTemplateRequest'
+            example:
+              template_code: featured_products_grid
+              title: Featured Products
+              slug: featured-products
+              tags: [homepage]
+      responses:
+        '201':
+          description: Section created from template successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section created from template successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+        '400':
+          description: Bad request (template not active, limit reached)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                  error:
+                    type: object
+                    nullable: true
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: template 'invalid_code' not found
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefronts/{id}/sections/active:
+    get:
+      tags: [Admin Sections]
+      summary: List active sections only
+      description: |
+        List only active sections for a storefront. Same as customer view but for admin context.
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional page filter (e.g. 'home', 'category', 'all')
+      responses:
+        '200':
+          description: Active sections retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Active sections retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListSectionsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefronts/{id}/sections/{section_id}:
+    get:
+      tags: [Admin Sections]
+      summary: Get section by ID (Admin view)
+      description: |
+        Retrieve a specific section with full details including enriched data.
+        Admin endpoint showing all section data.
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+        - name: section_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Section ID
+      responses:
+        '200':
+          description: Section retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags: [Admin Sections]
+      summary: Update section
+      description: |
+        Update an existing section. Only provided fields are updated (partial update).
+        
+        Business rules:
+        - Cannot change section_type after creation
+        - Slug must remain unique per storefront
+        - Validates storefront ownership
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+        - name: section_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Section ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './storefront-section-schemas.yaml#/components/schemas/UpdateSectionRequest'
+            example:
+              title: Updated Section Title
+              is_active: false
+              content:
+                images:
+                  - url: https://cdn.example.com/new-banner.jpg
+                    alt: New Banner
+      responses:
+        '200':
+          description: Section updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section updated successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden (not storefront owner)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Access denied
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Conflict (slug already exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: section with slug 'new-slug' already exists for this storefront
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags: [Admin Sections]
+      summary: Delete section (soft delete)
+      description: |
+        Soft-delete a section. The section is marked as deleted but can be restored later.
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+        - name: section_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Section ID
+      responses:
+        '200':
+          description: Section deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section deleted successfully
+                  data:
+                    type: object
+                    nullable: true
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefronts/{id}/sections/{section_id}/restore:
+    post:
+      tags: [Admin Sections]
+      summary: Restore section
+      description: |
+        Restore a previously soft-deleted section.
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+        - name: section_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Section ID
+      responses:
+        '200':
+          description: Section restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section restored successfully
+                  data:
+                    type: object
+                    nullable: true
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefronts/{id}/sections/reorder:
+    put:
+      tags: [Admin Sections]
+      summary: Reorder sections
+      description: |
+        Update the display order of sections. Provide section IDs in desired order.
+        The order in the array determines the new display_order (starting from 0).
+        
+        Business rules:
+        - All section IDs must belong to the storefront
+        - Operation is transactional (all or nothing)
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './storefront-section-schemas.yaml#/components/schemas/ReorderSectionsRequest'
+            example:
+              section_ids:
+                - 550e8400-e29b-41d4-a716-446655440001
+                - 550e8400-e29b-41d4-a716-446655440002
+                - 550e8400-e29b-41d4-a716-446655440003
+      responses:
+        '200':
+          description: Sections reordered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Sections reordered successfully
+                  data:
+                    type: object
+                    nullable: true
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefronts/{id}/sections/{section_id}/duplicate:
+    post:
+      tags: [Admin Sections]
+      summary: Duplicate section
+      description: |
+        Create a copy of an existing section with new title and slug.
+        All content, settings, and tags are copied from the original.
+        
+        Business rules:
+        - Maximum 10 sections per storefront (includes duplicates)
+        - New slug must be unique
+        - Display order is auto-assigned (appended to end)
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+        - name: section_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Section ID to duplicate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './storefront-section-schemas.yaml#/components/schemas/DuplicateSectionRequest'
+            example:
+              new_title: Hero Banner - Copy
+              new_slug: hero-banner-copy
+      responses:
+        '201':
+          description: Section duplicated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section duplicated successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+        '400':
+          description: Bad request (limit reached)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: section limit reached: maximum 10 sections allowed per storefront
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          description: Conflict (new slug already exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: section with slug 'hero-banner-copy' already exists for this storefront
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefronts/{id}/sections/bulk-status:
+    put:
+      tags: [Admin Sections]
+      summary: Bulk update section status
+      description: |
+        Update the active status of multiple sections at once.
+        Useful for activating/deactivating multiple sections for seasonal changes.
+        
+        Authentication: Required (JWT token)
+        Authorization: Storefront owner/admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './storefront-section-schemas.yaml#/components/schemas/BulkUpdateStatusRequest'
+            example:
+              section_ids:
+                - 550e8400-e29b-41d4-a716-446655440001
+                - 550e8400-e29b-41d4-a716-446655440002
+              is_active: false
+      responses:
+        '200':
+          description: Section status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Section status updated successfully
+                  data:
+                    type: object
+                    nullable: true
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Template Endpoints
+  /api/v1/admin/section-templates:
+    get:
+      tags: [Section Templates]
+      summary: List section templates
+      description: |
+        List all available section templates with optional filters.
+        Templates provide prebuilt section configurations that can be used to quickly create sections.
+        
+        Authentication: Required (JWT token)
+        Authorization: Admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [image_slider, product_list, hero_banner, text_block, video_embed, category_grid, testimonial, countdown_timer, loyalty_widget]
+          description: Filter by section type
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category (e.g., ecommerce, marketing, content)
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Templates retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListTemplatesResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/admin/section-templates/{id}:
+    get:
+      tags: [Section Templates]
+      summary: Get template by ID or code
+      description: |
+        Retrieve a specific template by ID or template code.
+        Shows default content, settings, and metadata.
+        
+        Authentication: Required (JWT token)
+        Authorization: Admin only
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Template ID (UUID) or template code (string)
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Template retrieved successfully
+                  data:
+                    $ref: './storefront-section-schemas.yaml#/components/schemas/TemplateResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  responses:
+    BadRequestError:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+                example: Invalid request format
+              error:
+                type: object
+                nullable: true
+
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+                example: Authentication required
+              error:
+                type: object
+                nullable: true
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+                example: Section not found
+              error:
+                type: object
+                nullable: true
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: error
+              message:
+                type: string
+                example: Failed to process request
+              error:
+                type: object
+                nullable: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

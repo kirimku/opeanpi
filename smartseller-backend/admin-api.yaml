@@ -1,0 +1,1068 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Admin API
+  description: |
+    Comprehensive admin management API for SmartSeller platform.
+    This API provides endpoints for administrative operations including drop point management,
+    user management, system configuration, and analytics.
+  version: 1.0.0
+  contact:
+    name: SmartSeller Team
+    email: support@smartseller.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Development server
+  - url: https://api.smartseller.com/api/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Error Responses
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Operation failed"
+        error:
+          type: string
+          example: "validation_error"
+        error_detail:
+          type: string
+          example: "Name field is required"
+        validation_errors:
+          type: array
+          items:
+            type: string
+          example: ["Name: wajib diisi", "Code: sudah digunakan"]
+        meta:
+          type: object
+          properties:
+            http_status:
+              type: integer
+              example: 400
+
+    # Success Responses
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        data:
+          type: object
+          nullable: true
+
+tags:
+  - name: Admin Drop Points
+    description: Admin drop point management operations
+  - name: Admin Account
+    description: Admin account profile and preferences
+
+paths:
+  # Admin Drop Point Endpoints
+  /admin/warranty/drop-points:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Create drop point
+      description: |
+        Create a new drop point for warranty claims.
+        This endpoint allows administrators to add new drop points to the system.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointRequest'
+      responses:
+        '201':
+          description: Drop point created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point created successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Admin Drop Points
+      summary: List drop points
+      description: |
+        Get a paginated list of drop points with optional filtering.
+        This endpoint provides comprehensive drop point management capabilities for administrators.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+          example: 1
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page
+          example: 10
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 50
+          description: Filter by code
+          example: "DP-JKT-001"
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 200
+          description: Filter by name
+          example: "Jakarta Central"
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointType'
+          description: Filter by type
+          example: "retail"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointStatus'
+          description: Filter by status
+          example: "active"
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by city
+          example: "Jakarta"
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by area
+          example: "Menteng"
+        - name: province
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by province
+          example: "DKI Jakarta"
+        - name: country
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by country
+          example: "Indonesia"
+        - name: postal_code
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 20
+          description: Filter by postal code
+          example: "10310"
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by tags
+          example: ["central", "express"]
+        - name: min_rating
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 5
+          description: Filter by minimum rating
+          example: 4.0
+        - name: max_rating
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 5
+          description: Filter by maximum rating
+          example: 5.0
+        - name: has_capacity
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by available capacity
+          example: true
+        - name: has_service
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 50
+          description: Filter by service availability
+          example: "warranty_submission"
+        - name: latitude
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+          description: Filter by latitude (for location-based search)
+          example: -6.2088
+        - name: longitude
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          description: Filter by longitude (for location-based search)
+          example: 106.8456
+        - name: radius_km
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          description: Radius in km for location-based search
+          example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [name, code, city, area, province, status, rating, priority, created_at, updated_at]
+            default: "created_at"
+          description: Sort field
+          example: "created_at"
+        - name: sort_direction
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: "desc"
+          description: Sort direction
+          example: "desc"
+      responses:
+        '200':
+          description: Drop points retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop points retrieved successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/AdminDropPointManagementResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/{id}:
+    get:
+      tags:
+        - Admin Drop Points
+      summary: Get drop point
+      description: |
+        Get detailed information about a specific drop point.
+        This endpoint provides comprehensive drop point information for administrators.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Drop point retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point retrieved successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point
+      description: |
+        Update an existing drop point.
+        This endpoint allows administrators to modify drop point information.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointRequest'
+      responses:
+        '200':
+          description: Drop point updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point updated successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Admin Drop Points
+      summary: Delete drop point
+      description: |
+        Delete a drop point (soft delete).
+        This endpoint allows administrators to remove drop points from the system.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Drop point deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/bulk:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Bulk update drop points
+      description: |
+        Perform bulk operations on multiple drop points.
+        This endpoint allows administrators to perform mass operations efficiently.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointBulkOperationRequest'
+      responses:
+        '200':
+          description: Bulk operation completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Bulk operation completed successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointBulkOperationResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/statistics:
+    get:
+      tags:
+        - Admin Drop Points
+      summary: Get drop point statistics
+      description: |
+        Get statistics and analytics for drop points.
+        This endpoint provides comprehensive analytics for administrators.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: storefront_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID (optional, defaults to admin's storefront)
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Drop point statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point statistics retrieved successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointStatisticsResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/{id}/activate:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Activate drop point
+      description: |
+        Activate a drop point to make it operational.
+        This endpoint allows administrators to activate drop points.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Drop point activated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point activated successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/{id}/deactivate:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Deactivate drop point
+      description: |
+        Deactivate a drop point to make it temporarily unavailable.
+        This endpoint allows administrators to deactivate drop points.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Drop point deactivated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point deactivated successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/{id}/status:
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point status
+      description: |
+        Update status of a specific drop point.
+        This endpoint allows administrators to change drop point status.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointStatusUpdateRequest'
+      responses:
+        '200':
+          description: Drop point status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point status updated successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/{id}/capacity:
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point capacity
+      description: |
+        Update capacity information of a specific drop point.
+        This endpoint allows administrators to manage drop point capacity.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointCapacityUpdateRequest'
+      responses:
+        '200':
+          description: Drop point capacity updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point capacity updated successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/{id}/rating:
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point rating
+      description: |
+        Update rating information of a specific drop point.
+        This endpoint allows administrators to manage drop point ratings.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Drop point ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointRatingUpdateRequest'
+      responses:
+        '200':
+          description: Drop point rating updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point rating updated successfully"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/warranty/drop-points/validate:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Validate drop point code
+      description: |
+        Check if a drop point code is unique and available.
+        This endpoint allows administrators to validate drop point codes before creation.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointValidationRequest'
+      responses:
+        '200':
+          description: Drop point code validation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point code validation completed"
+                  data:
+                    $ref: './drop-point-endpoints.yaml#/components/schemas/DropPointValidationResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

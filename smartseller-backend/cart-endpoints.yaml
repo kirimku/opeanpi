@@ -1,0 +1,322 @@
+paths:
+  /api/v1/cart:
+    get:
+      tags:
+        - Shopping Cart
+      summary: Get current user's shopping cart
+      description: Retrieve the current user's shopping cart with all items and totals
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/CartListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Cart not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/cart/items:
+    post:
+      tags:
+        - Shopping Cart
+      summary: Add item to cart
+      description: Add a product or product variant to the shopping cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './cart-order-schemas.yaml#/schemas/AddToCartRequest'
+      responses:
+        '201':
+          description: Item added to cart successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/CartListResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '409':
+          description: Insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/cart/items/{id}:
+    put:
+      tags:
+        - Shopping Cart
+      summary: Update cart item quantity
+      description: Update the quantity of a specific item in the cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Cart item ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './cart-order-schemas.yaml#/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Cart item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/CartListResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Cart item not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '409':
+          description: Insufficient stock
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Shopping Cart
+      summary: Remove item from cart
+      description: Remove a specific item from the shopping cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Cart item ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item removed from cart successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/CartListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Cart item not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/cart/clear:
+    delete:
+      tags:
+        - Shopping Cart
+      summary: Clear entire cart
+      description: Remove all items from the shopping cart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cart cleared successfully"
+                  data:
+                    type: object
+                    nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Cart not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+  /api/v1/cart/coupon:
+    post:
+      tags:
+        - Shopping Cart
+      summary: Apply coupon to cart
+      description: Apply a discount coupon to the shopping cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './cart-order-schemas.yaml#/schemas/ApplyCouponRequest'
+      responses:
+        '200':
+          description: Coupon applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/CartListResponse'
+        '400':
+          description: Invalid coupon or request data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Cart or coupon not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '409':
+          description: Coupon not applicable or expired
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Shopping Cart
+      summary: Remove coupon from cart
+      description: Remove the applied coupon from the shopping cart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Coupon removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: './cart-order-schemas.yaml#/schemas/CartListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '404':
+          description: Cart not found or no coupon applied
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/schemas/ErrorResponse'

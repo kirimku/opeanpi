@@ -1,0 +1,2924 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Drop Point API
+  description: |
+    Comprehensive drop point management API for SmartSeller platform.
+    This API provides endpoints for managing drop points where customers can submit 
+    and pick up warranty claims, including location-based discovery, capacity management,
+    and administrative operations.
+  version: 1.0.0
+  contact:
+    name: SmartSeller Team
+    email: support@smartseller.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Development server
+  - url: https://api.smartseller.com/api/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Error Responses
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Operation failed"
+        error:
+          type: string
+          example: "validation_error"
+        error_detail:
+          type: string
+          example: "Name field is required"
+        validation_errors:
+          type: array
+          items:
+            type: string
+          example: ["Name: wajib diisi", "Code: sudah digunakan"]
+        meta:
+          type: object
+          properties:
+            http_status:
+              type: integer
+              example: 400
+
+    # Success Responses
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        data:
+          type: object
+          nullable: true
+
+    # Drop Point Types
+    DropPointType:
+      type: string
+      enum: [retail, service, locker, partner]
+      description: |
+        retail: Retail store location
+        service: Service center
+        locker: Automated locker
+        partner: Third-party partner location
+
+    DropPointStatus:
+      type: string
+      enum: [active, inactive, maintenance, suspended]
+      description: |
+        active: Fully operational
+        inactive: Temporarily closed
+        maintenance: Under maintenance
+        suspended: Permanently closed
+
+    # Operating Hours
+    OperatingHours:
+      type: object
+      properties:
+        day_of_week:
+          type: integer
+          minimum: 0
+          maximum: 6
+          description: "Day of week (0 = Sunday, 6 = Saturday)"
+          example: 1
+        open_time:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+          description: "Opening time in HH:MM format"
+          example: "09:00"
+        close_time:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+          description: "Closing time in HH:MM format"
+          example: "17:00"
+        is_open:
+          type: boolean
+          description: "Whether the drop point is open on this day"
+          example: true
+        notes:
+          type: string
+          nullable: true
+          description: "Special notes for this day (e.g., 'Holiday', 'Limited hours')"
+          example: "Holiday hours"
+
+    OperatingHoursDTO:
+      type: object
+      properties:
+        monday:
+          $ref: '#/components/schemas/DayOperatingHours'
+        tuesday:
+          $ref: '#/components/schemas/DayOperatingHours'
+        wednesday:
+          $ref: '#/components/schemas/DayOperatingHours'
+        thursday:
+          $ref: '#/components/schemas/DayOperatingHours'
+        friday:
+          $ref: '#/components/schemas/DayOperatingHours'
+        saturday:
+          $ref: '#/components/schemas/DayOperatingHours'
+        sunday:
+          $ref: '#/components/schemas/DayOperatingHours'
+        holidays:
+          type: string
+          nullable: true
+          description: "Special holiday notes"
+          example: "Closed on public holidays"
+
+    DayOperatingHours:
+      type: object
+      properties:
+        open:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+          description: "Opening time in HH:MM format"
+          example: "09:00"
+        close:
+          type: string
+          pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+          description: "Closing time in HH:MM format"
+          example: "17:00"
+        closed:
+          type: boolean
+          nullable: true
+          description: "If true, the location is closed on this day"
+          example: false
+
+    # Contact Information
+    ContactInfo:
+      type: object
+      properties:
+        phone:
+          type: string
+          example: "+62812345678"
+        email:
+          type: string
+          format: email
+          example: "drop-point@example.com"
+        website:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://example.com"
+        contact_name:
+          type: string
+          nullable: true
+          example: "John Doe"
+        whatsapp:
+          type: string
+          nullable: true
+          example: "+62812345678"
+
+    ContactInfoDTO:
+      type: object
+      properties:
+        phone:
+          type: string
+          nullable: true
+          example: "+62812345678"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "drop-point@example.com"
+        website:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://example.com"
+        contact_name:
+          type: string
+          nullable: true
+          example: "John Doe"
+
+    # Capacity Information
+    CapacityInfo:
+      type: object
+      properties:
+        maximum_capacity:
+          type: integer
+          minimum: 1
+          description: "Maximum capacity of the drop point"
+          example: 100
+        current_load:
+          type: integer
+          minimum: 0
+          description: "Current load at the drop point"
+          example: 45
+        available_slots:
+          type: integer
+          minimum: 0
+          description: "Available slots at the drop point"
+          example: 55
+        utilization_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: "Capacity utilization percentage"
+          example: 45.0
+        last_updated:
+          type: string
+          format: date-time
+          description: "Last time capacity was updated"
+          example: "2023-01-15T10:30:00Z"
+
+    CapacityInfoDTO:
+      type: object
+      properties:
+        maximum_capacity:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: "Maximum capacity of the drop point"
+          example: 100
+        available_slots:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: "Available slots at the drop point"
+          example: 55
+        current_load:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: "Current load at the drop point"
+          example: 45
+        reservation_window:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: "Reservation window in hours"
+          example: 24
+
+    # Services
+    Services:
+      type: object
+      properties:
+        warranty_submission:
+          type: boolean
+          description: "Warranty submission service available"
+          example: true
+        warranty_pickup:
+          type: boolean
+          description: "Warranty pickup service available"
+          example: true
+        warranty_repair:
+          type: boolean
+          description: "Warranty repair service available"
+          example: false
+        product_return:
+          type: boolean
+          description: "Product return service available"
+          example: true
+        technical_support:
+          type: boolean
+          description: "Technical support service available"
+          example: true
+        spare_parts:
+          type: boolean
+          description: "Spare parts service available"
+          example: false
+        supported_brands:
+          type: array
+          items:
+            type: string
+          description: "List of supported brands"
+          example: ["Apple", "Samsung", "Xiaomi"]
+        special_services:
+          type: array
+          items:
+            type: string
+          description: "List of special services"
+          example: ["Express service", "Priority handling"]
+
+    # Request/Response Schemas
+    DropPointRequest:
+      type: object
+      required:
+        - code
+        - name
+        - address
+        - area
+        - city
+        - province
+        - postal_code
+        - country
+        - latitude
+        - longitude
+        - drop_point_type
+        - status
+      properties:
+        code:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: "Unique code for the drop point"
+          example: "DP-JKT-001"
+        name:
+          type: string
+          minLength: 3
+          maxLength: 200
+          description: "Display name for the drop point"
+          example: "Jakarta Central Drop Point"
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: "Detailed description of the drop point"
+          example: "Central location for warranty claims in Jakarta area"
+        address:
+          type: string
+          minLength: 5
+          maxLength: 500
+          description: "Street address of the drop point"
+          example: "Jl. Sudirman No. 123"
+        area:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: "Area or district"
+          example: "Menteng"
+        city:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: "City name"
+          example: "Jakarta"
+        province:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: "Province or state"
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          minLength: 3
+          maxLength: 20
+          description: "Postal code"
+          example: "10310"
+        country:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: "Country name"
+          example: "Indonesia"
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: "Latitude coordinate"
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: "Longitude coordinate"
+          example: 106.8456
+        drop_point_type:
+          $ref: '#/components/schemas/DropPointType'
+        status:
+          $ref: '#/components/schemas/DropPointStatus'
+        operating_hours:
+          $ref: '#/components/schemas/OperatingHoursDTO'
+        timezone:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: "Timezone for the drop point"
+          example: "Asia/Jakarta"
+        contact_info:
+          $ref: '#/components/schemas/ContactInfoDTO'
+        capacity_info:
+          $ref: '#/components/schemas/CapacityInfoDTO'
+        services:
+          type: object
+          description: "Services offered at the drop point"
+          example:
+            warranty_submission: true
+            warranty_pickup: true
+            technical_support: true
+        instructions:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: "Special instructions for customers"
+          example: "Please bring original receipt and warranty card"
+        notes:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: "Internal notes"
+          example: "High traffic location, needs regular monitoring"
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Tags for categorization and search"
+          example: ["central", "high-traffic", "express"]
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: "Priority level (lower number = higher priority)"
+          example: 10
+
+    DropPointResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        storefront_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        code:
+          type: string
+          example: "DP-JKT-001"
+        name:
+          type: string
+          example: "Jakarta Central Drop Point"
+        description:
+          type: string
+          nullable: true
+          example: "Central location for warranty claims in Jakarta area"
+        address:
+          type: string
+          example: "Jl. Sudirman No. 123"
+        area:
+          type: string
+          example: "Menteng"
+        city:
+          type: string
+          example: "Jakarta"
+        province:
+          type: string
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          example: "10310"
+        country:
+          type: string
+          example: "Indonesia"
+        latitude:
+          type: number
+          format: float
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          example: 106.8456
+        drop_point_type:
+          $ref: '#/components/schemas/DropPointType'
+        status:
+          $ref: '#/components/schemas/DropPointStatus'
+        operating_hours:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperatingHours'
+        timezone:
+          type: string
+          nullable: true
+          example: "Asia/Jakarta"
+        contact:
+          $ref: '#/components/schemas/ContactInfo'
+        capacity:
+          $ref: '#/components/schemas/CapacityInfo'
+        services:
+          $ref: '#/components/schemas/Services'
+        instructions:
+          type: string
+          nullable: true
+          example: "Please bring original receipt and warranty card"
+        notes:
+          type: string
+          nullable: true
+          example: "High traffic location, needs regular monitoring"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["central", "high-traffic", "express"]
+        priority:
+          type: integer
+          example: 10
+        rating:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 5
+          example: 4.5
+        total_reviews:
+          type: integer
+          example: 150
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+
+    DropPointWithDistanceResponse:
+      allOf:
+        - $ref: '#/components/schemas/DropPointResponse'
+        - type: object
+          properties:
+            distance_km:
+              type: number
+              format: float
+              description: "Distance from reference point in kilometers"
+              example: 2.5
+
+    CustomerDropPointResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        code:
+          type: string
+          example: "DP-JKT-001"
+        name:
+          type: string
+          example: "Jakarta Central Drop Point"
+        address:
+          type: string
+          example: "Jl. Sudirman No. 123"
+        area:
+          type: string
+          example: "Menteng"
+        city:
+          type: string
+          example: "Jakarta"
+        province:
+          type: string
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          example: "10310"
+        latitude:
+          type: number
+          format: float
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          example: 106.8456
+        drop_point_type:
+          $ref: '#/components/schemas/DropPointType'
+        status:
+          $ref: '#/components/schemas/DropPointStatus'
+        operating_hours:
+          $ref: '#/components/schemas/OperatingHoursDTO'
+        contact_info:
+          $ref: '#/components/schemas/ContactInfoDTO'
+        capacity_info:
+          $ref: '#/components/schemas/CapacityInfoDTO'
+        services:
+          type: object
+          description: "Services offered at the drop point"
+          example:
+            warranty_submission: true
+            warranty_pickup: true
+            technical_support: true
+        instructions:
+          type: string
+          nullable: true
+          example: "Please bring original receipt and warranty card"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["central", "high-traffic", "express"]
+        priority:
+          type: integer
+          example: 10
+        rating:
+          type: number
+          format: float
+          nullable: true
+          example: 4.5
+        total_reviews:
+          type: integer
+          example: 150
+        distance_km:
+          type: number
+          format: float
+          nullable: true
+          description: "Distance from reference point in kilometers"
+          example: 2.5
+
+    # Discovery and Search Requests
+    CustomerDropPointDiscoveryRequest:
+      type: object
+      properties:
+        # Location-based discovery
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          minimum: -90
+          maximum: 90
+          description: "Latitude for location-based search"
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          minimum: -180
+          maximum: 180
+          description: "Longitude for location-based search"
+          example: 106.8456
+        radius_km:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 100
+          description: "Search radius in kilometers"
+          example: 10
+        # Location-based discovery by address
+        city:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by city"
+          example: "Jakarta"
+        area:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by area"
+          example: "Menteng"
+        province:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by province"
+          example: "DKI Jakarta"
+        # Service-based discovery
+        service_key:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 50
+          description: "Filter by service availability"
+          example: "warranty_submission"
+        # Filters
+        drop_point_type:
+          $ref: '#/components/schemas/DropPointType'
+        min_rating:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 5
+          description: "Filter by minimum rating"
+          example: 4.0
+        has_capacity:
+          type: boolean
+          nullable: true
+          description: "Filter by available capacity"
+          example: true
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Filter by tags"
+          example: ["central", "express"]
+        # Pagination
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: "Page number for pagination"
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+          description: "Number of items per page"
+          example: 10
+        # Sorting
+        sort_by:
+          type: string
+          enum: [distance, rating, priority, name]
+          default: "priority"
+          description: "Sort field"
+          example: "priority"
+        sort_direction:
+          type: string
+          enum: [asc, desc]
+          default: "asc"
+          description: "Sort direction"
+          example: "asc"
+
+    DropPointNearbyRequest:
+      type: object
+      required:
+        - latitude
+        - longitude
+        - radius_km
+        - limit
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: "Latitude coordinate"
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: "Longitude coordinate"
+          example: 106.8456
+        radius_km:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: "Search radius in kilometers"
+          example: 10
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: "Maximum number of results"
+          example: 20
+
+    DropPointNearbyForStorefrontRequest:
+      type: object
+      required:
+        - storefront_id
+        - latitude
+        - longitude
+        - radius_km
+        - limit
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          description: "Storefront ID"
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: "Latitude coordinate"
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: "Longitude coordinate"
+          example: 106.8456
+        radius_km:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: "Search radius in kilometers"
+          example: 10
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: "Maximum number of results"
+          example: 20
+
+    DropPointSearchRequest:
+      type: object
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Filter by storefront ID"
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        code:
+          type: string
+          nullable: true
+          minLength: 3
+          maxLength: 50
+          description: "Filter by code"
+          example: "DP-JKT-001"
+        name:
+          type: string
+          nullable: true
+          minLength: 3
+          maxLength: 200
+          description: "Filter by name"
+          example: "Jakarta Central"
+        type:
+          $ref: '#/components/schemas/DropPointType'
+        status:
+          $ref: '#/components/schemas/DropPointStatus'
+        city:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by city"
+          example: "Jakarta"
+        area:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by area"
+          example: "Menteng"
+        province:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by province"
+          example: "DKI Jakarta"
+        country:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by country"
+          example: "Indonesia"
+        postal_code:
+          type: string
+          nullable: true
+          minLength: 3
+          maxLength: 20
+          description: "Filter by postal code"
+          example: "10310"
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Filter by tags"
+          example: ["central", "express"]
+        min_rating:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 5
+          description: "Filter by minimum rating"
+          example: 4.0
+        max_rating:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 5
+          description: "Filter by maximum rating"
+          example: 5.0
+        has_capacity:
+          type: boolean
+          nullable: true
+          description: "Filter by available capacity"
+          example: true
+        has_service:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 50
+          description: "Filter by service availability"
+          example: "warranty_submission"
+        # Location-based search
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          minimum: -90
+          maximum: 90
+          description: "Filter by latitude (for location-based search)"
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          minimum: -180
+          maximum: 180
+          description: "Filter by longitude (for location-based search)"
+          example: 106.8456
+        radius_km:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 1000
+          description: "Radius in km for location-based search"
+          example: 10
+        # Date range filters
+        created_after:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points created after this date"
+          example: "2023-01-01T00:00:00Z"
+        created_before:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points created before this date"
+          example: "2023-12-31T23:59:59Z"
+        updated_after:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points updated after this date"
+          example: "2023-01-01T00:00:00Z"
+        updated_before:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points updated before this date"
+          example: "2023-12-31T23:59:59Z"
+        # Pagination
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: "Page number for pagination"
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: "Number of items per page"
+          example: 10
+        # Sorting
+        sort_by:
+          type: string
+          enum: [name, code, city, area, province, status, rating, priority, created_at, updated_at]
+          default: "created_at"
+          description: "Sort field"
+          example: "created_at"
+        sort_direction:
+          type: string
+          enum: [asc, desc]
+          default: "desc"
+          description: "Sort direction"
+          example: "desc"
+
+    # Admin Management Requests
+    AdminDropPointManagementRequest:
+      type: object
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Filter by storefront ID"
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        code:
+          type: string
+          nullable: true
+          minLength: 3
+          maxLength: 50
+          description: "Filter by code"
+          example: "DP-JKT-001"
+        name:
+          type: string
+          nullable: true
+          minLength: 3
+          maxLength: 200
+          description: "Filter by name"
+          example: "Jakarta Central"
+        type:
+          $ref: '#/components/schemas/DropPointType'
+        status:
+          $ref: '#/components/schemas/DropPointStatus'
+        city:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by city"
+          example: "Jakarta"
+        area:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by area"
+          example: "Menteng"
+        province:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by province"
+          example: "DKI Jakarta"
+        country:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 100
+          description: "Filter by country"
+          example: "Indonesia"
+        postal_code:
+          type: string
+          nullable: true
+          minLength: 3
+          maxLength: 20
+          description: "Filter by postal code"
+          example: "10310"
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Filter by tags"
+          example: ["central", "express"]
+        min_rating:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 5
+          description: "Filter by minimum rating"
+          example: 4.0
+        max_rating:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 5
+          description: "Filter by maximum rating"
+          example: 5.0
+        has_capacity:
+          type: boolean
+          nullable: true
+          description: "Filter by available capacity"
+          example: true
+        has_service:
+          type: string
+          nullable: true
+          minLength: 2
+          maxLength: 50
+          description: "Filter by service availability"
+          example: "warranty_submission"
+        # Location-based search
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          minimum: -90
+          maximum: 90
+          description: "Filter by latitude (for location-based search)"
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          minimum: -180
+          maximum: 180
+          description: "Filter by longitude (for location-based search)"
+          example: 106.8456
+        radius_km:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 1000
+          description: "Radius in km for location-based search"
+          example: 10
+        # Date range filters
+        created_after:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points created after this date"
+          example: "2023-01-01T00:00:00Z"
+        created_before:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points created before this date"
+          example: "2023-12-31T23:59:59Z"
+        updated_after:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points updated after this date"
+          example: "2023-01-01T00:00:00Z"
+        updated_before:
+          type: string
+          format: date-time
+          nullable: true
+          description: "Filter drop points updated before this date"
+          example: "2023-12-31T23:59:59Z"
+        # Pagination
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: "Page number for pagination"
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: "Number of items per page"
+          example: 10
+        # Sorting
+        sort_by:
+          type: string
+          enum: [name, code, city, area, province, status, rating, priority, created_at, updated_at, storefront_id]
+          default: "created_at"
+          description: "Sort field"
+          example: "created_at"
+        sort_direction:
+          type: string
+          enum: [asc, desc]
+          default: "desc"
+          description: "Sort direction"
+          example: "desc"
+
+    AdminDropPointResponse:
+      allOf:
+        - $ref: '#/components/schemas/DropPointResponse'
+        - type: object
+          properties:
+            storefront_name:
+              type: string
+              nullable: true
+              description: "Storefront name"
+              example: "My Awesome Store"
+
+    # Update Requests
+    DropPointStatusUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/DropPointStatus'
+
+    DropPointCapacityUpdateRequest:
+      type: object
+      required:
+        - current_load
+      properties:
+        current_load:
+          type: integer
+          minimum: 0
+          description: "Current load at the drop point"
+          example: 45
+
+    DropPointRatingUpdateRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+          description: "Average customer rating"
+          example: 4.5
+
+    DropPointValidationRequest:
+      type: object
+      required:
+        - code
+        - storefront_id
+      properties:
+        code:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: "Drop point code to validate"
+          example: "DP-JKT-001"
+        storefront_id:
+          type: string
+          format: uuid
+          description: "Storefront ID"
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        exclude_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Exclude this drop point ID from validation (for updates)"
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    DropPointValidationResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: "Whether the code is valid and available"
+          example: true
+        message:
+          type: string
+          nullable: true
+          description: "Validation message"
+          example: "Code is available"
+
+    DropPointBulkOperationRequest:
+      type: object
+      required:
+        - drop_point_ids
+        - operation
+      properties:
+        drop_point_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: "List of drop point IDs to operate on"
+          example: ["550e8400-e29b-41d4-a716-446655440000", "550e8400-e29b-41d4-a716-446655440001"]
+        operation:
+          type: string
+          enum: [activate, deactivate, delete]
+          description: "Operation to perform"
+          example: "activate"
+
+    DropPointBulkOperationResponse:
+      type: object
+      properties:
+        success_count:
+          type: integer
+          description: "Number of successful operations"
+          example: 8
+        failure_count:
+          type: integer
+          description: "Number of failed operations"
+          example: 2
+        errors:
+          type: array
+          items:
+            type: string
+          description: "List of error messages"
+          example: ["Drop point not found: 550e8400-e29b-41d4-a716-446655440002"]
+
+    DropPointStatisticsResponse:
+      type: object
+      properties:
+        total_drop_points:
+          type: integer
+          description: "Total number of drop points"
+          example: 150
+        active_drop_points:
+          type: integer
+          description: "Number of active drop points"
+          example: 120
+        inactive_drop_points:
+          type: integer
+          description: "Number of inactive drop points"
+          example: 20
+        maintenance_drop_points:
+          type: integer
+          description: "Number of drop points under maintenance"
+          example: 5
+        suspended_drop_points:
+          type: integer
+          description: "Number of suspended drop points"
+          example: 5
+        average_rating:
+          type: number
+          format: float
+          nullable: true
+          description: "Average rating across all drop points"
+          example: 4.2
+        total_capacity:
+          type: integer
+          description: "Total capacity across all drop points"
+          example: 15000
+        available_capacity:
+          type: integer
+          description: "Total available capacity across all drop points"
+          example: 8500
+        utilization_rate:
+          type: number
+          format: float
+          description: "Average utilization rate across all drop points"
+          example: 43.3
+        drop_points_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Drop points grouped by type"
+          example:
+            retail: 80
+            service: 40
+            locker: 20
+            partner: 10
+        drop_points_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Drop points grouped by status"
+          example:
+            active: 120
+            inactive: 20
+            maintenance: 5
+            suspended: 5
+        drop_points_by_city:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Drop points grouped by city"
+          example:
+            "Jakarta": 60
+            "Surabaya": 30
+            "Bandung": 25
+            "Medan": 20
+            "Others": 15
+        top_rated_drop_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/DropPointResponse'
+          description: "Top rated drop points"
+          example: []
+
+    # Pagination Responses
+    DropPointListResponse:
+      type: object
+      properties:
+        drop_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/DropPointResponse'
+        total:
+          type: integer
+          format: int64
+          description: "Total number of drop points"
+          example: 150
+        page:
+          type: integer
+          description: "Current page number"
+          example: 1
+        page_size:
+          type: integer
+          description: "Number of items per page"
+          example: 10
+        total_pages:
+          type: integer
+          description: "Total number of pages"
+          example: 15
+
+    DropPointListWithDistanceResponse:
+      type: object
+      properties:
+        drop_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/DropPointWithDistanceResponse'
+        total:
+          type: integer
+          format: int64
+          description: "Total number of drop points"
+          example: 150
+        page:
+          type: integer
+          description: "Current page number"
+          example: 1
+        page_size:
+          type: integer
+          description: "Number of items per page"
+          example: 10
+        total_pages:
+          type: integer
+          description: "Total number of pages"
+          example: 15
+
+    CustomerDropPointDiscoveryResponse:
+      type: object
+      properties:
+        drop_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerDropPointResponse'
+        total:
+          type: integer
+          format: int64
+          description: "Total number of drop points"
+          example: 150
+        page:
+          type: integer
+          description: "Current page number"
+          example: 1
+        page_size:
+          type: integer
+          description: "Number of items per page"
+          example: 10
+        total_pages:
+          type: integer
+          description: "Total number of pages"
+          example: 15
+
+    AdminDropPointManagementResponse:
+      type: object
+      properties:
+        drop_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminDropPointResponse'
+        total:
+          type: integer
+          format: int64
+          description: "Total number of drop points"
+          example: 150
+        page:
+          type: integer
+          description: "Current page number"
+          example: 1
+        page_size:
+          type: integer
+          description: "Number of items per page"
+          example: 10
+        total_pages:
+          type: integer
+          description: "Total number of pages"
+          example: 15
+
+    # Utility Schemas
+    DropDownOption:
+      type: object
+      properties:
+        value:
+          type: string
+          description: "Option value"
+          example: "retail"
+        label:
+          type: string
+          description: "Option label"
+          example: "Retail Store"
+
+  parameters:
+    DropPointIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Drop point ID
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    StorefrontSlugParam:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^[a-z0-9-]+$'
+      description: Storefront slug
+      example: "my-awesome-store"
+
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number for pagination
+      example: 1
+
+    PageSizeParam:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+      description: Number of items per page
+      example: 10
+
+tags:
+  - name: Admin Drop Points
+    description: Admin drop point management operations
+  - name: Customer Drop Points
+    description: Customer drop point discovery and information
+
+paths:
+  # Customer Drop Point Endpoints
+  /api/v1/storefront/{slug}/drop-points:
+    post:
+      tags:
+        - Customer Drop Points
+      summary: Discover drop points
+      description: |
+        Discover drop points with various filters including location, services, and availability.
+        This endpoint allows customers to find suitable drop points for warranty claims.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorefrontSlugParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerDropPointDiscoveryRequest'
+      responses:
+        '200':
+          description: Drop points discovered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop points discovered successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerDropPointDiscoveryResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Customer Drop Points
+      summary: List drop points
+      description: |
+        List drop points with query parameters for simpler client integration.
+        This is a GET alternative to the POST discovery endpoint.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorefrontSlugParam'
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+          example: 1
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Number of items per page
+          example: 10
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/DropPointType'
+          description: Filter by drop point type
+          example: "retail"
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by city
+          example: "Jakarta"
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by area
+          example: "Menteng"
+        - name: province
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by province
+          example: "DKI Jakarta"
+        - name: service
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 50
+          description: Filter by service availability
+          example: "warranty_submission"
+        - name: min_rating
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 5
+          description: Filter by minimum rating
+          example: 4.0
+        - name: has_capacity
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by available capacity
+          example: true
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [distance, rating, priority, name]
+            default: "priority"
+          description: Sort field
+          example: "priority"
+        - name: sort_direction
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: "asc"
+          description: Sort direction
+          example: "asc"
+      responses:
+        '200':
+          description: Drop points listed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop points listed successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerDropPointDiscoveryResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storefront/{slug}/drop-points/nearby:
+    post:
+      tags:
+        - Customer Drop Points
+      summary: Get nearby drop points
+      description: |
+        Find drop points near a specific location with distance calculation.
+        This endpoint uses geospatial queries to find the closest drop points.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorefrontSlugParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointNearbyForStorefrontRequest'
+      responses:
+        '200':
+          description: Nearby drop points retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Nearby drop points retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointListWithDistanceResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storefront/{slug}/drop-points/search:
+    post:
+      tags:
+        - Customer Drop Points
+      summary: Search drop points
+      description: |
+        Search drop points with advanced filtering and pagination.
+        This endpoint provides comprehensive search capabilities for finding drop points.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorefrontSlugParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointSearchRequest'
+      responses:
+        '200':
+          description: Drop points searched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop points searched successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointListResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storefront/{slug}/drop-points/{id}:
+    get:
+      tags:
+        - Customer Drop Points
+      summary: Get drop point details
+      description: |
+        Get detailed information about a specific drop point.
+        This endpoint provides comprehensive drop point information for customers.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorefrontSlugParam'
+        - $ref: '#/components/parameters/DropPointIdParam'
+      responses:
+        '200':
+          description: Drop point details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point details retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerDropPointResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storefront/{slug}/drop-points/types:
+    get:
+      tags:
+        - Customer Drop Points
+      summary: Get drop point types
+      description: |
+        Get available drop point types for filtering.
+        This endpoint provides dropdown options for UI components.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorefrontSlugParam'
+      responses:
+        '200':
+          description: Drop point types retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point types retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DropDownOption'
+                    example:
+                      - value: "retail"
+                        label: "Retail Store"
+                      - value: "service"
+                        label: "Service Center"
+                      - value: "locker"
+                        label: "Automated Locker"
+                      - value: "partner"
+                        label: "Partner Location"
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storefront/{slug}/drop-points/services:
+    get:
+      tags:
+        - Customer Drop Points
+      summary: Get drop point services
+      description: |
+        Get available drop point services for filtering.
+        This endpoint provides dropdown options for UI components.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/StorefrontSlugParam'
+      responses:
+        '200':
+          description: Drop point services retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point services retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DropDownOption'
+                    example:
+                      - value: "warranty_submission"
+                        label: "Warranty Submission"
+                      - value: "warranty_pickup"
+                        label: "Warranty Pickup"
+                      - value: "warranty_repair"
+                        label: "Warranty Repair"
+                      - value: "product_return"
+                        label: "Product Return"
+                      - value: "technical_support"
+                        label: "Technical Support"
+                      - value: "spare_parts"
+                        label: "Spare Parts"
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Admin Drop Point Endpoints
+  /api/v1/admin/warranty/drop-points:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Create drop point
+      description: |
+        Create a new drop point for warranty claims.
+        This endpoint allows administrators to add new drop points to the system.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointRequest'
+      responses:
+        '201':
+          description: Drop point created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point created successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Admin Drop Points
+      summary: List drop points
+      description: |
+        Get a paginated list of drop points with optional filtering.
+        This endpoint provides comprehensive drop point management capabilities for administrators.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+          example: 1
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page
+          example: 10
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 50
+          description: Filter by code
+          example: "DP-JKT-001"
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 200
+          description: Filter by name
+          example: "Jakarta Central"
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/DropPointType'
+          description: Filter by type
+          example: "retail"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/DropPointStatus'
+          description: Filter by status
+          example: "active"
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by city
+          example: "Jakarta"
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by area
+          example: "Menteng"
+        - name: province
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by province
+          example: "DKI Jakarta"
+        - name: country
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Filter by country
+          example: "Indonesia"
+        - name: postal_code
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 20
+          description: Filter by postal code
+          example: "10310"
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by tags
+          example: ["central", "express"]
+        - name: min_rating
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 5
+          description: Filter by minimum rating
+          example: 4.0
+        - name: max_rating
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 5
+          description: Filter by maximum rating
+          example: 5.0
+        - name: has_capacity
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by available capacity
+          example: true
+        - name: has_service
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 50
+          description: Filter by service availability
+          example: "warranty_submission"
+        - name: latitude
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+          description: Filter by latitude (for location-based search)
+          example: -6.2088
+        - name: longitude
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          description: Filter by longitude (for location-based search)
+          example: 106.8456
+        - name: radius_km
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          description: Radius in km for location-based search
+          example: 10
+        - name: sort_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [name, code, city, area, province, status, rating, priority, created_at, updated_at]
+            default: "created_at"
+          description: Sort field
+          example: "created_at"
+        - name: sort_direction
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: "desc"
+          description: Sort direction
+          example: "desc"
+      responses:
+        '200':
+          description: Drop points retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop points retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/AdminDropPointManagementResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/{id}:
+    get:
+      tags:
+        - Admin Drop Points
+      summary: Get drop point
+      description: |
+        Get detailed information about a specific drop point.
+        This endpoint provides comprehensive drop point information for administrators.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      responses:
+        '200':
+          description: Drop point retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point
+      description: |
+        Update an existing drop point.
+        This endpoint allows administrators to modify drop point information.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointRequest'
+      responses:
+        '200':
+          description: Drop point updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point updated successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Admin Drop Points
+      summary: Delete drop point
+      description: |
+        Delete a drop point (soft delete).
+        This endpoint allows administrators to remove drop points from the system.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      responses:
+        '200':
+          description: Drop point deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/bulk:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Bulk update drop points
+      description: |
+        Perform bulk operations on multiple drop points.
+        This endpoint allows administrators to perform mass operations efficiently.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointBulkOperationRequest'
+      responses:
+        '200':
+          description: Bulk operation completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Bulk operation completed successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointBulkOperationResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/statistics:
+    get:
+      tags:
+        - Admin Drop Points
+      summary: Get drop point statistics
+      description: |
+        Get statistics and analytics for drop points.
+        This endpoint provides comprehensive analytics for administrators.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: storefront_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID (optional, defaults to admin's storefront)
+          example: "550e8400-e29b-41d4-a716-446655440001"
+      responses:
+        '200':
+          description: Drop point statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point statistics retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointStatisticsResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/{id}/activate:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Activate drop point
+      description: |
+        Activate a drop point to make it operational.
+        This endpoint allows administrators to activate drop points.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      responses:
+        '200':
+          description: Drop point activated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point activated successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/{id}/deactivate:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Deactivate drop point
+      description: |
+        Deactivate a drop point to make it temporarily unavailable.
+        This endpoint allows administrators to deactivate drop points.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      responses:
+        '200':
+          description: Drop point deactivated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point deactivated successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/{id}/status:
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point status
+      description: |
+        Update status of a specific drop point.
+        This endpoint allows administrators to change drop point status.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointStatusUpdateRequest'
+      responses:
+        '200':
+          description: Drop point status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point status updated successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/{id}/capacity:
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point capacity
+      description: |
+        Update capacity information of a specific drop point.
+        This endpoint allows administrators to manage drop point capacity.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointCapacityUpdateRequest'
+      responses:
+        '200':
+          description: Drop point capacity updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point capacity updated successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/{id}/rating:
+    put:
+      tags:
+        - Admin Drop Points
+      summary: Update drop point rating
+      description: |
+        Update rating information of a specific drop point.
+        This endpoint allows administrators to manage drop point ratings.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DropPointIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointRatingUpdateRequest'
+      responses:
+        '200':
+          description: Drop point rating updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point rating updated successfully"
+                  data:
+                    $ref: '#/components/schemas/DropPointResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Drop point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/warranty/drop-points/validate:
+    post:
+      tags:
+        - Admin Drop Points
+      summary: Validate drop point code
+      description: |
+        Check if a drop point code is unique and available.
+        This endpoint allows administrators to validate drop point codes before creation.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DropPointValidationRequest'
+      responses:
+        '200':
+          description: Drop point code validation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Drop point code validation completed"
+                  data:
+                    $ref: '#/components/schemas/DropPointValidationResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

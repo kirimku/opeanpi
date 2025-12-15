@@ -1,0 +1,1283 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Voucher Loyalty API
+  description: API for managing voucher loyalty points, sharing rewards, and referral programs
+  version: 1.0.0
+  contact:
+    name: SmartSeller API Team
+    email: api@smartseller.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.smartseller.com/v1
+    description: Production server
+  - url: https://staging-api.smartseller.com/v1
+    description: Staging server
+  - url: http://localhost:8090/v1
+    description: Development server
+
+tags:
+  - name: Admin Voucher Loyalty
+    description: Admin operations for voucher loyalty management
+  - name: Storefront Voucher Loyalty
+    description: Storefront operations for voucher loyalty
+  - name: Customer Voucher Loyalty
+    description: Customer operations for voucher loyalty
+
+paths:
+  /admin/vouchers/loyalty/process-usage:
+    post:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Process voucher usage and award loyalty points
+      description: Process a voucher usage event and calculate/award loyalty points based on applicable rules
+      operationId: processVoucherUsage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessVoucherUsageRequest'
+      responses:
+        '200':
+          description: Voucher usage processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessVoucherUsageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/vouchers/loyalty/process-share:
+    post:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Process voucher sharing and award loyalty points
+      description: Process a voucher sharing event and award loyalty points based on sharing rules
+      operationId: processVoucherShare
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessVoucherShareRequest'
+      responses:
+        '200':
+          description: Voucher sharing processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessVoucherShareResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/vouchers/loyalty/process-referral:
+    post:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Process voucher referral and award loyalty points
+      description: Process a voucher referral event and award points to both referrer and referee
+      operationId: processVoucherReferral
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessVoucherReferralRequest'
+      responses:
+        '200':
+          description: Voucher referral processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessVoucherReferralResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/vouchers/loyalty/rules:
+    get:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Get voucher loyalty rules
+      description: Retrieve a list of voucher loyalty rules with filtering and pagination
+      operationId: getVoucherLoyaltyRules
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: voucher_id
+          in: query
+          description: Filter by voucher ID
+          schema:
+            type: string
+            format: uuid
+        - name: rule_type
+          in: query
+          description: Filter by rule type
+          schema:
+            $ref: '#/components/schemas/VoucherLoyaltyRuleType'
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Voucher loyalty rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVoucherLoyaltyRulesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Create voucher loyalty rule
+      description: Create a new voucher loyalty rule
+      operationId: createVoucherLoyaltyRule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoucherLoyaltyRuleRequest'
+      responses:
+        '201':
+          description: Voucher loyalty rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherLoyaltyRuleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/vouchers/loyalty/rules/{rule_id}:
+    get:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Get voucher loyalty rule by ID
+      description: Retrieve a specific voucher loyalty rule by its ID
+      operationId: getVoucherLoyaltyRule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Voucher loyalty rule retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherLoyaltyRuleResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Update voucher loyalty rule
+      description: Update an existing voucher loyalty rule
+      operationId: updateVoucherLoyaltyRule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVoucherLoyaltyRuleRequest'
+      responses:
+        '200':
+          description: Voucher loyalty rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherLoyaltyRuleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Delete voucher loyalty rule
+      description: Delete a voucher loyalty rule
+      operationId: deleteVoucherLoyaltyRule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Voucher loyalty rule deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/vouchers/loyalty/analytics:
+    get:
+      tags:
+        - Admin Voucher Loyalty
+      summary: Get voucher loyalty analytics
+      description: Retrieve comprehensive analytics for voucher loyalty performance
+      operationId: getVoucherLoyaltyAnalytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storefront_id
+          in: query
+          description: Filter by storefront ID
+          schema:
+            type: string
+            format: uuid
+        - name: voucher_id
+          in: query
+          description: Filter by voucher ID
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          description: Start date for analytics period
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: End date for analytics period
+          schema:
+            type: string
+            format: date
+        - name: period
+          in: query
+          description: Analytics period (daily, weekly, monthly)
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: daily
+      responses:
+        '200':
+          description: Voucher loyalty analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherLoyaltyAnalyticsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /storefronts/{storefront_id}/vouchers/loyalty/rules:
+    get:
+      tags:
+        - Storefront Voucher Loyalty
+      summary: Get storefront voucher loyalty rules
+      description: Retrieve voucher loyalty rules for a specific storefront
+      operationId: getStorefrontVoucherLoyaltyRules
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storefront_id
+          in: path
+          required: true
+          description: Storefront ID
+          schema:
+            type: string
+            format: uuid
+        - name: rule_type
+          in: query
+          description: Filter by rule type
+          schema:
+            $ref: '#/components/schemas/VoucherLoyaltyRuleType'
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Storefront voucher loyalty rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVoucherLoyaltyRulesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /customers/vouchers/loyalty/summary:
+    get:
+      tags:
+        - Customer Voucher Loyalty
+      summary: Get customer voucher loyalty summary
+      description: Retrieve a customer's voucher loyalty summary including points and rewards
+      operationId: getCustomerVoucherLoyaltySummary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Customer voucher loyalty summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerVoucherLoyaltySummaryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /customers/vouchers/loyalty/history:
+    get:
+      tags:
+        - Customer Voucher Loyalty
+      summary: Get customer voucher loyalty history
+      description: Retrieve a customer's voucher loyalty transaction history
+      operationId: getCustomerVoucherLoyaltyHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront ID
+          schema:
+            type: string
+            format: uuid
+        - name: transaction_type
+          in: query
+          description: Filter by transaction type
+          schema:
+            $ref: '#/components/schemas/VoucherLoyaltyTransactionType'
+        - name: start_date
+          in: query
+          description: Start date for history
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: End date for history
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Customer voucher loyalty history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerVoucherLoyaltyHistoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ProcessVoucherUsageRequest:
+      type: object
+      required:
+        - voucher_id
+        - voucher_code
+        - voucher_code_id
+        - order_id
+        - customer_id
+        - order_amount
+        - discount_amount
+        - storefront_id
+        - used_at
+      properties:
+        voucher_id:
+          type: string
+          format: uuid
+          description: Voucher ID
+        voucher_code:
+          type: string
+          description: Voucher code used
+        voucher_code_id:
+          type: string
+          format: uuid
+          description: Voucher code ID
+        order_id:
+          type: string
+          format: uuid
+          description: Order ID where voucher was used
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID who used the voucher
+        order_amount:
+          type: string
+          format: decimal
+          description: Total order amount
+        discount_amount:
+          type: string
+          format: decimal
+          description: Discount amount applied by voucher
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID
+        used_at:
+          type: string
+          format: date-time
+          description: When the voucher was used
+
+    ProcessVoucherUsageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the processing was successful
+        message:
+          type: string
+          description: Response message
+        voucher_usage_id:
+          type: string
+          format: uuid
+          description: ID of the created voucher usage record
+        points_awarded:
+          type: integer
+          description: Number of points awarded
+        applied_rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedLoyaltyRule'
+          description: List of loyalty rules that were applied
+
+    ProcessVoucherShareRequest:
+      type: object
+      required:
+        - voucher_id
+        - voucher_code
+        - customer_id
+        - storefront_id
+        - shared_at
+        - share_channel
+      properties:
+        voucher_id:
+          type: string
+          format: uuid
+          description: Voucher ID
+        voucher_code:
+          type: string
+          description: Voucher code that was shared
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID who shared the voucher
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID
+        shared_at:
+          type: string
+          format: date-time
+          description: When the voucher was shared
+        share_channel:
+          type: string
+          enum: [email, sms, whatsapp, facebook, twitter, instagram, other]
+          description: Channel through which voucher was shared
+
+    ProcessVoucherShareResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the processing was successful
+        message:
+          type: string
+          description: Response message
+        points_awarded:
+          type: integer
+          description: Number of points awarded for sharing
+        applied_rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedLoyaltyRule'
+          description: List of loyalty rules that were applied
+
+    ProcessVoucherReferralRequest:
+      type: object
+      required:
+        - voucher_id
+        - voucher_code
+        - referrer_id
+        - referee_id
+        - storefront_id
+        - order_id
+        - order_amount
+        - converted_at
+      properties:
+        voucher_id:
+          type: string
+          format: uuid
+          description: Voucher ID
+        voucher_code:
+          type: string
+          description: Voucher code used in referral
+        referrer_id:
+          type: string
+          format: uuid
+          description: Customer ID who referred
+        referee_id:
+          type: string
+          format: uuid
+          description: Customer ID who was referred
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID
+        order_id:
+          type: string
+          format: uuid
+          description: Order ID from referral conversion
+        order_amount:
+          type: string
+          format: decimal
+          description: Order amount from referral conversion
+        converted_at:
+          type: string
+          format: date-time
+          description: When the referral was converted
+
+    ProcessVoucherReferralResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the processing was successful
+        message:
+          type: string
+          description: Response message
+        referrer_points:
+          type: integer
+          description: Points awarded to referrer
+        referee_points:
+          type: integer
+          description: Points awarded to referee
+        applied_rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedLoyaltyRule'
+          description: List of loyalty rules that were applied
+
+    AppliedLoyaltyRule:
+      type: object
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule ID
+        rule_name:
+          type: string
+          description: Rule name
+        rule_type:
+          $ref: '#/components/schemas/VoucherLoyaltyRuleType'
+        points_value:
+          type: string
+          format: decimal
+          description: Points value from the rule
+        calculation_type:
+          $ref: '#/components/schemas/VoucherLoyaltyCalculationType'
+        points_awarded:
+          type: integer
+          description: Actual points awarded by this rule
+
+    VoucherLoyaltyRuleType:
+      type: string
+      enum:
+        - usage
+        - share
+        - referral
+      description: Type of voucher loyalty rule
+
+    VoucherLoyaltyCalculationType:
+      type: string
+      enum:
+        - fixed
+        - percentage
+        - multiplier
+      description: Type of points calculation
+
+    CreateVoucherLoyaltyRuleRequest:
+      type: object
+      required:
+        - rule_name
+        - rule_type
+        - points_value
+        - calculation_type
+        - storefront_id
+      properties:
+        rule_name:
+          type: string
+          description: Rule name
+        rule_type:
+          $ref: '#/components/schemas/VoucherLoyaltyRuleType'
+        points_value:
+          type: string
+          format: decimal
+          description: Points value
+        calculation_type:
+          $ref: '#/components/schemas/VoucherLoyaltyCalculationType'
+        voucher_id:
+          type: string
+          format: uuid
+          description: Voucher ID (null for global rules)
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID
+        max_points_per_usage:
+          type: integer
+          description: Maximum points per usage
+        max_points_per_customer:
+          type: integer
+          description: Maximum points per customer per day
+        applicable_tiers:
+          type: array
+          items:
+            type: string
+          description: Applicable customer tiers
+        conditions:
+          type: object
+          description: Additional conditions for the rule
+        is_active:
+          type: boolean
+          description: Whether the rule is active
+        priority:
+          type: integer
+          description: Rule priority (higher = higher priority)
+        start_date:
+          type: string
+          format: date-time
+          description: Rule start date
+        end_date:
+          type: string
+          format: date-time
+          description: Rule end date
+
+    UpdateVoucherLoyaltyRuleRequest:
+      type: object
+      properties:
+        rule_name:
+          type: string
+          description: Rule name
+        points_value:
+          type: string
+          format: decimal
+          description: Points value
+        calculation_type:
+          $ref: '#/components/schemas/VoucherLoyaltyCalculationType'
+        max_points_per_usage:
+          type: integer
+          description: Maximum points per usage
+        max_points_per_customer:
+          type: integer
+          description: Maximum points per customer per day
+        applicable_tiers:
+          type: array
+          items:
+            type: string
+          description: Applicable customer tiers
+        conditions:
+          type: object
+          description: Additional conditions for the rule
+        is_active:
+          type: boolean
+          description: Whether the rule is active
+        priority:
+          type: integer
+          description: Rule priority (higher = higher priority)
+        start_date:
+          type: string
+          format: date-time
+          description: Rule start date
+        end_date:
+          type: string
+          format: date-time
+          description: Rule end date
+
+    VoucherLoyaltyRuleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Rule ID
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID
+        voucher_id:
+          type: string
+          format: uuid
+          description: Voucher ID
+        rule_name:
+          type: string
+          description: Rule name
+        rule_type:
+          $ref: '#/components/schemas/VoucherLoyaltyRuleType'
+        points_value:
+          type: string
+          format: decimal
+          description: Points value
+        calculation_type:
+          $ref: '#/components/schemas/VoucherLoyaltyCalculationType'
+        max_points_per_usage:
+          type: integer
+          description: Maximum points per usage
+        max_points_per_customer:
+          type: integer
+          description: Maximum points per customer per day
+        applicable_tiers:
+          type: array
+          items:
+            type: string
+          description: Applicable customer tiers
+        conditions:
+          type: object
+          description: Additional conditions for the rule
+        is_active:
+          type: boolean
+          description: Whether the rule is active
+        priority:
+          type: integer
+          description: Rule priority
+        start_date:
+          type: string
+          format: date-time
+          description: Rule start date
+        end_date:
+          type: string
+          format: date-time
+          description: Rule end date
+        total_usage_count:
+          type: integer
+          description: Total usage count
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    GetVoucherLoyaltyRulesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+        data:
+          type: object
+          properties:
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoucherLoyaltyRuleResponse'
+              description: List of voucher loyalty rules
+            pagination:
+              $ref: '#/components/schemas/PaginationInfo'
+
+    VoucherLoyaltyAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+        data:
+          type: object
+          properties:
+            summary:
+              $ref: '#/components/schemas/VoucherLoyaltyAnalyticsSummary'
+            time_series_data:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoucherLoyaltyTimeSeriesData'
+              description: Time series analytics data
+            top_vouchers:
+              type: array
+              items:
+                $ref: '#/components/schemas/TopVoucherAnalytics'
+              description: Top performing vouchers
+            customer_tier_breakdown:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomerTierBreakdown'
+              description: Customer tier breakdown
+
+    VoucherLoyaltyAnalyticsSummary:
+      type: object
+      properties:
+        total_vouchers_used:
+          type: integer
+          description: Total vouchers used
+        total_points_awarded:
+          type: integer
+          description: Total points awarded
+        total_shares:
+          type: integer
+          description: Total voucher shares
+        total_referrals:
+          type: integer
+          description: Total referrals
+        average_points_per_voucher:
+          type: number
+          format: float
+          description: Average points per voucher
+        conversion_rate:
+          type: number
+          format: float
+          description: Referral conversion rate
+
+    VoucherLoyaltyTimeSeriesData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date
+        vouchers_used:
+          type: integer
+          description: Number of vouchers used
+        points_awarded:
+          type: integer
+          description: Points awarded
+        shares:
+          type: integer
+          description: Number of shares
+        referrals:
+          type: integer
+          description: Number of referrals
+
+    TopVoucherAnalytics:
+      type: object
+      properties:
+        voucher_id:
+          type: string
+          format: uuid
+          description: Voucher ID
+        voucher_title:
+          type: string
+          description: Voucher title
+        usage_count:
+          type: integer
+          description: Usage count
+        points_awarded:
+          type: integer
+          description: Points awarded
+
+    CustomerTierBreakdown:
+      type: object
+      properties:
+        tier:
+          type: string
+          description: Customer tier
+        customer_count:
+          type: integer
+          description: Number of customers
+        points_earned:
+          type: integer
+          description: Points earned by tier
+
+    CustomerVoucherLoyaltySummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+        data:
+          type: object
+          properties:
+            loyalty_account:
+              $ref: '#/components/schemas/CustomerLoyaltyAccount'
+            voucher_summary:
+              $ref: '#/components/schemas/CustomerVoucherSummary'
+            sharing_rewards:
+              $ref: '#/components/schemas/CustomerSharingRewards'
+            referral_rewards:
+              $ref: '#/components/schemas/CustomerReferralRewards'
+
+    CustomerLoyaltyAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Loyalty account ID
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+        current_tier:
+          type: string
+          description: Current customer tier
+        current_balance:
+          type: integer
+          description: Current loyalty points balance
+        total_points_earned:
+          type: integer
+          description: Total points earned
+        is_frozen:
+          type: boolean
+          description: Whether the account is frozen
+
+    CustomerVoucherSummary:
+      type: object
+      properties:
+        total_vouchers_used:
+          type: integer
+          description: Total vouchers used
+        total_points_earned_from_vouchers:
+          type: integer
+          description: Total points earned from vouchers
+        favorite_voucher_type:
+          type: string
+          description: Most used voucher type
+        last_voucher_used:
+          type: string
+          format: date-time
+          description: Last voucher usage date
+
+    CustomerSharingRewards:
+      type: object
+      properties:
+        total_shares:
+          type: integer
+          description: Total voucher shares
+        total_points_from_sharing:
+          type: integer
+          description: Total points earned from sharing
+        favorite_share_channel:
+          type: string
+          description: Most used share channel
+        last_share_date:
+          type: string
+          format: date-time
+          description: Last share date
+
+    CustomerReferralRewards:
+      type: object
+      properties:
+        successful_referrals:
+          type: integer
+          description: Number of successful referrals
+        total_points_from_referrals:
+          type: integer
+          description: Total points earned from referrals
+        pending_referrals:
+          type: integer
+          description: Number of pending referrals
+        last_referral_date:
+          type: string
+          format: date-time
+          description: Last referral date
+
+    VoucherLoyaltyTransactionType:
+      type: string
+      enum:
+        - voucher_usage
+        - voucher_share
+        - voucher_referral
+      description: Type of voucher loyalty transaction
+
+    CustomerVoucherLoyaltyHistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+        data:
+          type: object
+          properties:
+            transactions:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoucherLoyaltyTransaction'
+              description: List of voucher loyalty transactions
+            pagination:
+              $ref: '#/components/schemas/PaginationInfo'
+
+    VoucherLoyaltyTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Transaction ID
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+        transaction_type:
+          $ref: '#/components/schemas/VoucherLoyaltyTransactionType'
+        voucher_id:
+          type: string
+          format: uuid
+          description: Voucher ID
+        voucher_code:
+          type: string
+          description: Voucher code
+        points_awarded:
+          type: integer
+          description: Points awarded
+        rule_applied:
+          type: string
+          description: Rule that was applied
+        created_at:
+          type: string
+          format: date-time
+          description: Transaction timestamp
+
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+        total_items:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+        has_next:
+          type: boolean
+          description: Whether there's a next page
+        has_prev:
+          type: boolean
+          description: Whether there's a previous page
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+        error_code:
+          type: string
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Invalid request parameters
+            error_code: INVALID_REQUEST
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Authentication required
+            error_code: UNAUTHORIZED
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Insufficient permissions
+            error_code: FORBIDDEN
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Resource not found
+            error_code: NOT_FOUND
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Rate limit exceeded
+            error_code: RATE_LIMIT_EXCEEDED
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Internal server error
+            error_code: INTERNAL_SERVER_ERROR

@@ -1,0 +1,601 @@
+# Admin Loyalty Settings Endpoints
+# OpenAPI specification for admin loyalty program configuration
+
+paths:
+  /api/v1/admin/loyalty/settings:
+    get:
+      summary: Get loyalty program settings
+      description: Retrieve the current loyalty program configuration for the admin's storefront
+      operationId: getAdminLoyaltySettings
+      tags:
+        - Admin Loyalty
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Settings retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/LoyaltySettings'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    message: "Settings retrieved successfully"
+                    data:
+                      id: "9aec4999-c858-422f-b27e-88246ea547d5"
+                      storefront_id: "b0ea82e3-366d-49a4-8c03-316a1ac2a2c4"
+                      is_active: true
+                      points_per_currency: "1"
+                      currency_per_point: "0.01"
+                      default_expiry_days: 365
+                      expiration_strategy: "fifo"
+                      enable_expiry_warnings: true
+                      settings:
+                        program_name: "Rexus Rewards"
+                        program_description: "Earn points with every purchase"
+                        min_redemption_points: 100
+                        max_redemption_percentage: 50
+                        redemption_increments: 100
+                        tier_evaluation_period_days: 30
+                        allow_point_transfers: false
+                        allow_negative_balance: false
+                        referrer_bonus_points: 500
+                        referee_bonus_points: 250
+                        referral_validity_days: 30
+                        review_reward_points: 50
+                        birthday_reward_points: 100
+                        signup_bonus_points: 100
+                        max_points_per_order: null
+                        notify_on_points_earned: true
+                        notify_on_points_expiring: true
+                        notify_on_tier_change: true
+                        expiry_warning_days: 30
+                        enable_referral_program: true
+                        enable_review_rewards: true
+                        enable_birthday_rewards: true
+                        enable_signup_bonus: true
+                        enable_tier_system: true
+                        custom_settings: {}
+                      created_at: "2024-11-15T10:30:00+07:00"
+                      updated_at: "2024-11-17T16:25:00+07:00"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update loyalty program settings
+      description: Update loyalty program configuration. All fields are optional - only send fields you want to change.
+      operationId: updateAdminLoyaltySettings
+      tags:
+        - Admin Loyalty
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSettingsRequest'
+            examples:
+              updateConversionRates:
+                summary: Update conversion rates
+                value:
+                  points_per_currency: "2.0"
+                  currency_per_point: "0.005"
+              enableProgram:
+                summary: Enable/disable program
+                value:
+                  is_active: true
+              updateExpiration:
+                summary: Update expiration settings
+                value:
+                  default_expiry_days: 365
+                  expiration_strategy: "fifo"
+                  enable_expiry_warnings: true
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Settings updated successfully"
+                  data:
+                    $ref: '#/components/schemas/UpdateSettingsResponse'
+              examples:
+                success:
+                  summary: Successful update
+                  value:
+                    success: true
+                    message: "Settings updated successfully"
+                    data:
+                      id: "9aec4999-c858-422f-b27e-88246ea547d5"
+                      message: "Loyalty program settings updated successfully"
+                      updated_at: "2024-11-17T16:30:15+07:00"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/admin/loyalty/tiers:
+    get:
+      summary: Get all loyalty tiers
+      description: Retrieve all loyalty tier definitions (Bronze, Silver, Gold, Platinum)
+      operationId: getAdminLoyaltyTiers
+      tags:
+        - Admin Loyalty
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tiers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      tiers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LoyaltyTier'
+                      total_count:
+                        type: integer
+                      active_count:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/admin/loyalty/rules:
+    get:
+      summary: Get all loyalty rules
+      description: Retrieve all loyalty earning rules and bonuses
+      operationId: getAdminLoyaltyRules
+      tags:
+        - Admin Loyalty
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      rules:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LoyaltyRule'
+                      total_count:
+                        type: integer
+                      active_count:
+                        type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/v1/auth/login
+
+  schemas:
+    LoyaltySettings:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique settings ID
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront these settings belong to
+        is_active:
+          type: boolean
+          description: Whether loyalty program is enabled
+        points_per_currency:
+          type: string
+          pattern: '^\d+(\.\d+)?$'
+          description: Points earned per $1 spent (e.g., "1" = 1 point per dollar)
+          example: "1"
+        currency_per_point:
+          type: string
+          pattern: '^\d+(\.\d+)?$'
+          description: Dollar value per point redeemed (e.g., "0.01" = 100 points = $1)
+          example: "0.01"
+        default_expiry_days:
+          type: integer
+          nullable: true
+          description: Days until points expire (null = never expire)
+          example: 365
+        expiration_strategy:
+          type: string
+          enum: [fifo, lifo]
+          description: Which points expire first - FIFO (first-in-first-out) or LIFO (last-in-first-out)
+        enable_expiry_warnings:
+          type: boolean
+          description: Send warnings before points expire
+        settings:
+          $ref: '#/components/schemas/ProgramSettings'
+        created_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp
+
+    ProgramSettings:
+      type: object
+      properties:
+        program_name:
+          type: string
+          description: Display name shown to customers
+          example: "Rexus Rewards"
+        program_description:
+          type: string
+          description: Short description of the program
+        min_redemption_points:
+          type: integer
+          minimum: 0
+          description: Minimum points needed to redeem
+          example: 100
+        max_redemption_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Maximum percentage of order that can be paid with points
+          example: 50
+        redemption_increments:
+          type: integer
+          minimum: 1
+          description: Points must be redeemed in multiples of this value
+          example: 100
+        tier_evaluation_period_days:
+          type: integer
+          minimum: 1
+          description: How often tiers are re-evaluated
+          example: 30
+        allow_point_transfers:
+          type: boolean
+          description: Allow customers to transfer points to others
+        allow_negative_balance:
+          type: boolean
+          description: Allow negative point balances
+        referrer_bonus_points:
+          type: integer
+          description: Points given to the referrer
+          example: 500
+        referee_bonus_points:
+          type: integer
+          description: Points given to the referred friend
+          example: 250
+        referral_validity_days:
+          type: integer
+          description: How long referral codes remain valid
+          example: 30
+        review_reward_points:
+          type: integer
+          description: Points awarded for product reviews
+          example: 50
+        birthday_reward_points:
+          type: integer
+          description: Birthday bonus points
+          example: 100
+        signup_bonus_points:
+          type: integer
+          description: Welcome bonus for new customers
+          example: 100
+        max_points_per_order:
+          type: integer
+          nullable: true
+          description: Maximum points that can be earned per order
+        notify_on_points_earned:
+          type: boolean
+        notify_on_points_expiring:
+          type: boolean
+        notify_on_tier_change:
+          type: boolean
+        expiry_warning_days:
+          type: integer
+          description: Days before expiry to send warning
+          example: 30
+        enable_referral_program:
+          type: boolean
+        enable_review_rewards:
+          type: boolean
+        enable_birthday_rewards:
+          type: boolean
+        enable_signup_bonus:
+          type: boolean
+        enable_tier_system:
+          type: boolean
+        custom_settings:
+          type: object
+          additionalProperties: true
+          description: Store-specific custom configuration
+
+    UpdateSettingsRequest:
+      type: object
+      description: All fields are optional - only send fields you want to update
+      properties:
+        is_active:
+          type: boolean
+        points_per_currency:
+          type: string
+          pattern: '^\d+(\.\d+)?$'
+        currency_per_point:
+          type: string
+          pattern: '^\d+(\.\d+)?$'
+        default_expiry_days:
+          type: integer
+          minimum: 0
+        expiration_strategy:
+          type: string
+          enum: [fifo, lifo]
+        enable_expiry_warnings:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/ProgramSettings'
+
+    UpdateSettingsResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        message:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    LoyaltyTier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        storefront_id:
+          type: string
+          format: uuid
+        tier_name:
+          type: string
+          enum: [bronze, silver, gold, platinum]
+        display_name:
+          type: string
+        description:
+          type: string
+        min_points:
+          type: integer
+        max_points:
+          type: integer
+          nullable: true
+        benefits:
+          type: object
+          properties:
+            free_shipping:
+              type: boolean
+            priority_support:
+              type: boolean
+            exclusive_deals:
+              type: boolean
+            early_access:
+              type: boolean
+            birthday_bonus:
+              type: integer
+            points_multiplier:
+              type: number
+              format: float
+        tier_order:
+          type: integer
+        is_active:
+          type: boolean
+        color:
+          type: string
+          pattern: '^#[0-9A-F]{6}$'
+        icon_url:
+          type: string
+          format: uri
+        badge_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    LoyaltyRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        storefront_id:
+          type: string
+          format: uuid
+        rule_name:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+        rule_type:
+          type: string
+          enum: [first_order, payment_method, category, order_amount]
+        bonus_points:
+          type: integer
+        is_active:
+          type: boolean
+        conditions:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "unauthorized"
+              message:
+                type: string
+                example: "Authentication required"
+              meta:
+                type: object
+                properties:
+                  http_status:
+                    type: integer
+                    example: 401
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "forbidden"
+              message:
+                type: string
+                example: "Storefront context required"
+              meta:
+                type: object
+                properties:
+                  http_status:
+                    type: integer
+                    example: 403
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "bad_request"
+              message:
+                type: string
+                example: "No storefront associated with admin account"
+              meta:
+                type: object
+                properties:
+                  http_status:
+                    type: integer
+                    example: 400
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "bad_request"
+              message:
+                type: string
+                example: "Invalid settings update"
+              meta:
+                type: object
+                properties:
+                  http_status:
+                    type: integer
+                    example: 400
+                  details:
+                    type: string
+                    example: "points_per_currency must be greater than 0"
+
+    InternalServerError:
+      description: Server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: string
+                example: "internal_server_error"
+              message:
+                type: string
+                example: "Failed to fetch settings"
+              meta:
+                type: object
+                properties:
+                  http_status:
+                    type: integer
+                    example: 500

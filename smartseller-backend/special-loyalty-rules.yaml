@@ -1,0 +1,2555 @@
+openapi: 3.0.3
+info:
+  title: Special Loyalty Rules API
+  description: |
+    Comprehensive API for managing customer-specific loyalty rules and referral codes in the SmartSeller platform.
+
+    This API allows administrators to create, manage, and analyze special loyalty rules that provide
+    customized rewards for specific customers. The system supports multiple calculation types including
+    fixed points, percentage-based rewards, and multipliers of standard loyalty points. Additionally,
+    it provides advanced referral code management capabilities for targeted customer referral programs.
+
+    ## Features
+    - **Rule Management**: Create, update, delete, and list special loyalty rules
+    - **Customer Assignment**: Assign rules to specific customers with time-based validity
+    - **Referral Code Management**: Assign unique referral codes to customers with custom rewards
+    - **Analytics & Reporting**: Comprehensive analytics on rule performance and usage
+    - **Multi-tenant Support**: Full storefront isolation and RBAC integration
+    - **Flexible Calculation**: Support for fixed, percentage, and multiplier calculations
+
+    ## Rule Types
+    - `referral`: Standard referral rewards
+    - `special_referral`: Enhanced referral rewards for VIP customers
+    - `vip_referral`: Premium referral rewards for top-tier customers
+    - `targeted_referral`: Custom referral rewards for specific customer segments
+
+    ## Referral Code Features
+    - **System or Admin-Generated**: Automatic code generation or admin-provided codes
+    - **Storefront-Scoped Uniqueness**: Codes are unique per storefront, not globally
+    - **One-Per-Customer**: Enforces one referral code per customer constraint
+    - **Custom Rules Override**: Special rule referral codes override standard referral logic
+    - **Usage Tracking**: Complete tracking of referral code usage and performance
+
+    ## Calculation Types
+    - `fixed`: Fixed number of points regardless of order value
+    - `percentage`: Points calculated as percentage of order amount
+    - `multiplier`: Multiple of standard loyalty points
+  version: 1.0.0
+  contact:
+    name: SmartSeller API Team
+    email: api-support@smartseller.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.smartseller.com/admin/v1
+    description: Production server
+  - url: https://staging-api.smartseller.com/admin/v1
+    description: Staging server
+  - url: http://localhost:8090/admin/v1
+    description: Development server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  /admin/loyalty/special-rules:
+    post:
+      tags:
+        - Special Loyalty Rules
+      summary: Create a new special loyalty rule
+      description: |
+        Creates a new special loyalty rule with the specified configuration. The rule can be
+        assigned to specific customers and will override standard loyalty calculations when applicable.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 100 requests per minute
+      operationId: createSpecialRule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug for multi-tenant isolation
+          schema:
+            type: string
+            example: "my-store"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSpecialRuleRequest'
+            examples:
+              fixed_points:
+                summary: Fixed points rule
+                description: Create a rule that awards 500 fixed points
+                value:
+                  rule_name: "VIP Fixed Points"
+                  rule_type: "vip_referral"
+                  description: "Fixed 500 points for VIP customer referrals"
+                  calculation_type: "fixed"
+                  points_value: "500"
+                  points_multiplier: "1.0"
+                  min_points_guarantee: 100
+                  priority: 10
+                  conditions:
+                    min_order_amount: "50.00"
+                    customer_segments: ["vip", "premium"]
+              percentage_rule:
+                summary: Percentage-based rule
+                description: Create a rule that awards 10% of order amount as points
+                value:
+                  rule_name: "High Value Referral Bonus"
+                  rule_type: "special_referral"
+                  description: "10% of order amount as bonus points"
+                  calculation_type: "percentage"
+                  points_value: "0"
+                  points_multiplier: "1.0"
+                  percentage_value: "10.0"
+                  min_points_guarantee: 50
+                  max_points_per_transaction: 1000
+                  priority: 8
+                  conditions:
+                    min_order_amount: "100.00"
+              multiplier_rule:
+                summary: Multiplier rule
+                description: Create a rule that multiplies standard points by 2.5x
+                value:
+                  rule_name: "Double Points Weekend"
+                  rule_type: "targeted_referral"
+                  description: "2.5x multiplier on standard loyalty points"
+                  calculation_type: "multiplier"
+                  points_value: "0"
+                  points_multiplier: "2.5"
+                  min_points_guarantee: 25
+                  end_date: "2024-12-31T23:59:59Z"
+                  usage_limit: 1000
+                  priority: 15
+      responses:
+        '201':
+          description: Special rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_SpecialRuleResponse'
+              example:
+                success: true
+                message: "Special rule created successfully"
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  storefront_id: "456e7890-e89b-12d3-a456-426614174001"
+                  rule_name: "VIP Fixed Points"
+                  rule_type: "vip_referral"
+                  description: "Fixed 500 points for VIP customer referrals"
+                  calculation_type: "fixed"
+                  points_value: "500"
+                  points_multiplier: "1.0"
+                  min_points_guarantee: 100
+                  start_date: "2024-01-15T10:30:00Z"
+                  usage_count: 0
+                  is_active: true
+                  priority: 10
+                  conditions:
+                    min_order_amount: "50.00"
+                    customer_segments: ["vip", "premium"]
+                  created_by: "789e0123-e89b-12d3-a456-426614174002"
+                  created_at: "2024-01-15T10:30:00Z"
+                  updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  summary: Validation error
+                  value:
+                    success: false
+                    message: "Invalid request format"
+                    errors:
+                      - field: "rule_name"
+                        message: "Rule name is required"
+                      - field: "points_value"
+                        message: "Invalid decimal format"
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Authentication required"
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Insufficient permissions to manage special rules"
+        '429':
+          description: Too Many Requests - Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Rate limit exceeded. Please try again later."
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Failed to create special rule"
+
+    get:
+      tags:
+        - Special Loyalty Rules
+      summary: List special loyalty rules
+      description: |
+        Retrieves a paginated list of special loyalty rules for the specified storefront.
+        Supports filtering and sorting options.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 200 requests per minute
+      operationId: listSpecialRules
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug for multi-tenant isolation
+          schema:
+            type: string
+            example: "my-store"
+        - name: page
+          in: query
+          description: "Page number for pagination (default: 1)"
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: per_page
+          in: query
+          description: "Number of items per page (max: 100, default: 20)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+        - name: rule_type
+          in: query
+          description: "Filter by rule type"
+          schema:
+            type: string
+            enum: ["referral", "special_referral", "vip_referral", "targeted_referral"]
+            example: "vip_referral"
+        - name: is_active
+          in: query
+          description: "Filter by active status"
+          schema:
+            type: boolean
+            example: true
+        - name: sort_by
+          in: query
+          description: "Sort field"
+          schema:
+            type: string
+            enum: ["created_at", "updated_at", "rule_name", "priority", "usage_count"]
+            default: "created_at"
+            example: "priority"
+        - name: sort_order
+          in: query
+          description: "Sort order"
+          schema:
+            type: string
+            enum: ["asc", "desc"]
+            default: "desc"
+            example: "desc"
+      responses:
+        '200':
+          description: Special rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ListSpecialRulesResponse'
+              example:
+                success: true
+                message: "Special rules retrieved successfully"
+                data:
+                  rules:
+                    - id: "123e4567-e89b-12d3-a456-426614174000"
+                      storefront_id: "456e7890-e89b-12d3-a456-426614174001"
+                      rule_name: "VIP Fixed Points"
+                      rule_type: "vip_referral"
+                      description: "Fixed 500 points for VIP customer referrals"
+                      calculation_type: "fixed"
+                      points_value: "500"
+                      points_multiplier: "1.0"
+                      min_points_guarantee: 100
+                      start_date: "2024-01-15T10:30:00Z"
+                      usage_count: 25
+                      is_active: true
+                      priority: 10
+                      conditions:
+                        min_order_amount: "50.00"
+                        customer_segments: ["vip", "premium"]
+                      created_by: "789e0123-e89b-12d3-a456-426614174002"
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-20T14:25:00Z"
+                    - id: "234e5678-e89b-12d3-a456-426614174001"
+                      storefront_id: "456e7890-e89b-12d3-a456-426614174001"
+                      rule_name: "Weekend Multiplier"
+                      rule_type: "targeted_referral"
+                      description: "2x points on weekends"
+                      calculation_type: "multiplier"
+                      points_value: "0"
+                      points_multiplier: "2.0"
+                      min_points_guarantee: 50
+                      start_date: "2024-01-10T00:00:00Z"
+                      end_date: "2024-12-31T23:59:59Z"
+                      usage_count: 150
+                      is_active: true
+                      priority: 5
+                      conditions:
+                        custom_conditions:
+                          days_of_week: ["saturday", "sunday"]
+                      created_by: "789e0123-e89b-12d3-a456-426614174002"
+                      created_at: "2024-01-10T08:00:00Z"
+                      updated_at: "2024-01-18T16:45:00Z"
+                  pagination:
+                    current_page: 1
+                    per_page: 20
+                    total_records: 45
+                    total_pages: 3
+                    has_next: true
+                    has_previous: false
+                  summary:
+                    total_rules: 45
+                    active_rules: 38
+                    inactive_rules: 7
+        '400':
+          description: Bad request - Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/{slug}/loyalty/special-rules/analytics:
+    get:
+      tags:
+        - Special Loyalty Rules Analytics
+      summary: Get overall special rules analytics
+      description: |
+        Retrieves comprehensive analytics for all special rules in the storefront.
+        Includes performance metrics, usage trends, and top-performing rules.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 50 requests per minute
+      operationId: getSpecialRulesAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug for multi-tenant isolation
+          schema:
+            type: string
+            example: "my-store"
+        - name: period
+          in: query
+          description: "Analytics period"
+          schema:
+            type: string
+            enum: ["daily", "weekly", "monthly"]
+            default: "monthly"
+            example: "monthly"
+        - name: days
+          in: query
+          description: "Number of days to include in analytics (default: 30)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+            example: 30
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_SpecialRuleAnalyticsResponse'
+              example:
+                success: true
+                message: "Special rules analytics retrieved successfully"
+                data:
+                  overall_analytics:
+                    total_rules: 15
+                    active_rules: 12
+                    total_assignments: 1250
+                    active_assignments: 980
+                    total_points_awarded: 250000
+                    total_usage_count: 3200
+                    average_points_per_use: 78.125
+                  rule_analytics:
+                    - rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                      rule_name: "VIP Fixed Points"
+                      rule_type: "vip_referral"
+                      total_assignments: 150
+                      active_assignments: 120
+                      total_usage_count: 450
+                      total_points_awarded: 225000
+                      average_points_per_use: 500.0
+                      last_used_at: "2024-01-20T14:25:00Z"
+                    - rule_id: "234e5678-e89b-12d3-a456-426614174001"
+                      rule_name: "Weekend Multiplier"
+                      rule_type: "targeted_referral"
+                      total_assignments: 200
+                      active_assignments: 180
+                      total_usage_count: 1200
+                      total_points_awarded: 60000
+                      average_points_per_use: 50.0
+                      last_used_at: "2024-01-20T18:30:00Z"
+                  usage_trends:
+                    - date: "2024-01-20"
+                      usage_count: 85
+                      points_awarded: 12500
+                    - date: "2024-01-19"
+                      usage_count: 92
+                      points_awarded: 11800
+                    - date: "2024-01-18"
+                      usage_count: 78
+                      points_awarded: 9800
+                  performance_metrics:
+                    most_used_rule: "VIP Fixed Points"
+                    highest_value_rule: "VIP Fixed Points"
+                    most_active_rule: "Weekend Multiplier"
+                    top_customer_segment: "vip"
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/loyalty/special-rules/{id}:
+    get:
+      tags:
+        - Special Loyalty Rules
+      summary: Get special rule details
+      description: |
+        Retrieves detailed information about a specific special loyalty rule.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 200 requests per minute
+      operationId: getSpecialRule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Special rule retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_SpecialRuleResponse'
+              example:
+                success: true
+                message: "Special rule retrieved successfully"
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  storefront_id: "456e7890-e89b-12d3-a456-426614174001"
+                  rule_name: "VIP Fixed Points"
+                  rule_type: "vip_referral"
+                  description: "Fixed 500 points for VIP customer referrals"
+                  calculation_type: "fixed"
+                  points_value: "500"
+                  points_multiplier: "1.0"
+                  min_points_guarantee: 100
+                  start_date: "2024-01-15T10:30:00Z"
+                  usage_count: 25
+                  is_active: true
+                  priority: 10
+                  conditions:
+                    min_order_amount: "50.00"
+                    customer_segments: ["vip", "premium"]
+                  created_by: "789e0123-e89b-12d3-a456-426614174002"
+                  created_at: "2024-01-15T10:30:00Z"
+                  updated_at: "2024-01-20T14:25:00Z"
+        '400':
+          description: Bad request - Invalid rule ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Special Loyalty Rules
+      summary: Update special loyalty rule
+      description: |
+        Updates an existing special loyalty rule with new configuration.
+        Only provided fields will be updated (partial update).
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 100 requests per minute
+      operationId: updateSpecialRule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSpecialRuleRequest'
+            examples:
+              update_points:
+                summary: Update points value
+                description: Update the points value and guarantee
+                value:
+                  points_value: "750"
+                  min_points_guarantee: 150
+              deactivate_rule:
+                summary: Deactivate rule
+                description: Deactivate the rule temporarily
+                value:
+                  is_active: false
+              update_conditions:
+                summary: Update rule conditions
+                description: Update minimum order amount and customer segments
+                value:
+                  conditions:
+                    min_order_amount: "75.00"
+                    customer_segments: ["vip", "premium", "elite"]
+      responses:
+        '200':
+          description: Special rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_SpecialRuleResponse'
+              example:
+                success: true
+                message: "Special rule updated successfully"
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  storefront_id: "456e7890-e89b-12d3-a456-426614174001"
+                  rule_name: "VIP Fixed Points"
+                  rule_type: "vip_referral"
+                  description: "Fixed 750 points for VIP customer referrals"
+                  calculation_type: "fixed"
+                  points_value: "750"
+                  points_multiplier: "1.0"
+                  min_points_guarantee: 150
+                  start_date: "2024-01-15T10:30:00Z"
+                  usage_count: 25
+                  is_active: true
+                  priority: 10
+                  conditions:
+                    min_order_amount: "75.00"
+                    customer_segments: ["vip", "premium", "elite"]
+                  created_by: "789e0123-e89b-12d3-a456-426614174002"
+                  created_at: "2024-01-15T10:30:00Z"
+                  updated_at: "2024-01-20T15:45:00Z"
+        '400':
+          description: Bad request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Special Loyalty Rules
+      summary: Delete special loyalty rule
+      description: |
+        Soft deletes a special loyalty rule (sets is_active to false).
+        The rule will no longer be applicable for new referrals.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 50 requests per minute
+      operationId: deleteSpecialRule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Special rule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_DeleteResponse'
+              example:
+                success: true
+                message: "Special rule deleted successfully"
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  message: "Special rule deleted successfully"
+        '400':
+          description: Bad request - Invalid rule ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/{slug}/loyalty/special-rules/{id}/assign:
+    post:
+      tags:
+        - Special Loyalty Rules Assignments
+      summary: Assign special rule to customers
+      description: |
+        Assigns a special loyalty rule to multiple customers. Each customer will receive
+        the rule with the specified validity period and assignment details.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 50 requests per minute
+      operationId: assignSpecialRuleToCustomers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignSpecialRuleRequest'
+            examples:
+              assign_multiple:
+                summary: Assign to multiple customers
+                description: Assign rule to multiple VIP customers
+                value:
+                  customer_ids:
+                    - "345e6789-e89b-12d3-a456-426614174003"
+                    - "456e7890-e89b-12d3-a456-426614174004"
+                    - "567e8901-e89b-12d3-a456-426614174005"
+                  assignment_reason: "VIP customer upgrade program"
+                  valid_until: "2024-12-31T23:59:59Z"
+                  notes: "Assigned as part of Q4 VIP retention campaign"
+              assign_single:
+                summary: Assign to single customer
+                description: Assign rule to a specific premium customer
+                value:
+                  customer_ids:
+                    - "678e9012-e89b-12d3-a456-426614174006"
+                  assignment_reason: "Premium customer onboarding"
+                  notes: "New premium customer welcome bonus"
+      responses:
+        '200':
+          description: Rule assignment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_AssignSpecialRuleResponse'
+              example:
+                success: true
+                message: "Special rule assignment completed"
+                data:
+                  rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                  total_count: 3
+                  success_count: 3
+                  assignments:
+                    - assignment_id: "789e0123-e89b-12d3-a456-426614174007"
+                      special_rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                      customer_id: "345e6789-e89b-12d3-a456-426614174003"
+                      assigned_by: "789e0123-e89b-12d3-a456-426614174002"
+                      assigned_at: "2024-01-20T16:30:00Z"
+                      valid_until: "2024-12-31T23:59:59Z"
+                      assignment_reason: "VIP customer upgrade program"
+                      notes: "Assigned as part of Q4 VIP retention campaign"
+                    - assignment_id: "890e1234-e89b-12d3-a456-426614174008"
+                      special_rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                      customer_id: "456e7890-e89b-12d3-a456-426614174004"
+                      assigned_by: "789e0123-e89b-12d3-a456-426614174002"
+                      assigned_at: "2024-01-20T16:30:00Z"
+                      valid_until: "2024-12-31T23:59:59Z"
+                      assignment_reason: "VIP customer upgrade program"
+                      notes: "Assigned as part of Q4 VIP retention campaign"
+                    - assignment_id: "901e2345-e89b-12d3-a456-426614174009"
+                      special_rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                      customer_id: "567e8901-e89b-12d3-a456-426614174005"
+                      assigned_by: "789e0123-e89b-12d3-a456-426614174002"
+                      assigned_at: "2024-01-20T16:30:00Z"
+                      valid_until: "2024-12-31T23:59:59Z"
+                      assignment_reason: "VIP customer upgrade program"
+                      notes: "Assigned as part of Q4 VIP retention campaign"
+                  message: "Assigned special rule to 3 out of 3 customers"
+        '400':
+          description: Bad request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/{slug}/loyalty/special-rules/{id}/unassign/{customerId}:
+    delete:
+      tags:
+        - Special Loyalty Rules Assignments
+      summary: Unassign special rule from customer
+      description: |
+        Removes a special loyalty rule assignment from a specific customer.
+        The customer will no longer receive rewards from this rule.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 100 requests per minute
+      operationId: unassignSpecialRuleFromCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: customerId
+          in: path
+          required: true
+          description: Customer ID
+          schema:
+            type: string
+            format: uuid
+            example: "345e6789-e89b-12d3-a456-426614174003"
+      responses:
+        '200':
+          description: Rule unassigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_UnassignResponse'
+              example:
+                success: true
+                message: "Special rule unassigned successfully"
+                data:
+                  rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                  customer_id: "345e6789-e89b-12d3-a456-426614174003"
+                  message: "Special rule unassigned successfully"
+        '400':
+          description: Bad request - Invalid ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/{slug}/loyalty/special-rules/{id}/assignments:
+    get:
+      tags:
+        - Special Loyalty Rules Assignments
+      summary: Get special rule assignments
+      description: |
+        Retrieves a paginated list of customer assignments for a specific special rule.
+        Includes assignment details and usage statistics.
+        
+        **Permission Required**: `manage_roles`
+        
+        **Rate Limiting**: 100 requests per minute
+      operationId: getSpecialRuleAssignments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: page
+          in: query
+          description: "Page number for pagination (default: 1)"
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: per_page
+          in: query
+          description: "Number of items per page (max: 100, default: 20)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+        - name: is_active
+          in: query
+          description: "Filter by active status"
+          schema:
+            type: boolean
+            example: true
+      responses:
+        '200':
+          description: Assignments retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ListAssignmentsResponse'
+              example:
+                success: true
+                message: "Special rule assignments retrieved successfully"
+                data:
+                  assignments:
+                    - id: "789e0123-e89b-12d3-a456-426614174007"
+                      special_rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                      special_rule_name: "VIP Fixed Points"
+                      customer_id: "345e6789-e89b-12d3-a456-426614174003"
+                      loyalty_account_id: "012e3456-e89b-12d3-a456-426614174010"
+                      assigned_by: "789e0123-e89b-12d3-a456-426614174002"
+                      assignment_reason: "VIP customer upgrade program"
+                      valid_until: "2024-12-31T23:59:59Z"
+                      notes: "Assigned as part of Q4 VIP retention campaign"
+                      usage_count: 15
+                      is_active: true
+                      created_at: "2024-01-20T16:30:00Z"
+                      updated_at: "2024-01-20T16:30:00Z"
+                    - id: "890e1234-e89b-12d3-a456-426614174008"
+                      special_rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                      special_rule_name: "VIP Fixed Points"
+                      customer_id: "456e7890-e89b-12d3-a456-426614174004"
+                      loyalty_account_id: "123e4567-e89b-12d3-a456-426614174011"
+                      assigned_by: "789e0123-e89b-12d3-a456-426614174002"
+                      assignment_reason: "VIP customer upgrade program"
+                      valid_until: "2024-12-31T23:59:59Z"
+                      notes: "Assigned as part of Q4 VIP retention campaign"
+                      usage_count: 8
+                      is_active: true
+                      created_at: "2024-01-20T16:30:00Z"
+                      updated_at: "2024-01-20T16:30:00Z"
+                  pagination:
+                    current_page: 1
+                    per_page: 20
+                    total_records: 150
+                    total_pages: 8
+                    has_next: true
+                    has_previous: false
+                  summary:
+                    total_assignments: 150
+                    active_assignments: 125
+        '400':
+          description: Bad request - Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/loyalty/special-rules/{id}/referral-codes:
+    post:
+      tags:
+        - Special Loyalty Rules Referral Codes
+      summary: Assign referral code to customer
+      description: |
+        Assigns a unique referral code to a customer for a specific special rule.
+        The referral code can be either admin-provided or system-generated.
+
+        **Permission Required**: `manage_roles`
+
+        **Rate Limiting**: 100 requests per minute
+
+        **Business Rules:**
+        - One referral code per customer within the storefront
+        - Referral codes are unique per storefront (not globally)
+        - Special rules override standard referral logic
+        - Referral codes must be 3-20 characters, letters and numbers only
+      operationId: assignReferralCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignReferralCodeRequest'
+            examples:
+              system_generated:
+                summary: System-generated referral code
+                description: Let system generate a unique referral code
+                value:
+                  customer_id: "345e6789-e89b-12d3-a456-426614174003"
+                  loyalty_account_id: "012e3456-e89b-12d3-a456-426614174010"
+                  assignment_reason: "VIP customer referral program"
+                  notes: "Automatically generated code for VIP customer"
+              admin_provided:
+                summary: Admin-provided referral code
+                description: Use a specific referral code
+                value:
+                  customer_id: "345e6789-e89b-12d3-a456-426614174003"
+                  loyalty_account_id: "012e3456-e89b-12d3-a456-426614174010"
+                  referral_code: "VIP2024"
+                  assignment_reason: "Premium customer referral code"
+                  valid_until: "2024-12-31T23:59:59Z"
+      responses:
+        '201':
+          description: Referral code assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_AssignReferralCodeResponse'
+              example:
+                success: true
+                message: "Referral code assigned successfully"
+                data:
+                  assignment_id: "789e0123-e89b-12d3-a456-426614174007"
+                  special_rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                  customer_id: "345e6789-e89b-12d3-a456-426614174003"
+                  referral_code: "ABC123"
+                  referral_source: "system"
+                  assignment_reason: "VIP customer referral program"
+                  valid_from: "2024-01-20T16:30:00Z"
+                  code_generated_at: "2024-01-20T16:30:00Z"
+                  is_active: true
+        '400':
+          description: Bad request - Invalid input or business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  summary: Validation error
+                  value:
+                    success: false
+                    message: "Invalid request format"
+                business_rule_violation:
+                  summary: Business rule violation
+                  value:
+                    success: false
+                    message: "Customer already has an assigned referral code"
+                duplicate_code:
+                  summary: Duplicate referral code
+                  value:
+                    success: false
+                    message: "referral code 'VIP2024' already exists in this storefront"
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Special Loyalty Rules Referral Codes
+      summary: List referral codes for special rule
+      description: |
+        Retrieves a paginated list of all referral codes assigned to customers
+        for a specific special rule. Includes assignment details and usage statistics.
+
+        **Permission Required**: `manage_roles`
+
+        **Rate Limiting**: 200 requests per minute
+      operationId: listReferralCodes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: page
+          in: query
+          description: "Page number for pagination (default: 1)"
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: per_page
+          in: query
+          description: "Number of items per page (max: 100, default: 20)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+      responses:
+        '200':
+          description: Referral codes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_ListReferralCodesResponse'
+              example:
+                success: true
+                message: "Referral codes retrieved successfully"
+                data:
+                  special_rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                  rule_name: "VIP Fixed Points"
+                  rule_type: "vip_referral"
+                  assignments:
+                    - assignment_id: "789e0123-e89b-12d3-a456-426614174007"
+                      customer_id: "345e6789-e89b-12d3-a456-426614174003"
+                      customer_name: "John Doe"
+                      customer_email: "john@example.com"
+                      referral_code: "ABC123"
+                      referral_source: "system"
+                      assignment_reason: "VIP customer referral program"
+                      valid_from: "2024-01-20T16:30:00Z"
+                      valid_until: "2024-12-31T23:59:59Z"
+                      is_active: true
+                      usage_count: 5
+                      code_generated_at: "2024-01-20T16:30:00Z"
+                      created_at: "2024-01-20T16:30:00Z"
+                      notes: "VIP customer referral"
+                  pagination:
+                    current_page: 1
+                    per_page: 20
+                    total_records: 15
+                    total_pages: 1
+                    has_next: false
+                    has_previous: false
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/loyalty/special-rules/{id}/referral-codes/{referralCode}:
+    delete:
+      tags:
+        - Special Loyalty Rules Referral Codes
+      summary: Remove referral code assignment
+      description: |
+        Deactivates a referral code assignment for a specific special rule.
+        The referral code will no longer be valid for earning rewards.
+
+        **Permission Required**: `manage_roles`
+
+        **Rate Limiting**: 100 requests per minute
+
+        **Note:** This is a soft delete. The assignment is marked as inactive but
+        historical usage data is preserved for analytics.
+      operationId: removeReferralCode
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: referralCode
+          in: path
+          required: true
+          description: Referral code to remove
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 20
+            pattern: '^[A-Za-z0-9]+$'
+            example: "ABC123"
+      responses:
+        '200':
+          description: Referral code removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_DeleteResponse'
+              example:
+                success: true
+                message: "Referral code removed successfully"
+                data:
+                  id: "789e0123-e89b-12d3-a456-426614174007"
+                  message: "Referral code removed successfully"
+        '400':
+          description: Bad request - Invalid referral code format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Referral code not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "referral code 'NOTFOUND123' not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/{slug}/loyalty/special-rules/{id}/analytics:
+    get:
+      tags:
+        - Special Loyalty Rules Analytics
+      summary: Get special rule analytics
+      description: |
+        Retrieves detailed analytics for a specific special loyalty rule.
+        Includes usage statistics, performance metrics, and trends.
+
+        **Permission Required**: `manage_roles`
+
+        **Rate Limiting**: 50 requests per minute
+      operationId: getSpecialRuleAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Special rule ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: period
+          in: query
+          description: "Analytics period"
+          schema:
+            type: string
+            enum: ["daily", "weekly", "monthly"]
+            default: "monthly"
+            example: "monthly"
+        - name: days
+          in: query
+          description: "Number of days to include in analytics (default: 30)"
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+            example: 30
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse_RuleAnalytics'
+              example:
+                success: true
+                message: "Special rule analytics retrieved successfully"
+                data:
+                  rule_id: "123e4567-e89b-12d3-a456-426614174000"
+                  rule_name: "VIP Fixed Points"
+                  rule_type: "vip_referral"
+                  total_assignments: 150
+                  active_assignments: 120
+                  total_usage_count: 450
+                  total_points_awarded: 225000
+                  average_points_per_use: 500.0
+                  last_used_at: "2024-01-20T14:25:00Z"
+        '400':
+          description: Bad request - Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - Rule belongs to different storefront
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - Special rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    # Request Schemas
+    CreateSpecialRuleRequest:
+      type: object
+      required:
+        - rule_name
+        - rule_type
+        - calculation_type
+        - points_value
+        - points_multiplier
+        - min_points_guarantee
+        - priority
+      properties:
+        rule_name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Human-readable name for the special rule
+          example: "VIP Fixed Points"
+        rule_type:
+          type: string
+          enum: ["referral", "special_referral", "vip_referral", "targeted_referral"]
+          description: Type of special rule
+          example: "vip_referral"
+        description:
+          type: string
+          nullable: true
+          description: Detailed description of the rule's purpose
+          example: "Fixed 500 points for VIP customer referrals"
+        calculation_type:
+          type: string
+          enum: ["fixed", "percentage", "multiplier"]
+          description: How points are calculated
+          example: "fixed"
+        points_value:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+          description: Base points value (as decimal string)
+          example: "500"
+        points_multiplier:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+          description: Multiplier for standard points (as decimal string)
+          example: "1.0"
+        percentage_value:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+          nullable: true
+          description: Percentage value for percentage-based calculations (as decimal string)
+          example: "10.0"
+        max_points_per_transaction:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Maximum points that can be awarded in a single transaction
+          example: 1000
+        max_points_per_day:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Maximum points that can be awarded per day
+          example: 2000
+        min_points_garantee:
+          type: integer
+          minimum: 0
+          description: Minimum points guaranteed regardless of calculation
+          example: 100
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the rule expires (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        usage_limit:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Maximum number of times the rule can be used
+          example: 1000
+        priority:
+          type: integer
+          minimum: 1
+          description: Priority for rule selection (higher = more priority)
+          example: 10
+        conditions:
+          type: object
+          nullable: true
+          description: Flexible conditions for rule applicability
+          additionalProperties: true
+          example:
+            min_order_amount: "50.00"
+            customer_segments: ["vip", "premium"]
+            custom_conditions:
+              days_of_week: ["monday", "tuesday", "wednesday", "thursday", "friday"]
+
+    UpdateSpecialRuleRequest:
+      type: object
+      properties:
+        rule_name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          nullable: true
+          description: Updated rule name
+        description:
+          type: string
+          nullable: true
+          description: Updated rule description
+        calculation_type:
+          type: string
+          enum: ["fixed", "percentage", "multiplier"]
+          nullable: true
+          description: Updated calculation type
+        points_value:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+          nullable: true
+          description: Updated points value (as decimal string)
+        points_multiplier:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+          nullable: true
+          description: Updated points multiplier (as decimal string)
+        percentage_value:
+          type: string
+          pattern: ^\d+(\.\d{1,2})?$
+          nullable: true
+          description: Updated percentage value (as decimal string)
+        max_points_per_transaction:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Updated maximum points per transaction
+        max_points_per_day:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Updated maximum points per day
+        min_points_guarantee:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Updated minimum points guarantee
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Updated end date (RFC3339 format)
+        usage_limit:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Updated usage limit
+        priority:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Updated priority
+        is_active:
+          type: boolean
+          nullable: true
+          description: Updated active status
+        conditions:
+          type: object
+          nullable: true
+          description: Updated conditions
+          additionalProperties: true
+
+    AssignSpecialRuleRequest:
+      type: object
+      required:
+        - customer_ids
+      properties:
+        customer_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          description: List of customer IDs to assign the rule to
+          example:
+            - "345e6789-e89b-12d3-a456-426614174003"
+            - "456e7890-e89b-12d3-a456-426614174004"
+        assignment_reason:
+          type: string
+          nullable: true
+          description: Reason for the assignment
+          example: "VIP customer upgrade program"
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the assignment expires (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the assignment
+          example: "Assigned as part of Q4 VIP retention campaign"
+
+    # Referral Code Request Schemas
+    AssignReferralCodeRequest:
+      type: object
+      required:
+        - customer_id
+        - loyalty_account_id
+        - assignment_reason
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID to assign the referral code to
+          example: "345e6789-e89b-12d3-a456-426614174003"
+        loyalty_account_id:
+          type: string
+          format: uuid
+          description: Customer's loyalty account ID
+          example: "012e3456-e89b-12d3-a456-426614174010"
+        referral_code:
+          type: string
+          nullable: true
+          minLength: 3
+          maxLength: 20
+          pattern: '^[A-Za-z0-9]+$'
+          description: |
+            Optional admin-provided referral code. If empty, system generates one.
+            Must be 3-20 characters, letters and numbers only.
+          example: "VIP2024"
+        assignment_reason:
+          type: string
+          minLength: 5
+          maxLength: 500
+          description: Reason for assigning the referral code
+          example: "VIP customer referral program"
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional expiration date for the referral code assignment (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        notes:
+          type: string
+          nullable: true
+          description: Optional additional notes about the referral code assignment
+          example: "Assigned as part of Q4 VIP retention campaign"
+
+    # Response Schemas
+    SpecialRuleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the special rule
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID (multi-tenant isolation)
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        rule_name:
+          type: string
+          description: Human-readable name for the special rule
+          example: "VIP Fixed Points"
+        rule_type:
+          type: string
+          enum: ["referral", "special_referral", "vip_referral", "targeted_referral"]
+          description: Type of special rule
+          example: "vip_referral"
+        description:
+          type: string
+          nullable: true
+          description: Detailed description of the rule's purpose
+          example: "Fixed 500 points for VIP customer referrals"
+        calculation_type:
+          type: string
+          enum: ["fixed", "percentage", "multiplier"]
+          description: How points are calculated
+          example: "fixed"
+        points_value:
+          type: string
+          description: Base points value (as decimal string)
+          example: "500"
+        points_multiplier:
+          type: string
+          description: Multiplier for standard points (as decimal string)
+          example: "1.0"
+        percentage_value:
+          type: string
+          nullable: true
+          description: Percentage value for percentage-based calculations
+          example: "10.0"
+        max_points_per_transaction:
+          type: integer
+          nullable: true
+          description: Maximum points that can be awarded in a single transaction
+          example: 1000
+        max_points_per_day:
+          type: integer
+          nullable: true
+          description: Maximum points that can be awarded per day
+          example: 2000
+        min_points_guarantee:
+          type: integer
+          description: Minimum points guaranteed regardless of calculation
+          example: 100
+        start_date:
+          type: string
+          format: date-time
+          description: When the rule becomes effective (RFC3339 format)
+          example: "2024-01-15T10:30:00Z"
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the rule expires (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        usage_limit:
+          type: integer
+          nullable: true
+          description: Maximum number of times the rule can be used
+          example: 1000
+        usage_count:
+          type: integer
+          description: Current usage count
+          example: 25
+        is_active:
+          type: boolean
+          description: Whether the rule is currently active
+          example: true
+        priority:
+          type: integer
+          description: Priority for rule selection (higher = more priority)
+          example: 10
+        conditions:
+          type: object
+          nullable: true
+          description: Flexible conditions for rule applicability
+          additionalProperties: true
+          example:
+            min_order_amount: "50.00"
+            customer_segments: ["vip", "premium"]
+        created_by:
+          type: string
+          format: uuid
+          description: ID of the user who created the rule
+          example: "789e0123-e89b-12d3-a456-426614174002"
+        created_at:
+          type: string
+          format: date-time
+          description: When the rule was created (RFC3339 format)
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When the rule was last updated (RFC3339 format)
+          example: "2024-01-20T14:25:00Z"
+
+    ListSpecialRulesResponse:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpecialRuleResponse'
+          description: List of special rules
+        pagination:
+          $ref: '#/components/schemas/SpecialRulePaginationInfo'
+        summary:
+          $ref: '#/components/schemas/SpecialRulesSummary'
+
+    SpecialRulePaginationInfo:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          description: Current page number
+          example: 1
+        per_page:
+          type: integer
+          description: Number of items per page
+          example: 20
+        total_records:
+          type: integer
+          format: int64
+          description: Total number of records
+          example: 45
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 3
+        has_next:
+          type: boolean
+          description: Whether there's a next page
+          example: true
+        has_previous:
+          type: boolean
+          description: Whether there's a previous page
+          example: false
+
+    SpecialRulesSummary:
+      type: object
+      properties:
+        total_rules:
+          type: integer
+          description: Total number of rules in current page
+          example: 45
+        active_rules:
+          type: integer
+          description: Number of active rules in current page
+          example: 38
+        inactive_rules:
+          type: integer
+          description: Number of inactive rules in current page
+          example: 7
+
+    AssignSpecialRuleResponse:
+      type: object
+      properties:
+        assignment_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the assignment
+          example: "789e0123-e89b-12d3-a456-426614174007"
+        special_rule_id:
+          type: string
+          format: uuid
+          description: ID of the special rule
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        customer_id:
+          type: string
+          format: uuid
+          description: ID of the customer
+          example: "345e6789-e89b-12d3-a456-426614174003"
+        assigned_by:
+          type: string
+          format: uuid
+          description: ID of the user who made the assignment
+          example: "789e0123-e89b-12d3-a456-426614174002"
+        assigned_at:
+          type: string
+          format: date-time
+          description: When the assignment was made (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the assignment expires (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        assignment_reason:
+          type: string
+          nullable: true
+          description: Reason for the assignment
+          example: "VIP customer upgrade program"
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the assignment
+          example: "Assigned as part of Q4 VIP retention campaign"
+
+    RuleAssignmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the assignment
+          example: "789e0123-e89b-12d3-a456-426614174007"
+        special_rule_id:
+          type: string
+          format: uuid
+          description: ID of the special rule
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        special_rule_name:
+          type: string
+          description: Name of the special rule
+          example: "VIP Fixed Points"
+        customer_id:
+          type: string
+          format: uuid
+          description: ID of the customer
+          example: "345e6789-e89b-12d3-a456-426614174003"
+        loyalty_account_id:
+          type: string
+          format: uuid
+          description: ID of the customer's loyalty account
+          example: "012e3456-e89b-12d3-a456-426614174010"
+        assigned_by:
+          type: string
+          format: uuid
+          description: ID of the user who made the assignment
+          example: "789e0123-e89b-12d3-a456-426614174002"
+        assignment_reason:
+          type: string
+          nullable: true
+          description: Reason for the assignment
+          example: "VIP customer upgrade program"
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the assignment expires (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the assignment
+          example: "Assigned as part of Q4 VIP retention campaign"
+        usage_count:
+          type: integer
+          description: Number of times the customer has used this rule
+          example: 15
+        is_active:
+          type: boolean
+          description: Whether the assignment is currently active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: When the assignment was created (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When the assignment was last updated (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+
+    ListAssignmentsResponse:
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAssignmentResponse'
+          description: List of rule assignments
+        pagination:
+          $ref: '#/components/schemas/SpecialRulePaginationInfo'
+        summary:
+          $ref: '#/components/schemas/AssignmentsSummary'
+
+    AssignmentsSummary:
+      type: object
+      properties:
+        total_assignments:
+          type: integer
+          description: Total number of assignments in current page
+          example: 150
+        active_assignments:
+          type: integer
+          description: Number of active assignments in current page
+          example: 125
+
+    SpecialRuleAnalyticsResponse:
+      type: object
+      properties:
+        overall_analytics:
+          $ref: '#/components/schemas/OverallAnalytics'
+        rule_analytics:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAnalytics'
+          description: Analytics for individual rules
+        usage_trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageTrend'
+          description: Usage trends over time
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+
+    OverallAnalytics:
+      type: object
+      properties:
+        total_rules:
+          type: integer
+          description: Total number of special rules
+          example: 15
+        active_rules:
+          type: integer
+          description: Number of active special rules
+          example: 12
+        total_assignments:
+          type: integer
+          description: Total number of rule assignments
+          example: 1250
+        active_assignments:
+          type: integer
+          description: Number of active assignments
+          example: 980
+        total_points_awarded:
+          type: integer
+          format: int64
+          description: Total points awarded through special rules
+          example: 250000
+        total_usage_count:
+          type: integer
+          description: Total number of rule usages
+          example: 3200
+        average_points_per_use:
+          type: number
+          format: double
+          description: Average points awarded per usage
+          example: 78.125
+
+    RuleAnalytics:
+      type: object
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+          description: ID of the special rule
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        rule_name:
+          type: string
+          description: Name of the special rule
+          example: "VIP Fixed Points"
+        rule_type:
+          type: string
+          enum: ["referral", "special_referral", "vip_referral", "targeted_referral"]
+          description: Type of special rule
+          example: "vip_referral"
+        total_assignments:
+          type: integer
+          description: Total number of assignments for this rule
+          example: 150
+        active_assignments:
+          type: integer
+          description: Number of active assignments for this rule
+          example: 120
+        total_usage_count:
+          type: integer
+          description: Total number of times this rule has been used
+          example: 450
+        total_points_awarded:
+          type: integer
+          format: int64
+          description: Total points awarded by this rule
+          example: 225000
+        average_points_per_use:
+          type: number
+          format: double
+          description: Average points awarded per usage
+          example: 500.0
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this rule was last used (RFC3339 format)
+          example: "2024-01-20T14:25:00Z"
+
+    UsageTrend:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date of the trend data point
+          example: "2024-01-20"
+        usage_count:
+          type: integer
+          description: Number of rule usages on this date
+          example: 85
+        points_awarded:
+          type: integer
+          format: int64
+          description: Total points awarded on this date
+          example: 12500
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        most_used_rule:
+          type: string
+          nullable: true
+          description: Name of the most used rule
+          example: "VIP Fixed Points"
+        highest_value_rule:
+          type: string
+          nullable: true
+          description: Name of the rule that awarded the most points
+          example: "VIP Fixed Points"
+        most_active_rule:
+          type: string
+          nullable: true
+          description: Name of the rule with most active assignments
+          example: "Weekend Multiplier"
+        top_customer_segment:
+          type: string
+          nullable: true
+          description: Customer segment with highest engagement
+          example: "vip"
+
+    # Referral Code Response Schemas
+    AssignReferralCodeResponse:
+      type: object
+      properties:
+        assignment_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the referral code assignment
+          example: "789e0123-e89b-12d3-a456-426614174007"
+        special_rule_id:
+          type: string
+          format: uuid
+          description: ID of the special rule
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        customer_id:
+          type: string
+          format: uuid
+          description: ID of the customer
+          example: "345e6789-e89b-12d3-a456-426614174003"
+        referral_code:
+          type: string
+          description: Assigned referral code
+          example: "ABC123"
+        referral_source:
+          type: string
+          enum: ["admin", "system"]
+          description: Source of the referral code
+          example: "system"
+        assignment_reason:
+          type: string
+          description: Reason for the assignment
+          example: "VIP customer referral program"
+        valid_from:
+          type: string
+          format: date-time
+          description: When the assignment became effective (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the assignment expires (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        code_generated_at:
+          type: string
+          format: date-time
+          description: When the referral code was generated (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+        is_active:
+          type: boolean
+          description: Whether the assignment is currently active
+          example: true
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the assignment
+          example: "VIP customer referral"
+
+    ReferralCodeAssignment:
+      type: object
+      properties:
+        assignment_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the referral code assignment
+          example: "789e0123-e89b-12d3-a456-426614174007"
+        customer_id:
+          type: string
+          format: uuid
+          description: ID of the customer
+          example: "345e6789-e89b-12d3-a456-426614174003"
+        customer_name:
+          type: string
+          nullable: true
+          description: Name of the customer
+          example: "John Doe"
+        customer_email:
+          type: string
+          nullable: true
+          description: Email of the customer
+          example: "john@example.com"
+        referral_code:
+          type: string
+          description: Assigned referral code
+          example: "ABC123"
+        referral_source:
+          type: string
+          enum: ["admin", "system"]
+          description: Source of the referral code
+          example: "system"
+        assignment_reason:
+          type: string
+          nullable: true
+          description: Reason for the assignment
+          example: "VIP customer referral program"
+        valid_from:
+          type: string
+          format: date-time
+          description: When the assignment became effective (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the assignment expires (RFC3339 format)
+          example: "2024-12-31T23:59:59Z"
+        is_active:
+          type: boolean
+          description: Whether the assignment is currently active
+          example: true
+        usage_count:
+          type: integer
+          description: Number of times the referral code has been used
+          example: 5
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the referral code was last used (RFC3339 format)
+          example: "2024-01-22T14:25:00Z"
+        code_generated_at:
+          type: string
+          format: date-time
+          description: When the referral code was generated (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: When the assignment was created (RFC3339 format)
+          example: "2024-01-20T16:30:00Z"
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the assignment
+          example: "VIP customer referral"
+
+    ListReferralCodesResponse:
+      type: object
+      properties:
+        special_rule_id:
+          type: string
+          format: uuid
+          description: ID of the special rule
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        rule_name:
+          type: string
+          description: Name of the special rule
+          example: "VIP Fixed Points"
+        rule_type:
+          type: string
+          enum: ["referral", "special_referral", "vip_referral", "targeted_referral"]
+          description: Type of special rule
+          example: "vip_referral"
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralCodeAssignment'
+          description: List of referral code assignments
+        pagination:
+          $ref: '#/components/schemas/SpecialRulePaginationInfo'
+
+    # Common Response Wrappers
+    ApiResponse_AssignReferralCodeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Referral code assigned successfully"
+        data:
+          $ref: '#/components/schemas/AssignReferralCodeResponse'
+
+    ApiResponse_ListReferralCodesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Referral codes retrieved successfully"
+        data:
+          $ref: '#/components/schemas/ListReferralCodesResponse'
+
+    ApiResponse_SpecialRuleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rule created successfully"
+        data:
+          $ref: '#/components/schemas/SpecialRuleResponse'
+
+    ApiResponse_ListSpecialRulesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rules retrieved successfully"
+        data:
+          $ref: '#/components/schemas/ListSpecialRulesResponse'
+
+    ApiResponse_AssignSpecialRuleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rule assignment completed"
+        data:
+          type: object
+          properties:
+            rule_id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            total_count:
+              type: integer
+              example: 3
+            success_count:
+              type: integer
+              example: 3
+            assignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/AssignSpecialRuleResponse'
+            message:
+              type: string
+              example: "Assigned special rule to 3 out of 3 customers"
+
+    ApiResponse_ListAssignmentsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rule assignments retrieved successfully"
+        data:
+          $ref: '#/components/schemas/ListAssignmentsResponse'
+
+    ApiResponse_SpecialRuleAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rules analytics retrieved successfully"
+        data:
+          $ref: '#/components/schemas/SpecialRuleAnalyticsResponse'
+
+    ApiResponse_RuleAnalytics:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rule analytics retrieved successfully"
+        data:
+          $ref: '#/components/schemas/RuleAnalytics'
+
+    ApiResponse_DeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rule deleted successfully"
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            message:
+              type: string
+              example: "Special rule deleted successfully"
+
+    ApiResponse_UnassignResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Special rule unassigned successfully"
+        data:
+          type: object
+          properties:
+            rule_id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            customer_id:
+              type: string
+              format: uuid
+              example: "345e6789-e89b-12d3-a456-426614174003"
+            message:
+              type: string
+              example: "Special rule unassigned successfully"
+
+    # Error Response
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request format"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field that caused the error
+                example: "rule_name"
+              message:
+                type: string
+                description: Error message for the field
+                example: "Rule name is required"
+          description: Detailed validation errors (if applicable)
+          example:
+            - field: "rule_name"
+              message: "Rule name is required"
+            - field: "points_value"
+              message: "Invalid decimal format"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from authentication endpoint.
+        Include the token in the Authorization header: `Bearer <token>`
+        
+        The token must contain:
+        - User ID and permissions
+        - Storefront context for multi-tenant isolation
+        - Valid expiration time
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key for service-to-service authentication.
+        Include the API key in the X-API-Key header.
+        
+        This method is primarily used for internal service communication
+        and automated integrations.
+
+tags:
+  - name: Special Loyalty Rules
+    description: Core special loyalty rule management operations
+    externalDocs:
+      description: Special Loyalty Rules Documentation
+      url: https://docs.smartseller.com/loyalty/special-rules
+  - name: Special Loyalty Rules Assignments
+    description: Customer assignment operations for special rules
+    externalDocs:
+      description: Rule Assignments Documentation
+      url: https://docs.smartseller.com/loyalty/rule-assignments
+  - name: Special Loyalty Rules Referral Codes
+    description: Referral code management operations for special rules
+    externalDocs:
+      description: Referral Codes Documentation
+      url: https://docs.smartseller.com/loyalty/referral-codes
+  - name: Special Loyalty Rules Analytics
+    description: Analytics and reporting for special rules
+    externalDocs:
+      description: Analytics Documentation
+      url: https://docs.smartseller.com/loyalty/analytics

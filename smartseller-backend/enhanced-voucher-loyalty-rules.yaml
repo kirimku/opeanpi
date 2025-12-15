@@ -1,0 +1,1478 @@
+openapi: 3.0.3
+info:
+  title: Enhanced Voucher Loyalty Rules API
+  description: API for managing enhanced voucher loyalty rules with advanced calculation types and conditions
+  version: 1.0.0
+  contact:
+    name: SmartSeller Backend Team
+    email: support@kirimku.com
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Development server
+  - url: https://api.smartseller.kirimku.com/api/v1
+    description: Production server
+
+paths:
+  /admin/enhanced-voucher-loyalty-rules:
+    post:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Create enhanced voucher loyalty rule
+      description: Create a new enhanced voucher loyalty rule with specified configuration and conditions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEnhancedVoucherLoyaltyRuleRequest'
+      responses:
+        '201':
+          description: Rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleResponse'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: List enhanced voucher loyalty rules
+      description: Retrieve a paginated list of enhanced voucher loyalty rules with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default: 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default: 20, max: 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: type
+          in: query
+          description: Filter by rule type
+          schema:
+            type: string
+            enum: [fixed, percentage, multiplier, tier_based, graduated, conditional]
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: priority_min
+          in: query
+          description: Filter by minimum priority
+          schema:
+            type: integer
+        - name: priority_max
+          in: query
+          description: Filter by maximum priority
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEnhancedVoucherLoyaltyRulesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/enhanced-voucher-loyalty-rules/{ruleId}:
+    get:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Get enhanced voucher loyalty rule
+      description: Retrieve a specific enhanced voucher loyalty rule by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rule retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleResponse'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Update enhanced voucher loyalty rule
+      description: Update an existing enhanced voucher loyalty rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEnhancedVoucherLoyaltyRuleRequest'
+      responses:
+        '200':
+          description: Rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleResponse'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Delete enhanced voucher loyalty rule
+      description: Delete an existing enhanced voucher loyalty rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/enhanced-voucher-loyalty-rules/{ruleId}/activate:
+    post:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Activate enhanced voucher loyalty rule
+      description: Activate an existing enhanced voucher loyalty rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rule activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleResponse'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/enhanced-voucher-loyalty-rules/{ruleId}/deactivate:
+    post:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Deactivate enhanced voucher loyalty rule
+      description: Deactivate an existing enhanced voucher loyalty rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rule deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleResponse'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/enhanced-voucher-loyalty-rules/assignments:
+    post:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Create rule assignment
+      description: Assign an enhanced voucher loyalty rule to a specific customer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoucherLoyaltyRuleAssignmentRequest'
+      responses:
+        '201':
+          description: Assignment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherLoyaltyRuleAssignmentResponse'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: List rule assignments
+      description: Retrieve a paginated list of rule assignments with optional filtering
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default: 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default: 20, max: 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: rule_id
+          in: query
+          description: Filter by rule ID
+          schema:
+            type: string
+            format: uuid
+        - name: customer_id
+          in: query
+          description: Filter by customer ID
+          schema:
+            type: string
+            format: uuid
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Assignments retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListVoucherLoyaltyRuleAssignmentsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/enhanced-voucher-loyalty-rules/{ruleId}/analytics:
+    get:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Admin)
+      summary: Get rule analytics
+      description: Retrieve analytics data for a specific enhanced voucher loyalty rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          description: Rule ID
+          schema:
+            type: string
+            format: uuid
+        - name: period_type
+          in: query
+          description: Analytics period type
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: daily
+        - name: days
+          in: query
+          description: Number of days to include in analytics (default: 30)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+        - name: start_date
+          in: query
+          description: Start date for analytics (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date for analytics (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleAnalyticsResponse'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customer/enhanced-voucher-loyalty-rules/evaluate:
+    post:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Customer)
+      summary: Evaluate applicable rules
+      description: Evaluate which enhanced voucher loyalty rules apply to a specific order and calculate points
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateEnhancedVoucherLoyaltyRulesRequest'
+      responses:
+        '200':
+          description: Rules evaluated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluateEnhancedVoucherLoyaltyRulesResponse'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customer/enhanced-voucher-loyalty-rules/applicable:
+    get:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Customer)
+      summary: Get applicable rules
+      description: Retrieve list of enhanced voucher loyalty rules that apply to the customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: customer_id
+          in: query
+          required: true
+          description: Customer ID
+          schema:
+            type: string
+            format: uuid
+        - name: voucher_code
+          in: query
+          description: Filter by voucher code
+          schema:
+            type: string
+        - name: order_amount
+          in: query
+          description: Filter by order amount
+          schema:
+            type: number
+            format: decimal
+      responses:
+        '200':
+          description: Applicable rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetApplicableEnhancedVoucherLoyaltyRulesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customer/enhanced-voucher-loyalty-rules/usage-history:
+    get:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Customer)
+      summary: Get usage history
+      description: Retrieve customer's enhanced voucher loyalty rule usage history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: customer_id
+          in: query
+          required: true
+          description: Customer ID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (default: 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default: 20, max: 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: start_date
+          in: query
+          description: Start date for usage history (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date for usage history (ISO 8601 format)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Usage history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerVoucherLoyaltyRuleUsageHistoryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /customer/enhanced-voucher-loyalty-rules/usage-summary:
+    get:
+      tags:
+        - Enhanced Voucher Loyalty Rules (Customer)
+      summary: Get usage summary
+      description: Retrieve customer's enhanced voucher loyalty rule usage summary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: customer_id
+          in: query
+          required: true
+          description: Customer ID
+          schema:
+            type: string
+            format: uuid
+        - name: period
+          in: query
+          description: Summary period
+          schema:
+            type: string
+            enum: [week, month, quarter, year]
+            default: month
+      responses:
+        '200':
+          description: Usage summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerVoucherLoyaltyRuleUsageSummaryResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateEnhancedVoucherLoyaltyRuleRequest:
+      type: object
+      required:
+        - name
+        - type
+        - config
+        - start_date
+      properties:
+        name:
+          type: string
+          description: Rule name
+          maxLength: 255
+        description:
+          type: string
+          description: Rule description
+        type:
+          type: string
+          enum: [fixed, percentage, multiplier, tier_based, graduated, conditional]
+          description: Rule type
+        priority:
+          type: integer
+          description: Rule priority (1-20, higher = higher priority)
+          minimum: 1
+          maximum: 20
+          default: 5
+        is_active:
+          type: boolean
+          description: Whether the rule is active
+          default: true
+        config:
+          type: object
+          description: Rule configuration (varies by type)
+        conditions:
+          $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleConditions'
+        start_date:
+          type: string
+          format: date-time
+          description: Rule start date
+        end_date:
+          type: string
+          format: date-time
+          description: Rule end date (optional)
+        parent_rule_id:
+          type: string
+          format: uuid
+          description: Parent rule ID for template-based rules
+
+    UpdateEnhancedVoucherLoyaltyRuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Rule name
+          maxLength: 255
+        description:
+          type: string
+          description: Rule description
+        priority:
+          type: integer
+          description: Rule priority (1-20, higher = higher priority)
+          minimum: 1
+          maximum: 20
+        is_active:
+          type: boolean
+          description: Whether the rule is active
+        config:
+          type: object
+          description: Rule configuration (varies by type)
+        conditions:
+          $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleConditions'
+        start_date:
+          type: string
+          format: date-time
+          description: Rule start date
+        end_date:
+          type: string
+          format: date-time
+          description: Rule end date (optional)
+
+    EnhancedVoucherLoyaltyRuleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Rule ID
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID
+        name:
+          type: string
+          description: Rule name
+        description:
+          type: string
+          description: Rule description
+        type:
+          type: string
+          enum: [fixed, percentage, multiplier, tier_based, graduated, conditional]
+          description: Rule type
+        priority:
+          type: integer
+          description: Rule priority
+        is_active:
+          type: boolean
+          description: Whether the rule is active
+        config:
+          type: object
+          description: Rule configuration
+        conditions:
+          $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleConditions'
+        start_date:
+          type: string
+          format: date-time
+          description: Rule start date
+        end_date:
+          type: string
+          format: date-time
+          description: Rule end date
+        parent_rule_id:
+          type: string
+          format: uuid
+          description: Parent rule ID
+        created_by:
+          type: string
+          format: uuid
+          description: Created by user ID
+        created_at:
+          type: string
+          format: date-time
+          description: Created at timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Updated at timestamp
+
+    ListEnhancedVoucherLoyaltyRulesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        data:
+          type: object
+          properties:
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/EnhancedVoucherLoyaltyRuleResponse'
+            total:
+              type: integer
+              description: Total number of rules
+            page:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Items per page
+            total_pages:
+              type: integer
+              description: Total number of pages
+
+    CreateVoucherLoyaltyRuleAssignmentRequest:
+      type: object
+      required:
+        - rule_id
+        - customer_id
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule ID
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+        priority_override:
+          type: integer
+          description: Priority override for this assignment
+          minimum: 1
+          maximum: 20
+        max_usage:
+          type: integer
+          description: Maximum usage limit
+          minimum: 1
+        valid_from:
+          type: string
+          format: date-time
+          description: Assignment validity start date
+        valid_until:
+          type: string
+          format: date-time
+          description: Assignment validity end date
+        assignment_reason:
+          type: string
+          description: Reason for assignment
+
+    VoucherLoyaltyRuleAssignmentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Assignment ID
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule ID
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+        priority_override:
+          type: integer
+          description: Priority override
+        max_usage:
+          type: integer
+          description: Maximum usage limit
+        usage_count:
+          type: integer
+          description: Current usage count
+        valid_from:
+          type: string
+          format: date-time
+          description: Assignment validity start date
+        valid_until:
+          type: string
+          format: date-time
+          description: Assignment validity end date
+        assignment_reason:
+          type: string
+          description: Reason for assignment
+        is_active:
+          type: boolean
+          description: Whether the assignment is active
+        created_at:
+          type: string
+          format: date-time
+          description: Created at timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Updated at timestamp
+
+    ListVoucherLoyaltyRuleAssignmentsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        data:
+          type: object
+          properties:
+            assignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoucherLoyaltyRuleAssignmentResponse'
+            total:
+              type: integer
+              description: Total number of assignments
+            page:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Items per page
+            total_pages:
+              type: integer
+              description: Total number of pages
+
+    EvaluateEnhancedVoucherLoyaltyRulesRequest:
+      type: object
+      required:
+        - customer_id
+        - voucher_code
+        - order_amount
+        - order_items
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+        voucher_code:
+          type: string
+          description: Voucher code
+        order_amount:
+          type: number
+          format: decimal
+          description: Total order amount
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          description: Order items
+        customer_tier:
+          type: string
+          description: Customer tier
+        customer_segment:
+          type: string
+          description: Customer segment
+        order_date:
+          type: string
+          format: date-time
+          description: Order date (default: current time)
+
+    EvaluateEnhancedVoucherLoyaltyRulesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        data:
+          type: object
+          properties:
+            total_points:
+              type: integer
+              description: Total points awarded
+            applied_rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/AppliedRule'
+            evaluation_summary:
+              type: object
+              properties:
+                total_rules_evaluated:
+                  type: integer
+                  description: Total rules evaluated
+                applicable_rules_count:
+                  type: integer
+                  description: Number of applicable rules
+                conflict_resolution_applied:
+                  type: boolean
+                  description: Whether conflict resolution was applied
+                evaluation_time_ms:
+                  type: number
+                  description: Evaluation time in milliseconds
+
+    AppliedRule:
+      type: object
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule ID
+        rule_name:
+          type: string
+          description: Rule name
+        rule_type:
+          type: string
+          description: Rule type
+        priority:
+          type: integer
+          description: Rule priority
+        awarded_points:
+          type: integer
+          description: Points awarded by this rule
+        calculation_details:
+          type: object
+          description: Details of how points were calculated
+        applied_at:
+          type: string
+          format: date-time
+          description: When the rule was applied
+
+    OrderItem:
+      type: object
+      required:
+        - product_id
+        - quantity
+        - unit_price
+      properties:
+        product_id:
+          type: string
+          description: Product ID
+        quantity:
+          type: integer
+          minimum: 1
+          description: Item quantity
+        unit_price:
+          type: number
+          format: decimal
+          description: Unit price
+        category_id:
+          type: string
+          description: Product category ID
+        category_name:
+          type: string
+          description: Product category name
+        brand:
+          type: string
+          description: Product brand
+        tags:
+          type: array
+          items:
+            type: string
+          description: Product tags
+
+    EnhancedVoucherLoyaltyRuleConditions:
+      type: object
+      properties:
+        order_amount:
+          $ref: '#/components/schemas/OrderAmountCondition'
+        product_conditions:
+          $ref: '#/components/schemas/ProductCondition'
+        customer_conditions:
+          $ref: '#/components/schemas/CustomerCondition'
+        geographic_conditions:
+          $ref: '#/components/schemas/GeographicCondition'
+        time_conditions:
+          $ref: '#/components/schemas/TimeCondition'
+
+    OrderAmountCondition:
+      type: object
+      properties:
+        min_amount:
+          type: number
+          format: decimal
+          description: Minimum order amount
+        max_amount:
+          type: number
+          format: decimal
+          description: Maximum order amount
+
+    ProductCondition:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+          description: Product categories
+        brands:
+          type: array
+          items:
+            type: string
+          description: Product brands
+        tags:
+          type: array
+          items:
+            type: string
+          description: Product tags
+
+    CustomerCondition:
+      type: object
+      properties:
+        segments:
+          type: array
+          items:
+            type: string
+          description: Customer segments
+        tiers:
+          type: array
+          items:
+            type: string
+          description: Customer tiers
+        exclude_segments:
+          type: array
+          items:
+            type: string
+          description: Segments to exclude
+        account_age_days:
+          type: integer
+          description: Minimum account age in days
+
+    GeographicCondition:
+      type: object
+      properties:
+        countries:
+          type: array
+          items:
+            type: string
+          description: Countries
+        regions:
+          type: array
+          items:
+            type: string
+          description: Regions
+        cities:
+          type: array
+          items:
+            type: string
+          description: Cities
+
+    TimeCondition:
+      type: object
+      properties:
+        days_of_week:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Days of week (0=Sunday, 6=Saturday)
+        hours_of_day:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 23
+          description: Hours of day
+        holidays:
+          type: boolean
+          description: Whether to include holidays
+
+    EnhancedVoucherLoyaltyRuleAnalyticsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        data:
+          type: object
+          properties:
+            rule_id:
+              type: string
+              format: uuid
+              description: Rule ID
+            period_type:
+              type: string
+              enum: [daily, weekly, monthly]
+              description: Analytics period type
+            start_date:
+              type: string
+              format: date
+              description: Analytics start date
+            end_date:
+              type: string
+              format: date
+              description: Analytics end date
+            total_usage:
+              type: integer
+              description: Total usage count
+            unique_customers:
+              type: integer
+              description: Number of unique customers
+            total_points_awarded:
+              type: integer
+              description: Total points awarded
+            average_order_value:
+              type: number
+              format: decimal
+              description: Average order value
+            conversion_rate:
+              type: number
+              format: decimal
+              description: Conversion rate percentage
+            daily_breakdown:
+              type: array
+              items:
+                $ref: '#/components/schemas/DailyAnalytics'
+              description: Daily analytics breakdown
+
+    DailyAnalytics:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date
+        usage_count:
+          type: integer
+          description: Usage count for the day
+        unique_customers:
+          type: integer
+          description: Unique customers for the day
+        points_awarded:
+          type: integer
+          description: Points awarded for the day
+        average_order_value:
+          type: number
+          format: decimal
+          description: Average order value for the day
+
+    CustomerVoucherLoyaltyRuleUsageHistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        data:
+          type: object
+          properties:
+            usage_records:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoucherLoyaltyRuleUsageLogResponse'
+            total:
+              type: integer
+              description: Total number of usage records
+            page:
+              type: integer
+              description: Current page number
+            limit:
+              type: integer
+              description: Items per page
+            total_pages:
+              type: integer
+              description: Total number of pages
+
+    VoucherLoyaltyRuleUsageLogResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Usage log ID
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule ID
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+        assignment_id:
+          type: string
+          format: uuid
+          description: Assignment ID
+        points_awarded:
+          type: integer
+          description: Points awarded
+        order_amount:
+          type: number
+          format: decimal
+          description: Order amount
+        order_id:
+          type: string
+          description: Order ID
+        voucher_code:
+          type: string
+          description: Voucher code used
+        customer_tier:
+          type: string
+          description: Customer tier at time of usage
+        evaluation_context:
+          type: object
+          description: Evaluation context details
+        created_at:
+          type: string
+          format: date-time
+          description: Usage timestamp
+
+    CustomerVoucherLoyaltyRuleUsageSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        data:
+          type: object
+          properties:
+            customer_id:
+              type: string
+              format: uuid
+              description: Customer ID
+            period:
+              type: string
+              description: Summary period
+            total_usage:
+              type: integer
+              description: Total usage in period
+            total_points_earned:
+              type: integer
+              description: Total points earned in period
+            average_points_per_usage:
+              type: number
+              format: decimal
+              description: Average points per usage
+            most_used_rule:
+              type: object
+              properties:
+                rule_id:
+                  type: string
+                  format: uuid
+                rule_name:
+                  type: string
+                usage_count:
+                  type: integer
+            usage_breakdown:
+              type: array
+              items:
+                type: object
+                properties:
+                  rule_id:
+                    type: string
+                    format: uuid
+                  rule_name:
+                    type: string
+                  usage_count:
+                    type: integer
+                  points_earned:
+                    type: integer
+
+    GetApplicableEnhancedVoucherLoyaltyRulesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        data:
+          type: object
+          properties:
+            applicable_rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApplicableRule'
+            total_applicable:
+              type: integer
+              description: Total number of applicable rules
+
+    ApplicableRule:
+      type: object
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule ID
+        rule_name:
+          type: string
+          description: Rule name
+        rule_type:
+          type: string
+          description: Rule type
+        priority:
+          type: integer
+          description: Rule priority
+        estimated_points:
+          type: integer
+          description: Estimated points that would be awarded
+        conditions_met:
+          type: array
+          items:
+            type: string
+          description: Conditions that are met
+        conditions_not_met:
+          type: array
+          items:
+            type: string
+          description: Conditions that are not met
+
+    DeleteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+        message:
+          type: string
+          description: Success message
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Request success status
+          example: false
+        message:
+          type: string
+          description: Error message
+        errors:
+          type: array
+          items:
+            type: string
+          description: Detailed error messages
+        code:
+          type: string
+          description: Error code

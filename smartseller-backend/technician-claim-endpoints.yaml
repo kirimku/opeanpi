@@ -1,0 +1,501 @@
+paths:
+  # Technician Warranty Claims Management
+  /api/v1/technician/claims:
+    get:
+      tags:
+        - Technician Claims
+      summary: List technician claims
+      description: |
+        Retrieve a paginated list of warranty claims.
+        - When authenticated as a technician: shows only claims assigned to the technician.
+        - When authenticated as an owner: shows all technicians' claims within the owner's storefront.
+        
+        **Important**: This endpoint automatically excludes warehouse processing statuses (repaired, shipped, delivered).
+        Once a technician completes a repair, the claim moves to warehouse and no longer appears here.
+        
+        **Visible statuses**: validated, assigned, in_repair, completed
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, updated_at, priority, severity, status]
+            default: created_at
+        - name: sort_dir
+          in: query
+          description: Sort direction
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: status
+          in: query
+          description: Filter by claim status
+          schema:
+            type: string
+            enum: [validated, assigned, in_repair, completed]
+        - name: scope
+          in: query
+          description: View scope (owner only)
+          schema:
+            type: string
+            enum: [storefront]
+          examples:
+            storefront:
+              summary: Owner view across all technicians in storefront
+              value: storefront
+        - name: severity
+          in: query
+          description: Filter by issue severity
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: priority
+          in: query
+          description: Filter by priority
+          schema:
+            type: string
+            enum: [low, normal, high, urgent]
+        - name: search
+          in: query
+          description: Search in claim number, customer name, or issue description
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Technician claims retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Warranty claims retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/WarrantyClaimListResponse'
+              examples:
+                success:
+                  summary: Success response with claims
+                  value:
+                    success: true
+                    message: "Warranty claims retrieved successfully"
+                    data:
+                      claims:
+                        - id: "550e8400-e29b-41d4-a716-446655440000"
+                          claim_number: "WC-2024-001234"
+                          status: "assigned"
+                          priority: "high"
+                          severity: "medium"
+                          customer_name: "John Doe"
+                          customer_email: "john@example.com"
+                          issue_description: "Screen not working properly"
+                          assigned_to: "550e8400-e29b-41d4-a716-446655440007"
+                          created_at: "2024-11-15T10:00:00Z"
+                        - id: "550e8400-e29b-41d4-a716-446655440001"
+                          claim_number: "WC-2024-001235"
+                          status: "in_repair"
+                          priority: "normal"
+                          severity: "low"
+                          customer_name: "Jane Smith"
+                          customer_email: "jane@example.com"
+                          issue_description: "Battery draining quickly"
+                          assigned_to: "550e8400-e29b-41d4-a716-446655440007"
+                          created_at: "2024-11-14T14:30:00Z"
+                      pagination:
+                        page: 1
+                        limit: 20
+                        total: 15
+                        total_pages: 1
+                        has_next: false
+                        has_prev: false
+                      filters:
+                        available_statuses:
+                          - validated
+                          - assigned
+                          - in_repair
+                          - repaired
+                          - completed
+                        available_severities:
+                          - low
+                          - medium
+                          - high
+                          - critical
+                        available_priorities:
+                          - low
+                          - normal
+                          - high
+                          - urgent
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - User is not a technician
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Access denied - technician role required"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/technician/claims/{id}:
+    get:
+      tags:
+        - Technician Claims
+      summary: Get claim details
+      description: Retrieve detailed information about a specific warranty claim assigned to the technician
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Warranty claim ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Claim details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Warranty claim details retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/WarrantyClaimDetailDTO'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/technician/claims/{id}/start-repair:
+    post:
+      tags:
+        - Technician Claims
+      summary: Start repair on claim
+      description: |
+        Update claim status to "in_repair" when technician starts working on it.
+        This endpoint verifies that the claim is assigned to the authenticated technician before allowing the update.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Warranty claim ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRepairRequest'
+            examples:
+              startRepair:
+                summary: Start repair with notes, date, and video
+                value:
+                  notes: "Started diagnosing the issue. Customer reported screen flickering."
+                  estimated_completion_date: "2024-11-25T17:00:00Z"
+                  video_url: "https://youtube.com/watch?v=abc123"
+              startRepairMinimal:
+                summary: Start repair with video only
+                value:
+                  video_url: "https://youtube.com/watch?v=abc123"
+      responses:
+        '200':
+          description: Repair started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Repair started successfully"
+                  data:
+                    $ref: '#/components/schemas/WarrantyClaimDTO'
+              examples:
+                success:
+                  summary: Success response
+                  value:
+                    success: true
+                    message: "Repair started successfully"
+                    data:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      claim_number: "WC-2024-001234"
+                      status: "in_repair"
+                      priority: "high"
+                      severity: "medium"
+                      customer_name: "John Doe"
+                      issue_description: "Screen not working properly"
+                      assigned_to: "550e8400-e29b-41d4-a716-446655440007"
+                      updated_at: "2024-11-17T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Claim not assigned to this technician
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "This claim is not assigned to you"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/technician/claims/{id}/complete-repair:
+    post:
+      tags:
+        - Technician Claims
+      summary: Complete repair work
+      description: |
+        Technician marks repair as complete and transitions claim status to 'repaired'.
+        
+        **Requirements:**
+        - Claim must be assigned to the authenticated technician
+        - Claim must be in 'in_repair' status
+        - Repair notes are required (min 10 chars)
+        - Quality check result is required
+        
+        **Status Transition:**
+        - in_repair → repaired
+        
+        **Notes Format:**
+        The system will create comprehensive notes including:
+        - Repair notes
+        - Parts replaced (if provided)
+        - Video URL (if provided)
+        - Quality check result
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Warranty claim ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteRepairRequest'
+            examples:
+              basicCompletion:
+                summary: Basic repair completion
+                value:
+                  repair_notes: "Replaced screen digitizer. Tested touch functionality - working perfectly. Device cleaned and sanitized."
+                  quality_check_pass: true
+              detailedCompletion:
+                summary: Detailed completion with parts
+                value:
+                  repair_notes: "Replaced faulty screen digitizer and LCD panel. Recalibrated touch sensitivity. Performed full hardware diagnostics. All systems functioning normally."
+                  parts_replaced: "Screen digitizer (Part#: LCD-001), LCD panel (Part#: LCD-002), adhesive tape"
+                  quality_check_pass: true
+              completionWithVideo:
+                summary: Completion with video documentation
+                value:
+                  repair_notes: "Complete motherboard replacement due to water damage. Cleaned all components. Tested all ports and sensors. Device fully functional."
+                  parts_replaced: "Motherboard (Part#: MB-S23-001)"
+                  video_url: "https://youtube.com/watch?v=xyz789"
+                  quality_check_pass: true
+              failedQualityCheck:
+                summary: Completion with failed quality check
+                value:
+                  repair_notes: "Attempted screen replacement but touch calibration issues persist. Requires additional diagnostics or part replacement."
+                  parts_replaced: "Screen digitizer (Part#: LCD-001)"
+                  quality_check_pass: false
+      responses:
+        '200':
+          description: Repair completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Repair completed successfully"
+                  data:
+                    $ref: '#/components/schemas/WarrantyClaimDTO'
+              examples:
+                success:
+                  summary: Success response
+                  value:
+                    success: true
+                    message: "Repair completed successfully"
+                    data:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      claim_number: "WC-2024-001234"
+                      status: "repaired"
+                      priority: "high"
+                      assigned_to: "550e8400-e29b-41d4-a716-446655440007"
+                      assigned_to_name: "John Technician"
+                      updated_at: "2024-11-18T15:30:00Z"
+        '400':
+          description: Bad request - Invalid input or claim not in correct status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+              examples:
+                invalidStatus:
+                  summary: Claim not in repair status
+                  value:
+                    success: false
+                    message: "Claim must be in 'in_repair' status to complete"
+                validationError:
+                  summary: Validation error
+                  value:
+                    success: false
+                    message: "Invalid request format"
+                    errors:
+                      - field: "repair_notes"
+                        message: "Repair notes must be at least 10 characters"
+                      - field: "quality_check_pass"
+                        message: "Quality check result is required"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Claim not assigned to this technician
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "This claim is not assigned to you"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/technician/claims/{id}/status:
+    put:
+      tags:
+        - Technician Claims
+      summary: Update claim status
+      description: |
+        Update the status of a warranty claim assigned to the technician.
+        Technicians can update claims to: in_repair, repaired, or completed.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Warranty claim ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClaimRequest'
+            examples:
+              startRepair:
+                summary: Start repair
+                value:
+                  status: "in_repair"
+                  notes: "Started diagnosing the issue"
+              completeRepair:
+                summary: Complete repair
+                value:
+                  status: "repaired"
+                  notes: "Repair completed successfully"
+                  repair_notes: "Replaced screen and tested all functionality"
+      responses:
+        '200':
+          description: Claim status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Warranty claim status updated successfully"
+                  data:
+                    $ref: '#/components/schemas/WarrantyClaimDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

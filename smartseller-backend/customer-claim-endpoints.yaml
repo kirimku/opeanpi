@@ -1,0 +1,569 @@
+paths:
+  # Customer Claim Endpoints
+  /api/v1/storefront/{slug}/claims/submit:
+    post:
+      tags:
+        - Customer Claims
+      summary: Submit a warranty claim
+      description: Submit a new warranty claim for a registered product with optional Kirimku shipping integration
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerClaimSubmissionRequest'
+            examples:
+              basic_claim:
+                summary: Basic warranty claim without Kirimku
+                value:
+                  warranty_barcode: "REX240101ABC123"
+                  issue_description: "Product not working properly after 2 months of use"
+                  issue_category: "malfunction"
+                  contact_info:
+                    name: "John Doe"
+                    email: "john.doe@example.com"
+                    address: "Jl. Sudirman No. 123, Jakarta Pusat"
+                    postal_code: "10220"
+                    city: "Jakarta"
+                    province: "DKI Jakarta"
+                  enable_kirimku_shipping: false
+              kirimku_pickup_claim:
+                summary: Warranty claim with Kirimku pickup shipping
+                value:
+                  warranty_barcode: "REX240101ABC123"
+                  issue_description: "Product not working properly after 2 months of use"
+                  issue_category: "malfunction"
+                  contact_info:
+                    name: "John Doe"
+                    email: "john.doe@example.com"
+                    address: "Jl. Sudirman No. 123, Jakarta Pusat"
+                    postal_code: "10220"
+                    city: "Jakarta"
+                    province: "DKI Jakarta"
+                  enable_kirimku_shipping: true
+                  kirimku_shipping:
+                    pickup_method: "pickup"
+                    pickup_address:
+                      name: "John Doe"
+                      phone: "081234567890"
+                      address: "Jl. Sudirman No. 123, Jakarta Pusat"
+                      area: "Sudirman"
+                      city: "Jakarta"
+                      province: "DKI Jakarta"
+                      postal_code: "10220"
+                    destination_address:
+                      name: "SmartSeller Service Center"
+                      phone: "021-5551234"
+                      email: "service@smartseller.com"
+                      address: "Jl. Gatot Subroto No. 456, Jakarta Selatan"
+                      area: "Gatot Subroto"
+                      city: "Jakarta"
+                      province: "DKI Jakarta"
+                      postal_code: "12930"
+                    package_details:
+                      weight: 2.5
+                      length: 30
+                      width: 20
+                      height: 15
+                      description: "Defective electronic product for warranty claim"
+                    service_type: "REG"
+                    insurance_value: 500000
+              kirimku_dropoff_claim:
+                summary: Warranty claim with Kirimku drop-off shipping
+                value:
+                  warranty_barcode: "REX240101ABC123"
+                  issue_description: "Product not working properly after 2 months of use"
+                  issue_category: "malfunction"
+                  contact_info:
+                    name: "John Doe"
+                    email: "john.doe@example.com"
+                    address: "Jl. Sudirman No. 123, Jakarta Pusat"
+                    postal_code: "10220"
+                    city: "Jakarta"
+                    province: "DKI Jakarta"
+                  enable_kirimku_shipping: true
+                  kirimku_shipping:
+                    pickup_method: "drop_off"
+                    destination_address:
+                      name: "SmartSeller Service Center"
+                      phone: "021-5551234"
+                      email: "service@smartseller.com"
+                      address: "Jl. Gatot Subroto No. 456, Jakarta Selatan"
+                      area: "Gatot Subroto"
+                      city: "Jakarta"
+                      province: "DKI Jakarta"
+                      postal_code: "12930"
+                    package_details:
+                      weight: 2.5
+                      length: 30
+                      width: 20
+                      height: 15
+                      description: "Defective electronic product for warranty claim"
+                    service_type: "REG"
+                    insurance_value: 500000
+      responses:
+        '201':
+          description: Claim submitted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CustomerClaimSubmissionResponse'
+              examples:
+                basic_claim_success:
+                  summary: Basic claim submission success
+                  value:
+                    success: true
+                    message: "Warranty claim submitted successfully"
+                    data:
+                      claim_id: "claim_67890"
+                      status: "submitted"
+                      estimated_processing_time: "3-5 business days"
+                      tracking_number: null
+                      kirimku_booking: null
+                kirimku_claim_success:
+                  summary: Kirimku claim submission success
+                  value:
+                    success: true
+                    message: "Warranty claim submitted successfully with Kirimku booking"
+                    data:
+                      claim_id: "claim_67890"
+                      status: "submitted"
+                      estimated_processing_time: "3-5 business days"
+                      tracking_number: "KMK123456789"
+                      kirimku_booking:
+                        booking_id: "booking_12345"
+                        tracking_number: "KMK123456789"
+                        estimated_pickup: "2024-01-15T10:00:00Z"
+                        estimated_delivery: "2024-01-16T15:00:00Z"
+                        total_cost: 25000
+                        status: "confirmed"
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation_error:
+                  summary: Validation error
+                  value:
+                    success: false
+                    message: "Validation failed"
+                    error: "validation_error"
+                    validation_errors:
+                      - "warranty_barcode: field is required"
+                      - "issue_description: field is required"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - warranty barcode not found or not owned by customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Unprocessable entity - business logic error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                warranty_expired:
+                  summary: Warranty expired
+                  value:
+                    success: false
+                    message: "Cannot submit claim for expired warranty"
+                    error: "warranty_expired"
+                duplicate_claim:
+                  summary: Duplicate claim
+                  value:
+                    success: false
+                    message: "A claim has already been submitted for this warranty"
+                    error: "duplicate_claim"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    CustomerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Customer JWT authentication token
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        data:
+          type: object
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Operation failed"
+        error:
+          type: string
+          example: "validation_error"
+        error_detail:
+          type: string
+          example: "Field validation failed"
+        validation_errors:
+          type: array
+          items:
+            type: string
+          example: ["Field: is required"]
+
+    CustomerClaimSubmissionRequest:
+      type: object
+      required:
+        - warranty_barcode
+        - issue_description
+        - issue_category
+        - contact_info
+        - enable_kirimku_shipping
+      properties:
+        warranty_barcode:
+          type: string
+          description: The warranty barcode for the product
+          example: "REX240101ABC123"
+        issue_description:
+          type: string
+          description: Detailed description of the issue
+          minLength: 10
+          maxLength: 1000
+          example: "Product not working properly after 2 months of use"
+        issue_category:
+          type: string
+          description: Category of the issue
+          enum: ["malfunction", "damage", "defect", "other"]
+          example: "malfunction"
+        contact_info:
+          $ref: '#/components/schemas/CustomerClaimContactInfo'
+        enable_kirimku_shipping:
+          type: boolean
+          description: Whether to enable Kirimku shipping for product pickup
+          example: false
+        kirimku_shipping:
+          $ref: '#/components/schemas/CustomerClaimKirimkuShipping'
+          description: Kirimku shipping details (required if enable_kirimku_shipping is true)
+
+    CustomerClaimContactInfo:
+      type: object
+      required:
+        - name
+        - email
+        - address
+        - postal_code
+        - city
+        - province
+      properties:
+        name:
+          type: string
+          description: Customer contact name
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Customer contact email
+          example: "john.doe@example.com"
+        address:
+          type: string
+          description: Customer contact address
+          minLength: 10
+          maxLength: 500
+          example: "Jl. Sudirman No. 123, Jakarta Pusat"
+        postal_code:
+          type: string
+          description: Postal code
+          pattern: '^[0-9]{5}$'
+          example: "10220"
+        city:
+          type: string
+          description: City name
+          minLength: 2
+          maxLength: 100
+          example: "Jakarta"
+        province:
+          type: string
+          description: Province name
+          minLength: 2
+          maxLength: 100
+          example: "DKI Jakarta"
+
+    CustomerClaimKirimkuShipping:
+      type: object
+      required:
+        - pickup_method
+        - destination_address
+        - package_details
+        - service_type
+      properties:
+        pickup_method:
+          type: string
+          description: Method for product pickup
+          enum: ["pickup", "drop_off"]
+          example: "pickup"
+        pickup_address:
+          $ref: '#/components/schemas/CustomerClaimPickupAddress'
+          description: Pickup address (required only when pickup_method is 'pickup')
+        destination_address:
+          $ref: '#/components/schemas/CustomerClaimDestinationAddress'
+          description: Destination address for the warranty claim
+        package_details:
+          $ref: '#/components/schemas/CustomerClaimPackageDetails'
+        service_type:
+          type: string
+          description: Kirimku service type
+          enum: ["REG", "YES", "OKE"]
+          example: "REG"
+        insurance_value:
+          type: number
+          description: Insurance value for the package
+          minimum: 0
+          example: 500000
+
+    CustomerClaimPickupAddress:
+      type: object
+      required:
+        - name
+        - phone
+        - address
+        - area
+        - city
+        - province
+        - postal_code
+      properties:
+        name:
+          type: string
+          description: Contact name for pickup
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        phone:
+          type: string
+          description: Contact phone number for pickup
+          pattern: '^[0-9+\-\s()]+$'
+          example: "081234567890"
+        address:
+          type: string
+          description: Pickup address
+          minLength: 10
+          maxLength: 500
+          example: "Jl. Sudirman No. 123, Jakarta Pusat"
+        area:
+          type: string
+          description: Area or district
+          minLength: 2
+          maxLength: 100
+          example: "Sudirman"
+        city:
+          type: string
+          description: City name
+          minLength: 2
+          maxLength: 100
+          example: "Jakarta"
+        province:
+          type: string
+          description: Province name
+          minLength: 2
+          maxLength: 100
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          description: Postal code
+          pattern: '^[0-9]{5}$'
+          example: "10220"
+
+    CustomerClaimDestinationAddress:
+      type: object
+      required:
+        - name
+        - phone
+        - email
+        - address
+        - area
+        - city
+        - province
+        - postal_code
+      properties:
+        name:
+          type: string
+          description: Recipient name
+          minLength: 2
+          maxLength: 100
+          example: "SmartSeller Service Center"
+        phone:
+          type: string
+          description: Contact phone number
+          pattern: '^[0-9+\-\s()]+$'
+          example: "021-5551234"
+        email:
+          type: string
+          format: email
+          description: Contact email address
+          example: "service@smartseller.com"
+        address:
+          type: string
+          description: Delivery address
+          minLength: 10
+          maxLength: 500
+          example: "Jl. Gatot Subroto No. 456, Jakarta Selatan"
+        area:
+          type: string
+          description: Area or district
+          minLength: 2
+          maxLength: 100
+          example: "Gatot Subroto"
+        city:
+          type: string
+          description: City name
+          minLength: 2
+          maxLength: 100
+          example: "Jakarta"
+        province:
+          type: string
+          description: Province name
+          minLength: 2
+          maxLength: 100
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          description: Postal code
+          pattern: '^[0-9]{5}$'
+          example: "12930"
+
+    CustomerClaimPackageDetails:
+      type: object
+      required:
+        - weight
+        - length
+        - width
+        - height
+        - description
+      properties:
+        weight:
+          type: number
+          description: Package weight in kg
+          minimum: 0.1
+          maximum: 30
+          example: 2.5
+        length:
+          type: number
+          description: Package length in cm
+          minimum: 1
+          maximum: 150
+          example: 30
+        width:
+          type: number
+          description: Package width in cm
+          minimum: 1
+          maximum: 150
+          example: 20
+        height:
+          type: number
+          description: Package height in cm
+          minimum: 1
+          maximum: 150
+          example: 15
+        description:
+          type: string
+          description: Package description
+          minLength: 5
+          maxLength: 200
+          example: "Defective electronic product for warranty claim"
+
+    CustomerClaimSubmissionResponse:
+      type: object
+      properties:
+        claim_id:
+          type: string
+          description: Unique claim identifier
+          example: "claim_67890"
+        status:
+          type: string
+          description: Current claim status
+          enum: ["submitted", "processing", "approved", "rejected", "completed"]
+          example: "submitted"
+        estimated_processing_time:
+          type: string
+          description: Estimated processing time
+          example: "3-5 business days"
+        tracking_number:
+          type: string
+          nullable: true
+          description: Kirimku tracking number (if Kirimku shipping is enabled)
+          example: "KMK123456789"
+        kirimku_booking:
+          $ref: '#/components/schemas/CustomerClaimKirimkuInfo'
+          nullable: true
+          description: Kirimku booking information (if Kirimku shipping is enabled)
+
+    CustomerClaimKirimkuInfo:
+      type: object
+      properties:
+        booking_id:
+          type: string
+          description: Kirimku booking ID
+          example: "booking_12345"
+        tracking_number:
+          type: string
+          description: Kirimku tracking number
+          example: "KMK123456789"
+        estimated_pickup:
+          type: string
+          format: date-time
+          description: Estimated pickup time
+          example: "2024-01-15T10:00:00Z"
+        estimated_delivery:
+          type: string
+          format: date-time
+          description: Estimated delivery time
+          example: "2024-01-16T15:00:00Z"
+        total_cost:
+          type: number
+          description: Total shipping cost
+          example: 25000
+        status:
+          type: string
+          description: Booking status
+          enum: ["pending", "confirmed", "picked_up", "in_transit", "delivered", "cancelled"]
+          example: "confirmed"

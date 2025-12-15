@@ -1,0 +1,213 @@
+openapi: 3.0.3
+info:
+  title: Upload Endpoints
+  version: 1.0.0
+
+paths:
+  /api/v1/uploads/product-images:
+    post:
+      tags:
+        - Uploads
+      summary: Upload product images
+      description: |
+        Upload product images to cloud storage and get back URLs for use in product creation.
+        
+        **Features:**
+        - Supports multiple image formats (JPEG, PNG, GIF, WebP)
+        - Automatic image validation and processing
+        - Returns public URLs for immediate use
+        - File size and dimension validation
+        
+        **File Requirements:**
+        - Maximum file size: 10MB
+        - Supported formats: .jpg, .jpeg, .png, .gif, .webp
+        - Content-Type must match file extension
+        
+      operationId: uploadProductImages
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: string
+                  format: binary
+                  description: Image file to upload
+              required:
+                - images
+            encoding:
+              images:
+                contentType: image/jpeg, image/png, image/gif, image/webp
+      responses:
+        '200':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Image uploaded successfully"
+                  data:
+                    type: object
+                    properties:
+                      file_id:
+                        type: string
+                        format: uuid
+                        description: Unique identifier for the uploaded file
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      url:
+                        type: string
+                        format: uri
+                        description: Storage URL of the uploaded image (requires bucket configuration for public access)
+                        example: "https://smartseller-bucket.20b4fff2cd1e3e2799e6049d0fc3b3a6.r2.cloudflarestorage.com/development/default/products/images/main/2025/10/temp-product-id/123e4567-e89b-12d3-a456-426614174000.jpg"
+                      filename:
+                        type: string
+                        description: Original filename
+                        example: "product-image.jpg"
+                      content_type:
+                        type: string
+                        description: MIME type of the uploaded file
+                        example: "image/jpeg"
+                      file_size:
+                        type: integer
+                        description: File size in bytes
+                        example: 1048576
+                      width:
+                        type: integer
+                        description: Image width in pixels
+                        example: 1920
+                      height:
+                        type: integer
+                        description: Image height in pixels
+                        example: 1080
+                    required:
+                      - file_id
+                      - url
+                      - filename
+                      - content_type
+                      - file_size
+                      - width
+                      - height
+                required:
+                  - success
+                  - message
+                  - data
+              examples:
+                successful_upload:
+                  summary: Successful image upload
+                  value:
+                    success: true
+                    message: "Image uploaded successfully"
+                    data:
+                      file_id: "123e4567-e89b-12d3-a456-426614174000"
+                      url: "https://smartseller-bucket.20b4fff2cd1e3e2799e6049d0fc3b3a6.r2.cloudflarestorage.com/development/default/products/images/main/2025/10/temp-product-id/123e4567-e89b-12d3-a456-426614174000.jpg"
+                      filename: "product-image.jpg"
+                      content_type: "image/jpeg"
+                      file_size: 1048576
+                      width: 1920
+                      height: 1080
+        '400':
+          description: Bad request - Invalid file or validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid file format"
+                  error:
+                    type: string
+                    example: "Only image files are allowed (.jpg, .jpeg, .png, .gif, .webp)"
+                required:
+                  - success
+                  - message
+              examples:
+                invalid_extension:
+                  summary: Invalid file extension
+                  value:
+                    success: false
+                    message: "Invalid file format"
+                    error: "Only image files are allowed (.jpg, .jpeg, .png, .gif, .webp)"
+                invalid_content_type:
+                  summary: Invalid content type
+                  value:
+                    success: false
+                    message: "Invalid content type"
+                    error: "Content type does not match file extension"
+                file_too_large:
+                  summary: File too large
+                  value:
+                    success: false
+                    message: "File too large"
+                    error: "File size exceeds maximum limit of 10MB"
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Authentication required"
+                required:
+                  - success
+                  - message
+        '413':
+          description: Payload too large
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "File too large"
+                required:
+                  - success
+                  - message
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Failed to upload image"
+                  error:
+                    type: string
+                    example: "Storage service unavailable"
+                required:
+                  - success
+                  - message
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

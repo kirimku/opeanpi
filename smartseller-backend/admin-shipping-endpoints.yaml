@@ -1,0 +1,770 @@
+paths:
+  /api/v1/admin/kirimku/locations/search:
+    get:
+      summary: Search shipping locations (Admin)
+      description: Search for shipping locations using query parameters. Admin-specific endpoint with elevated privileges.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Search query for location name
+          schema:
+            type: string
+            example: "Jakarta"
+        - name: type
+          in: query
+          required: false
+          description: Type of location to search for
+          schema:
+            type: string
+            enum: ["province", "city", "district", "area"]
+            example: "city"
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Locations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Locations retrieved successfully"
+                  data:
+                    type: object
+                    properties:
+                      locations:
+                        type: array
+                        items:
+                          $ref: './schemas.yaml#/components/schemas/KirimkuLocation'
+                      total:
+                        type: integer
+                        example: 5
+        '400':
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/kirimku/couriers:
+    post:
+      summary: Get available couriers (Admin)
+      description: Retrieve list of available couriers for shipping between origin and destination. Admin-specific endpoint.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - origin
+                - destination
+                - weight
+              properties:
+                origin:
+                  type: string
+                  description: Origin location ID
+                  example: "JKT001"
+                destination:
+                  type: string
+                  description: Destination location ID
+                  example: "BDG001"
+                weight:
+                  type: integer
+                  description: Package weight in grams
+                  minimum: 1
+                  example: 1000
+                length:
+                  type: integer
+                  description: Package length in cm
+                  minimum: 1
+                  example: 20
+                width:
+                  type: integer
+                  description: Package width in cm
+                  minimum: 1
+                  example: 15
+                height:
+                  type: integer
+                  description: Package height in cm
+                  minimum: 1
+                  example: 10
+      responses:
+        '200':
+          description: Couriers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Couriers retrieved successfully"
+                  data:
+                    type: object
+                    properties:
+                      couriers:
+                        type: array
+                        items:
+                          $ref: './schemas.yaml#/components/schemas/KirimkuCourier'
+        '400':
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/kirimku/tariff:
+    post:
+      summary: Calculate shipping tariff (Admin)
+      description: Calculate shipping cost for a package between origin and destination. Admin-specific endpoint.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - origin
+                - destination
+                - weight
+                - courier_code
+              properties:
+                origin:
+                  type: string
+                  description: Origin location ID
+                  example: "JKT001"
+                destination:
+                  type: string
+                  description: Destination location ID
+                  example: "BDG001"
+                weight:
+                  type: integer
+                  description: Package weight in grams
+                  minimum: 1
+                  example: 1000
+                courier_code:
+                  type: string
+                  description: Courier service code
+                  example: "jne_reg"
+                length:
+                  type: integer
+                  description: Package length in cm
+                  minimum: 1
+                  example: 20
+                width:
+                  type: integer
+                  description: Package width in cm
+                  minimum: 1
+                  example: 15
+                height:
+                  type: integer
+                  description: Package height in cm
+                  minimum: 1
+                  example: 10
+      responses:
+        '200':
+          description: Tariff calculated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Tariff calculated successfully"
+                  data:
+                    type: object
+                    properties:
+                      tariff:
+                        $ref: './schemas.yaml#/components/schemas/KirimkuTariff'
+        '400':
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/kirimku/booking:
+    post:
+      summary: Create shipping booking (Admin)
+      description: Create a new shipping booking with admin privileges. Admin-specific endpoint.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/KirimkuBookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Booking created successfully"
+                  data:
+                    type: object
+                    properties:
+                      booking:
+                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+        '400':
+          description: Bad request - Invalid booking data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/kirimku/booking/{id}:
+    get:
+      summary: Get shipping booking details (Admin)
+      description: Retrieve details of a specific shipping booking with admin privileges. Admin-specific endpoint.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Booking ID
+          schema:
+            type: string
+            example: "BK123456789"
+      responses:
+        '200':
+          description: Booking details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Booking details retrieved successfully"
+                  data:
+                    type: object
+                    properties:
+                      booking:
+                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update shipping booking (Admin)
+      description: Update an existing shipping booking with admin privileges. Admin-specific endpoint.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Booking ID
+          schema:
+            type: string
+            example: "BK123456789"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas.yaml#/components/schemas/KirimkuBookingUpdateRequest'
+      responses:
+        '200':
+          description: Booking updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Booking updated successfully"
+                  data:
+                    type: object
+                    properties:
+                      booking:
+                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+        '400':
+          description: Bad request - Invalid update data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Cancel shipping booking (Admin)
+      description: Cancel an existing shipping booking with admin privileges. Admin-specific endpoint.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Booking ID
+          schema:
+            type: string
+            example: "BK123456789"
+      responses:
+        '200':
+          description: Booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Booking cancelled successfully"
+                  data:
+                    type: object
+                    properties:
+                      booking_id:
+                        type: string
+                        example: "BK123456789"
+                      status:
+                        type: string
+                        example: "cancelled"
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Booking cannot be cancelled
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/kirimku/transaction/{id}:
+    get:
+      summary: Get shipping transaction details (Admin)
+      description: |
+        Retrieve complete details of a shipping transaction with admin privileges.
+        
+        **Authentication Required:** Admin user authentication
+        
+        **Admin Privileges:** Full access to all transaction details including:
+        - Complete transaction state and history
+        - Delivery information (sender and recipient addresses)
+        - Package details with dimensions and value
+        - Amount breakdown (shipping, insurance, fees)
+        - **Complete invoice with payment information:**
+          - Payment URLs (payment_url, checkout_url)
+          - Payment method and channel details
+          - QR code data (base64 PNG image + text)
+          - Payment gateway provider information
+          - Payment status and timestamps
+        
+        **Use Cases:**
+        - Admin transaction monitoring and management
+        - Customer support for payment issues
+        - Transaction audit and reconciliation
+        - Payment gateway integration debugging
+        - QR code verification and regeneration
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID (numeric)
+          schema:
+            type: string
+            example: "549"
+      responses:
+        '200':
+          description: Transaction details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Transaction retrieved successfully"
+                  data:
+                    $ref: './schemas.yaml#/components/schemas/KirimkuTransaction'
+              examples:
+                qris_payment_transaction:
+                  summary: Transaction with QRIS payment and complete invoice
+                  value:
+                    success: true
+                    message: "Transaction retrieved successfully"
+                    data:
+                      id: "549"
+                      unique_id: "SS-1763858562"
+                      state: "invoiced"
+                      state_name: "Menunggu Pembayaran"
+                      state_information: "Menunggu pembayaran invoice"
+                      user_id: "3116fc5a-d512-4be7-9353-1c444c2af49b"
+                      created_at: "2025-11-23T07:42:42.182505+07:00"
+                      updated_at: "2025-11-23T07:42:42.359848+07:00"
+                      delivery:
+                        from:
+                          name: "Rexus Store"
+                          phone: "62211234567"
+                          address: "Jl. Default Address No. 123"
+                          area: "Cempaka Putih"
+                          city: "Jakarta Pusat"
+                          province: "DKI Jakarta"
+                          post_code: "10510"
+                        consignee:
+                          name: "Customer Name"
+                          phone: "628123456789"
+                          address: "Jl. Sudirman No. 123"
+                          area: "Menteng"
+                          city: "Jakarta Pusat"
+                          province: "DKI Jakarta"
+                          post_code: "10310"
+                        booking_code: ""
+                        courier: "jnt"
+                        courier_name: "J&T"
+                        service_name: "Regular"
+                      products:
+                        name: "Warranty Claim Package SS-1763858562"
+                        quantity: 1
+                        weight: 1000
+                        price: 150000
+                        length: 20
+                        width: 15
+                        height: 10
+                      amount:
+                        total: 7500
+                        details:
+                          shipping: 7500
+                          insurance: 0
+                      invoice:
+                        id: "INV-TX549-QR_CODE-20251123074242-wSEg"
+                        external_id: "ord_R1Px4zvvBm7761"
+                        payment_url: "https://payment.example.com/pay/abc123"
+                        amount: 7500
+                        status: "PENDING"
+                        payment_method: "QR_CODE"
+                        payment_channel: "QRIS"
+                        e_wallet: ""
+                        checkout_url: "https://checkout.example.com/abc123"
+                        qr_string: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA..."
+                        qr_code: "00020101021126...5802ID5915..."
+                        payment_gateway: "durianpay"
+                        expired_at: "2025-11-24T07:42:42.356819+07:00"
+                        paid_at: null
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+              examples:
+                not_authenticated:
+                  summary: User not authenticated
+                  value:
+                    success: false
+                    message: "Authentication required"
+                    error: "unauthorized"
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+              examples:
+                not_admin:
+                  summary: User is not an admin
+                  value:
+                    success: false
+                    message: "Admin privileges required"
+                    error: "forbidden"
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+              examples:
+                transaction_not_found:
+                  summary: Transaction ID does not exist
+                  value:
+                    success: false
+                    message: "Transaction not found"
+                    error: "not_found"
+        '500':
+          description: Internal server error or Kirimku API error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+              examples:
+                kirimku_api_error:
+                  summary: Kirimku API unavailable
+                  value:
+                    success: false
+                    message: "Failed to get transaction"
+                    error: "internal_error"
+                    error_detail: "Kirimku API error 404: HTTP 404: 404 page not found"
+
+  /api/v1/admin/kirimku/invoice/{id}:
+    get:
+      summary: Get shipping invoice details (Admin)
+      description: Retrieve details of a specific shipping invoice with admin privileges. Admin-specific endpoint.
+      tags:
+        - Admin Shipping
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Invoice ID
+          schema:
+            type: string
+            example: "INV123456789"
+      responses:
+        '200':
+          description: Invoice details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Invoice details retrieved successfully"
+                  data:
+                    type: object
+                    properties:
+                      invoice:
+                        $ref: './schemas.yaml#/components/schemas/KirimkuInvoice'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Admin privileges required
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Admin JWT token for authentication

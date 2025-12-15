@@ -1,0 +1,2172 @@
+paths:
+  /api/v1/storefront/{slug}/warranty/validate-barcode:
+    post:
+      tags:
+        - Storefront Customer Warranty
+      summary: Validate warranty barcode
+      description: Validates a warranty barcode and returns product, warranty, and coverage info
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                barcode:
+                  type: string
+                  description: Warranty barcode value
+                  example: "REX258937EFD8E5XC"
+                product_sku:
+                  type: string
+                  description: Optional product SKU to assist lookup
+                  example: "REX-120-7761"
+      responses:
+        '200':
+          description: Warranty validation successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  barcode:
+                    type: string
+                    example: "REX258937EFD8E5XC"
+                  status:
+                    type: string
+                    enum: [generated, activated, expired, revoked]
+                    example: "activated"
+                  message:
+                    type: string
+                    example: "Warranty is valid and active"
+                  product:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "adc891b3-e385-4c9a-8bd7-a96f4c72dcbb"
+                      sku:
+                        type: string
+                        example: "REX-120-7761"
+                      name:
+                        type: string
+                        example: "Rexus Aether Keyboard Gaming Mechanical Wireless Triple Mode Connection - Hot-Swappable & Gasket Mount"
+                      brand:
+                        type: string
+                        example: "Rexus"
+                      model:
+                        type: string
+                        example: "Aether"
+                      category:
+                        type: string
+                        example: "General"
+                      description:
+                        type: string
+                      image_url:
+                        type: string
+                        format: uri
+                        description: Primary product image URL
+                        example: "https://cdn.example.com/images/REX-120-7761-main.jpg"
+                  warranty:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      barcode:
+                        type: string
+                      status:
+                        type: string
+                      is_active:
+                        type: boolean
+                      expiry_date:
+                        type: string
+                        format: date-time
+                      days_remaining:
+                        type: integer
+                      warranty_period:
+                        type: string
+                      is_expired:
+                        type: boolean
+                      can_claim:
+                        type: boolean
+                  coverage:
+                    type: object
+                    properties:
+                      coverage_type:
+                        type: string
+                      covered_components:
+                        type: array
+                        items:
+                          type: string
+                      excluded_components:
+                        type: array
+                        items:
+                          type: string
+                      repair_coverage:
+                        type: boolean
+                      replacement_coverage:
+                        type: boolean
+                      labor_coverage:
+                        type: boolean
+                      parts_coverage:
+                        type: boolean
+                      terms:
+                        type: array
+                        items:
+                          type: string
+                  validation_time:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid request
+        '404':
+          description: Warranty not found
+        '500':
+          description: Internal server error
+  # Storefront Customer Warranty Endpoints (Authentication Required)
+  /api/v1/storefront/{slug}/warranties:
+    get:
+      tags:
+        - Storefront Customer Warranty
+      summary: Get customer warranties for storefront
+      description: Retrieve all warranties associated with the authenticated customer for a specific storefront
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: status
+          in: query
+          description: Filter by warranty status
+          schema:
+            type: string
+            enum: [active, expired, claimed, pending]
+        - name: product_name
+          in: query
+          description: Search by product name
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, expires_at, product_name, status]
+            default: created_at
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Customer warranties retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Customer warranties retrieved successfully"
+                  data:
+                    type: object
+                    properties:
+                      warranties:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StorefrontCustomerWarrantyDTO'
+                      pagination:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 10
+                          total_items:
+                            type: integer
+                            example: 25
+                          total_pages:
+                            type: integer
+                            example: 3
+                          has_next:
+                            type: boolean
+                            example: true
+                          has_previous:
+                            type: boolean
+                            example: false
+                      summary:
+                        type: object
+                        properties:
+                          total_warranties:
+                            type: integer
+                            example: 25
+                          active_warranties:
+                            type: integer
+                            example: 20
+                          expired_warranties:
+                            type: integer
+                            example: 3
+                          claimed_warranties:
+                            type: integer
+                            example: 2
+                          storefront_name:
+                            type: string
+                            example: "Rexus Official Store"
+        '400':
+          description: Bad request - Invalid storefront slug or parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid storefront slug or parameters"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Customer not authorized for this storefront
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "You are not authorized to access warranties for this storefront"
+        '404':
+          description: Storefront not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Storefront not found"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefront/{slug}/warranties/upload-proof:
+    post:
+      tags:
+        - Storefront Customer Warranty
+      summary: Upload proof of purchase for warranty registration
+      description: Upload proof of purchase document (receipt, invoice, etc.) for warranty registration
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - document_type
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Proof of purchase document file (PDF, JPG, PNG)
+                document_type:
+                  type: string
+                  enum: [receipt, invoice, purchase_order, warranty_card]
+                  description: Type of proof of purchase document
+                  example: "receipt"
+            encoding:
+              file:
+                contentType: application/pdf, image/jpeg, image/png
+      responses:
+        '200':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Proof of purchase uploaded successfully"
+                  data:
+                    $ref: '#/components/schemas/ProofOfPurchaseInfo'
+        '400':
+          description: Bad request - Invalid file or parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid file format or size"
+                  validation_errors:
+                    type: array
+                    items:
+                      type: string
+                    example: ["File size must be less than 10MB", "Only PDF, JPG, PNG files are allowed"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Customer not authorized for this storefront
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "You are not authorized to upload files for this storefront"
+        '413':
+          description: Payload too large - File size exceeds limit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "File size exceeds the maximum limit of 10MB"
+        '415':
+          description: Unsupported media type - Invalid file format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Unsupported file format. Only PDF, JPG, PNG are allowed"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefront/{slug}/warranties/register:
+    post:
+      tags:
+        - Storefront Customer Warranty
+      summary: Register a warranty for a customer
+      description: Register a warranty barcode to a customer account within a specific storefront
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerWarrantyRegistrationRequest'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                barcode:
+                  type: string
+                  description: "Warranty barcode value (product SKU and serial number will be extracted from this)"
+                  example: "WB-2024-001234567"
+                proof_of_purchase:
+                  type: string
+                  format: binary
+                  description: "Invoice or receipt file"
+              required:
+                - barcode
+                - proof_of_purchase
+      responses:
+        '201':
+          description: Warranty registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Warranty registered successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerWarrantyRegistrationResponse'
+        '400':
+          description: Bad request - Invalid request data or warranty cannot be registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Warranty barcode 'WB-2024-001234567' not found"
+                  error:
+                    type: string
+                    example: "registration_failed"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Customer not authorized for this storefront
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Warranty barcode does not belong to this storefront"
+                  error:
+                    type: string
+                    example: "registration_failed"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+        '409':
+          description: Conflict - Warranty already registered or expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Warranty is already registered to another customer"
+                  error:
+                    type: string
+                    example: "registration_failed"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefront/{slug}/warranties/{id}:
+    get:
+      tags:
+        - Storefront Customer Warranty
+      summary: Get warranty details
+      description: Retrieve detailed information about a specific warranty
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+        - name: id
+          in: path
+          required: true
+          description: Warranty ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Warranty details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Warranty details retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/StorefrontCustomerWarrantyDetailDTO'
+        '400':
+          description: Bad request - Invalid warranty ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid warranty ID format"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Warranty does not belong to customer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "You are not authorized to access this warranty"
+        '404':
+          description: Warranty not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Warranty not found"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      tags:
+        - Storefront Customer Warranty
+      summary: Update warranty information
+      description: Update warranty information for a specific warranty
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+        - name: id
+          in: path
+          required: true
+          description: Warranty ID
+          schema:
+            type: string
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                purchase_date:
+                  type: string
+                  format: date-time
+                  description: "Updated purchase date"
+                  example: "2024-01-15T00:00:00Z"
+                purchase_price:
+                  type: number
+                  format: decimal
+                  description: "Updated purchase price"
+                  example: 999.99
+                retailer_name:
+                  type: string
+                  description: "Updated retailer name"
+                  example: "TechStore Inc"
+                retailer_address:
+                  type: string
+                  description: "Updated retailer address"
+                  example: "123 Main St, City, State"
+                invoice_number:
+                  type: string
+                  description: "Updated invoice number"
+                  example: "INV-2024-001"
+      responses:
+        '200':
+          description: Warranty updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Warranty updated successfully"
+                  data:
+                    $ref: '#/components/schemas/StorefrontCustomerWarrantyDetailDTO'
+        '400':
+          description: Bad request - Invalid data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid warranty data"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Warranty does not belong to customer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "You are not authorized to update this warranty"
+        '404':
+          description: Warranty not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Warranty not found"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Warranty Claim Submission Endpoint
+  /api/v1/storefront/{slug}/claims/submit:
+    post:
+      tags:
+        - Storefront Customer Claims
+      summary: Submit warranty claim with optional Kirimku shipping
+      description: Submit a warranty claim with optional Kirimku shipping integration for product return/replacement
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitClaimWithKirimkuRequest'
+      responses:
+        '200':
+          description: Warranty claim submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Warranty claim submitted successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerClaimSubmissionResponse'
+        '400':
+          description: Bad request - Invalid claim data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid claim data provided"
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Issue description is required", "Contact phone is required"]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Warranty not eligible for claims
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Warranty is not eligible for claims or has expired"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    # Public Warranty Schemas
+    ValidateWarrantyRequest:
+      type: object
+      required:
+        - barcode
+      properties:
+        barcode:
+          type: string
+          example: "WB-2023-ABC123DEF456"
+          description: The warranty barcode to validate
+
+    WarrantyValidationDTO:
+      type: object
+      properties:
+        barcode:
+          type: string
+          example: "WB-2023-ABC123DEF456"
+        is_valid:
+          type: boolean
+          example: true
+        is_active:
+          type: boolean
+          example: true
+        is_expired:
+          type: boolean
+          example: false
+        product_info:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            name:
+              type: string
+              example: "Samsung Galaxy S23"
+            brand:
+              type: string
+              example: "Samsung"
+            model:
+              type: string
+              example: "Galaxy S23"
+            category:
+              type: string
+              example: "Smartphone"
+        warranty_info:
+          type: object
+          properties:
+            warranty_period_months:
+              type: integer
+              example: 12
+            activation_date:
+              type: string
+              format: date-time
+              nullable: true
+              example: "2023-12-01T10:00:00Z"
+            expiry_date:
+              type: string
+              format: date-time
+              nullable: true
+              example: "2024-12-01T10:00:00Z"
+            days_remaining:
+              type: integer
+              nullable: true
+              example: 365
+            status:
+              type: string
+              enum: [generated, activated, expired, revoked]
+              example: "activated"
+        storefront_info:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "TechStore Indonesia"
+            contact_email:
+              type: string
+              format: email
+              example: "support@techstore.id"
+            contact_phone:
+              type: string
+              example: "+6281234567890"
+
+    ActivateWarrantyRequest:
+      type: object
+      required:
+        - barcode
+        - customer_name
+        - customer_email
+        - customer_phone
+        - purchase_date
+      properties:
+        barcode:
+          type: string
+          example: "WB-2023-ABC123DEF456"
+        customer_name:
+          type: string
+          example: "John Doe"
+        customer_email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        customer_phone:
+          type: string
+          example: "+6281234567890"
+        purchase_date:
+          type: string
+          format: date
+          example: "2023-12-01"
+        purchase_location:
+          type: string
+          example: "TechStore Jakarta"
+        purchase_receipt_number:
+          type: string
+          example: "RCP-2023-001234"
+
+    WarrantyActivationDTO:
+      type: object
+      properties:
+        warranty_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        barcode:
+          type: string
+          example: "WB-2023-ABC123DEF456"
+        activation_date:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+        expiry_date:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:00:00Z"
+        warranty_period_months:
+          type: integer
+          example: 12
+        product_info:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "Samsung Galaxy S23"
+            brand:
+              type: string
+              example: "Samsung"
+            model:
+              type: string
+              example: "Galaxy S23"
+        customer_info:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "John Doe"
+            email:
+              type: string
+              format: email
+              example: "john.doe@example.com"
+            phone:
+              type: string
+              example: "+6281234567890"
+
+    # Customer Warranty Schemas
+    CustomerWarrantyRegistrationRequest:
+      type: object
+      required:
+        - barcode
+        - proof_of_purchase
+      properties:
+        barcode:
+          type: string
+          description: "Warranty barcode value (product SKU and serial number will be extracted from this)"
+          example: "WB-2024-001234567"
+        purchase_date:
+          type: string
+          format: date-time
+          description: "Purchase date (optional)"
+          example: "2024-01-15T00:00:00Z"
+        purchase_price:
+          type: number
+          format: decimal
+          description: "Purchase price (optional)"
+          example: 999.99
+        retailer_name:
+          type: string
+          description: "Name of the retailer (optional)"
+          example: "TechStore Inc"
+        retailer_address:
+          type: string
+          description: "Retailer address (optional)"
+          example: "123 Main St, City, State"
+        invoice_number:
+          type: string
+          description: "Invoice number (optional)"
+          example: "INV-2024-001"
+        proof_of_purchase:
+          $ref: '#/components/schemas/ProofOfPurchaseInfo'
+
+    CustomerWarrantyRegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: "Registration success status"
+          example: true
+        registration_id:
+          type: string
+          format: uuid
+          description: "Unique registration identifier"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        warranty_id:
+          type: string
+          format: uuid
+          description: "Warranty identifier"
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        barcode_value:
+          type: string
+          description: "Warranty barcode value"
+          example: "WB-2024-001234567"
+        status:
+          type: string
+          description: "Warranty status"
+          example: "registered"
+        activation_date:
+          type: string
+          format: date-time
+          description: "Warranty activation date"
+          example: "2024-01-15T10:30:00Z"
+        expiry_date:
+          type: string
+          format: date-time
+          description: "Warranty expiry date"
+          example: "2026-01-15T10:30:00Z"
+        warranty_period:
+          type: string
+          description: "Warranty period description"
+          example: "24 months"
+        product:
+          $ref: '#/components/schemas/CustomerProductInfo'
+        customer:
+          $ref: '#/components/schemas/CustomerInfo'
+        coverage:
+          $ref: '#/components/schemas/CustomerWarrantyCoverage'
+        next_steps:
+          type: array
+          description: "Next steps for the customer"
+          items:
+            type: string
+        registration_time:
+            type: string
+            format: date-time
+            description: "Registration timestamp"
+            example: "2024-01-15T10:30:00Z"
+
+    CustomerRegistrationInfo:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+        - phone_number
+        - address
+      properties:
+        first_name:
+          type: string
+          description: "Customer's first name"
+          example: "John"
+        last_name:
+          type: string
+          description: "Customer's last name"
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          description: "Customer's email address"
+          example: "john.doe@example.com"
+        phone_number:
+          type: string
+          description: "Customer's phone number"
+          example: "+1234567890"
+        address:
+          $ref: '#/components/schemas/CustomerAddressInfo'
+        date_of_birth:
+          type: string
+          format: date-time
+          description: "Customer's date of birth (optional)"
+          example: "1990-01-01T00:00:00Z"
+        preferences:
+          $ref: '#/components/schemas/CustomerPreferences'
+
+    CustomerAddressInfo:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - postal_code
+        - country
+      properties:
+        street:
+          type: string
+          description: "Street address"
+          example: "123 Main Street"
+        city:
+          type: string
+          description: "City"
+          example: "New York"
+        state:
+          type: string
+          description: "State or province"
+          example: "NY"
+        postal_code:
+          type: string
+          description: "Postal or ZIP code"
+          example: "10001"
+        country:
+          type: string
+          description: "Country"
+          example: "USA"
+
+    CustomerPreferences:
+      type: object
+      properties:
+        email_notifications:
+          type: boolean
+          description: "Enable email notifications"
+          example: true
+        sms_notifications:
+          type: boolean
+          description: "Enable SMS notifications"
+          example: false
+        language:
+          type: string
+          description: "Preferred language"
+          example: "en"
+        timezone:
+          type: string
+          description: "Preferred timezone"
+          example: "America/New_York"
+
+    ProofOfPurchaseInfo:
+      type: object
+      required:
+        - document_type
+      properties:
+        document_type:
+          type: string
+          description: "Type of proof document"
+          enum: [receipt, invoice, purchase_order, warranty_card]
+          example: "receipt"
+        document_url:
+          type: string
+          format: uri
+          description: "URL to the uploaded proof document"
+          example: "https://cloudflare-bucket.com/receipts/receipt-123.pdf"
+        file_name:
+          type: string
+          description: "Original filename of the uploaded document"
+          example: "receipt-123.pdf"
+        file_size:
+          type: integer
+          format: int64
+          description: "File size in bytes"
+          example: 1024000
+        mime_type:
+          type: string
+          description: "MIME type of the uploaded file"
+          example: "application/pdf"
+        uploaded_at:
+          type: string
+          format: date-time
+          description: "When the document was uploaded"
+          example: "2024-01-15T10:30:00Z"
+
+    CustomerProductInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Product ID"
+          example: "123e4567-e89b-12d3-a456-426614174002"
+        sku:
+          type: string
+          description: "Product SKU"
+          example: "SKU-PHONE-001"
+        name:
+          type: string
+          description: "Product name"
+          example: "Smartphone Pro Max 256GB"
+        brand:
+          type: string
+          description: "Product brand"
+          example: "TechBrand"
+        model:
+          type: string
+          description: "Product model"
+          example: "Pro Max"
+        category:
+          type: string
+          description: "Product category"
+          example: "Electronics"
+        description:
+          type: string
+          description: "Product description"
+          example: "Latest flagship smartphone"
+        image_url:
+          type: string
+          format: uri
+          description: "Product image URL"
+          example: "https://example.com/images/phone.jpg"
+        price:
+          type: number
+          format: decimal
+          description: "Product price (optional)"
+          example: 999.99
+
+    CustomerInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Customer ID"
+          example: "123e4567-e89b-12d3-a456-426614174003"
+        first_name:
+          type: string
+          description: "Customer's first name"
+          example: "John"
+        last_name:
+          type: string
+          description: "Customer's last name"
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          description: "Customer's email"
+          example: "john.doe@example.com"
+        phone_number:
+          type: string
+          description: "Customer's phone number"
+          example: "+1234567890"
+
+    CustomerWarrantyCoverage:
+      type: object
+      properties:
+        coverage_type:
+          type: string
+          description: "Type of warranty coverage"
+          example: "comprehensive"
+        covered_components:
+          type: array
+          description: "List of covered components"
+          items:
+            type: string
+          example: ["hardware", "software", "battery"]
+        excluded_components:
+          type: array
+          description: "List of excluded components"
+          items:
+            type: string
+          example: ["water_damage", "physical_abuse"]
+        repair_coverage:
+          type: boolean
+          description: "Whether repairs are covered"
+          example: true
+        replacement_coverage:
+          type: boolean
+          description: "Whether replacements are covered"
+          example: true
+        labor_coverage:
+          type: boolean
+          description: "Whether labor is covered"
+          example: true
+        parts_coverage:
+          type: boolean
+          description: "Whether parts are covered"
+          example: true
+        terms:
+          type: array
+          description: "Warranty terms"
+          items:
+            type: string
+        limitations:
+          type: array
+          description: "Warranty limitations (optional)"
+          items:
+            type: string
+
+    CustomerWarrantyDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        barcode:
+          type: string
+          example: "WB-2023-ABC123DEF456"
+        product_name:
+          type: string
+          example: "Samsung Galaxy S23"
+        product_brand:
+          type: string
+          example: "Samsung"
+        product_model:
+          type: string
+          example: "Galaxy S23"
+        status:
+          type: string
+          enum: [active, expired, claimed]
+          example: "active"
+        activation_date:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+        expiry_date:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:00:00Z"
+        days_remaining:
+          type: integer
+          example: 365
+        warranty_period_months:
+          type: integer
+          example: 12
+        purchase_date:
+          type: string
+          format: date
+          example: "2023-12-01"
+        purchase_location:
+          type: string
+          example: "TechStore Jakarta"
+        has_active_claim:
+          type: boolean
+          example: false
+        claim_count:
+          type: integer
+          example: 0
+
+    CustomerWarrantyDetailDTO:
+      allOf:
+        - $ref: '#/components/schemas/CustomerWarrantyDTO'
+        - type: object
+          properties:
+            product_details:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: "Latest Samsung flagship smartphone with advanced camera"
+                specifications:
+                  type: object
+                  example: {"storage": "256GB", "ram": "8GB", "color": "Phantom Black"}
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                  example: ["https://images.smartseller.com/products/samsung-s23.jpg"]
+            purchase_details:
+              type: object
+              properties:
+                receipt_number:
+                  type: string
+                  example: "RCP-2023-001234"
+                purchase_price:
+                  type: number
+                  format: decimal
+                  example: 12000000
+                currency:
+                  type: string
+                  example: "IDR"
+                payment_method:
+                  type: string
+                  example: "Credit Card"
+            storefront_details:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "TechStore Indonesia"
+                contact_email:
+                  type: string
+                  format: email
+                  example: "support@techstore.id"
+                contact_phone:
+                  type: string
+                  example: "+6281234567890"
+                address:
+                  type: string
+                  example: "Jl. Sudirman No. 123, Jakarta"
+            warranty_terms:
+              type: object
+              properties:
+                coverage_description:
+                  type: string
+                  example: "Covers manufacturing defects and hardware malfunctions"
+                exclusions:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Physical damage", "Water damage", "Software issues"]
+                claim_process:
+                  type: string
+                  example: "Submit claim through customer portal with proof of purchase"
+            claims_history:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomerClaimSummaryDTO'
+
+    CustomerWarrantySummaryDTO:
+      type: object
+      properties:
+        total_warranties:
+          type: integer
+          example: 5
+        active_warranties:
+          type: integer
+          example: 3
+        expired_warranties:
+          type: integer
+          example: 1
+        claimed_warranties:
+          type: integer
+          example: 1
+        expiring_soon:
+          type: integer
+          example: 1
+          description: "Warranties expiring within 30 days"
+
+    StorefrontCustomerWarrantyDTO:
+      allOf:
+        - $ref: '#/components/schemas/CustomerWarrantyDTO'
+        - type: object
+          properties:
+            storefront_slug:
+              type: string
+              example: "rexus"
+              description: "Storefront identifier"
+            storefront_name:
+              type: string
+              example: "Rexus Official Store"
+              description: "Display name of the storefront"
+
+    StorefrontCustomerWarrantyListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StorefrontCustomerWarrantyDTO'
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+        summary:
+          $ref: '#/components/schemas/CustomerWarrantySummaryDTO'
+
+    # Customer Claim Schemas
+    SubmitClaimRequest:
+      type: object
+      required:
+        - issue_category
+        - issue_description
+        - contact_phone
+      properties:
+        issue_category:
+          type: string
+          example: "Hardware Malfunction"
+          description: "Category of the issue"
+        issue_description:
+          type: string
+          example: "Screen flickering and touch not responsive"
+          description: "Detailed description of the issue"
+        contact_phone:
+          type: string
+          example: "+6281234567890"
+          description: "Contact phone number for this claim"
+        preferred_contact_method:
+          type: string
+          enum: [email, phone, whatsapp]
+          default: email
+          example: "email"
+        shipping_address:
+          type: object
+          properties:
+            street:
+              type: string
+              example: "Jl. Sudirman No. 123"
+            city:
+              type: string
+              example: "Jakarta"
+            state:
+              type: string
+              example: "DKI Jakarta"
+            postal_code:
+              type: string
+              example: "12190"
+            country:
+              type: string
+              example: "Indonesia"
+        attachments:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: "Supporting files (images, documents, videos)"
+          maxItems: 5
+
+    SubmitClaimWithKirimkuRequest:
+      type: object
+      required:
+        - warranty_id
+        - issue_category
+        - issue_description
+        - contact_phone
+      properties:
+        warranty_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          description: "ID of the warranty to claim"
+        issue_category:
+          type: string
+          example: "Hardware Malfunction"
+          description: "Category of the issue"
+        issue_description:
+          type: string
+          example: "Screen flickering and touch not responsive"
+          description: "Detailed description of the issue"
+        contact_phone:
+          type: string
+          example: "+6281234567890"
+          description: "Contact phone number for this claim"
+        preferred_contact_method:
+          type: string
+          enum: [email, phone, whatsapp]
+          default: email
+          example: "email"
+        shipping_address:
+          type: object
+          properties:
+            street:
+              type: string
+              example: "Jl. Sudirman No. 123"
+            city:
+              type: string
+              example: "Jakarta"
+            state:
+              type: string
+              example: "DKI Jakarta"
+            postal_code:
+              type: string
+              example: "12190"
+            country:
+              type: string
+              example: "Indonesia"
+        attachments:
+          type: array
+          items:
+            type: string
+            format: binary
+          description: "Supporting files (images, documents, videos)"
+          maxItems: 5
+        # Kirimku Integration Fields
+        enable_kirimku_shipping:
+          type: boolean
+          default: false
+          example: true
+          description: "Enable Kirimku shipping integration for product return/replacement"
+        kirimku_shipping_details:
+          type: object
+          description: "Kirimku shipping configuration (required if enable_kirimku_shipping is true)"
+          properties:
+            origin_area_id:
+              type: integer
+              example: 1
+              description: "Origin area ID for shipping calculation"
+            destination_area_id:
+              type: integer
+              example: 2
+              description: "Destination area ID for shipping calculation"
+            package_weight:
+              type: integer
+              example: 1000
+              description: "Package weight in grams"
+            package_length:
+              type: integer
+              example: 20
+              description: "Package length in centimeters"
+            package_width:
+              type: integer
+              example: 15
+              description: "Package width in centimeters"
+            package_height:
+              type: integer
+              example: 10
+              description: "Package height in centimeters"
+            insurance_amount:
+              type: number
+              format: decimal
+              example: 1000000
+              description: "Insurance amount in IDR"
+            cod_amount:
+              type: number
+              format: decimal
+              example: 0
+              description: "Cash on delivery amount in IDR (0 for no COD)"
+
+    CustomerClaimSubmissionResponse:
+      type: object
+      properties:
+        claim_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        claim_number:
+          type: string
+          example: "WC-2023-001234"
+        status:
+          type: string
+          example: "pending"
+        estimated_completion:
+          type: string
+          format: date-time
+          example: "2023-12-31T23:59:59Z"
+        shipping_info:
+          $ref: '#/components/schemas/CustomerClaimShippingInfo'
+
+    CustomerClaimShippingInfo:
+      type: object
+      properties:
+        booking_id:
+          type: string
+          example: "KB-2023-001234"
+          description: "Kirimku booking ID"
+        invoice_code:
+          type: string
+          example: "INV-2023-001234"
+          description: "Kirimku invoice code"
+        shipping_cost:
+          type: number
+          format: decimal
+          example: 15000
+          description: "Total shipping cost in IDR"
+        courier:
+          type: string
+          example: "JNT"
+          description: "Selected courier service"
+        service_type:
+          type: string
+          example: "REG"
+          description: "Service type (REG, YES, etc.)"
+        estimated_delivery:
+          type: string
+          format: date-time
+          example: "2023-12-25T17:00:00Z"
+          description: "Estimated delivery date and time"
+        tracking_number:
+          type: string
+          example: "JP1234567890"
+          description: "Courier tracking number"
+        status:
+          type: string
+          example: "pending"
+          description: "Shipping status"
+        payment_status:
+          type: string
+          example: "pending"
+          description: "Payment status for shipping"
+        payment_url:
+          type: string
+          example: "https://payment.kirimku.com/pay/abc123"
+          description: "Payment URL for shipping cost"
+
+    CustomerClaimDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        claim_number:
+          type: string
+          example: "WC-2023-001234"
+        warranty_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        barcode:
+          type: string
+          example: "WB-2023-ABC123DEF456"
+        product_name:
+          type: string
+          example: "Samsung Galaxy S23"
+        status:
+          type: string
+          enum: [pending, validated, in_progress, completed, rejected, cancelled]
+          example: "pending"
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: "medium"
+        issue_category:
+          type: string
+          example: "Hardware Malfunction"
+        issue_description:
+          type: string
+          example: "Screen flickering and touch not responsive"
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-12-15T10:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+        last_status_update:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+        can_be_cancelled:
+          type: boolean
+          example: true
+        can_be_updated:
+          type: boolean
+          example: true
+
+    CustomerClaimDetailDTO:
+      allOf:
+        - $ref: '#/components/schemas/CustomerClaimDTO'
+        - type: object
+          properties:
+            contact_information:
+              type: object
+              properties:
+                phone:
+                  type: string
+                  example: "+6281234567890"
+                preferred_contact_method:
+                  type: string
+                  enum: [email, phone, whatsapp]
+                  example: "email"
+            shipping_address:
+              $ref: '#/components/schemas/AddressDTO'
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/ClaimAttachmentDTO'
+            timeline:
+              type: array
+              items:
+                $ref: '#/components/schemas/CustomerClaimTimelineDTO'
+            resolution_details:
+              type: object
+              nullable: true
+              properties:
+                resolution_type:
+                  type: string
+                  enum: [repair, replacement, refund]
+                  example: "repair"
+                resolution_description:
+                  type: string
+                  example: "Screen replaced and device tested"
+                completion_date:
+                  type: string
+                  format: date-time
+                  example: "2023-12-05T14:30:00Z"
+                warranty_extension:
+                  type: object
+                  nullable: true
+                  properties:
+                    extended_months:
+                      type: integer
+                      example: 3
+                    new_expiry_date:
+                      type: string
+                      format: date-time
+                      example: "2025-03-01T10:00:00Z"
+            repair_tracking:
+              $ref: '#/components/schemas/CustomerRepairTrackingDTO'
+
+    CustomerClaimSummaryDTO:
+      type: object
+      properties:
+        total_claims:
+          type: integer
+          example: 3
+        pending_claims:
+          type: integer
+          example: 1
+        in_progress_claims:
+          type: integer
+          example: 1
+        completed_claims:
+          type: integer
+          example: 1
+        rejected_claims:
+          type: integer
+          example: 0
+        average_resolution_days:
+          type: number
+          format: decimal
+          example: 7.5
+
+    UpdateCustomerClaimRequest:
+      type: object
+      properties:
+        contact_phone:
+          type: string
+          example: "+6281234567890"
+        preferred_contact_method:
+          type: string
+          enum: [email, phone, whatsapp]
+          example: "whatsapp"
+        shipping_address:
+          type: object
+          properties:
+            street:
+              type: string
+              example: "Jl. Sudirman No. 456"
+            city:
+              type: string
+              example: "Jakarta"
+            state:
+              type: string
+              example: "DKI Jakarta"
+            postal_code:
+              type: string
+              example: "12190"
+            country:
+              type: string
+              example: "Indonesia"
+        additional_notes:
+          type: string
+          maxLength: 500
+          example: "Please contact me via WhatsApp for faster communication"
+
+    CancelClaimRequest:
+      type: object
+      required:
+        - cancellation_reason
+      properties:
+        cancellation_reason:
+          type: string
+          example: "Issue resolved by local technician"
+        additional_notes:
+          type: string
+          maxLength: 500
+          example: "Found a local repair shop that fixed the issue quickly"
+
+    UploadAttachmentRequest:
+      type: object
+      required:
+        - file
+        - file_type
+      properties:
+        file:
+          type: string
+          format: binary
+          description: "File to upload (max 10MB)"
+        file_type:
+          type: string
+          enum: [receipt, photo, document, video]
+          example: "photo"
+        description:
+          type: string
+          maxLength: 200
+          example: "Photo showing the screen flickering issue"
+
+    # Supporting Schemas
+    CustomerClaimTimelineDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        event_type:
+          type: string
+          example: "STATUS_CHANGED"
+        title:
+          type: string
+          example: "Claim Status Updated"
+        description:
+          type: string
+          example: "Your claim has been validated and assigned to our technical team"
+        performed_by_type:
+          type: string
+          enum: [customer, admin, system]
+          example: "admin"
+        is_customer_visible:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+
+    CustomerRepairTrackingDTO:
+      type: object
+      properties:
+        repair_ticket_number:
+          type: string
+          example: "RT-2023-001234"
+        current_status:
+          type: string
+          enum: [pending, in_progress, completed, quality_check, approved]
+          example: "in_progress"
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-12-05T14:30:00Z"
+        repair_description:
+          type: string
+          example: "Screen replacement in progress"
+        technician_notes:
+          type: string
+          example: "Ordered replacement screen, will install once received"
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 60
+        milestones:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                example: "Diagnosis Complete"
+              description:
+                type: string
+                example: "Issue identified as faulty screen digitizer"
+              completed_at:
+                type: string
+                format: date-time
+                example: "2023-12-02T09:30:00Z"
+              is_completed:
+                type: boolean
+                example: true
+
+    WarrantyNotificationDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [warranty_expiring, claim_status_update, claim_approved, claim_rejected]
+          example: "warranty_expiring"
+        title:
+          type: string
+          example: "Warranty Expiring Soon"
+        message:
+          type: string
+          example: "Your warranty for Samsung Galaxy S23 will expire in 30 days"
+        is_read:
+          type: boolean
+          example: false
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: "medium"
+        related_warranty_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        related_claim_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        action_required:
+          type: boolean
+          example: false
+        action_url:
+          type: string
+          format: uri
+          nullable: true
+          example: "/warranties/123e4567-e89b-12d3-a456-426614174000"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-12-31T23:59:59Z"
+
+    ClaimAttachmentDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        filename:
+          type: string
+          example: "receipt.jpg"
+        original_filename:
+          type: string
+          example: "purchase_receipt_2023.jpg"
+        file_type:
+          type: string
+          enum: [receipt, photo, document, video]
+          example: "receipt"
+        file_size:
+          type: integer
+          example: 1024000
+        mime_type:
+          type: string
+          example: "image/jpeg"
+        description:
+          type: string
+          nullable: true
+          example: "Purchase receipt from TechStore"
+        url:
+          type: string
+          format: uri
+          example: "https://storage.smartseller.com/claims/attachments/receipt.jpg"
+        thumbnail_url:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://storage.smartseller.com/claims/thumbnails/receipt_thumb.jpg"
+        uploaded_at:
+          type: string
+          format: date-time
+          example: "2023-12-01T10:00:00Z"
+        can_be_deleted:
+          type: boolean
+          example: true
+
+    AddressDTO:
+      type: object
+      properties:
+        street:
+          type: string
+          example: "Jl. Sudirman No. 123"
+        city:
+          type: string
+          example: "Jakarta"
+        state:
+          type: string
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          example: "12190"
+        country:
+          type: string
+          example: "Indonesia"
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        total_items:
+          type: integer
+          example: 150
+        total_pages:
+          type: integer
+          example: 8
+        has_next:
+          type: boolean
+          example: true
+        has_previous:
+          type: boolean
+          example: false
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Invalid input parameters"
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                      example: "barcode"
+                    message:
+                      type: string
+                      example: "Barcode is required and must be valid"
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Unauthorized access"
+
+    NotFound:
+      description: Not found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Resource not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Internal server error"
+
+  securitySchemes:
+    CustomerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Customer JWT token obtained from authentication endpoints

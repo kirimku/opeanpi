@@ -1,0 +1,78 @@
+components:
+  schemas:
+    StorefrontResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          example: Rexus Store
+        slug:
+          type: string
+          example: rexus
+        description:
+          type: string
+          example: Test storefront for warranty testing
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          example: active
+        settings:
+          type: object
+          properties:
+            enable_guest_checkout:
+              type: boolean
+              example: false
+            require_phone_verification:
+              type: boolean
+              example: false
+            require_email_verification:
+              type: boolean
+              example: false
+            allowed_payment_methods:
+              type: array
+              items:
+                type: string
+              nullable: true
+            currency:
+              type: string
+              example: IDR
+            timezone:
+              type: string
+              example: Asia/Jakarta
+            language:
+              type: string
+              example: id
+            tax_settings:
+              type: object
+              properties:
+                enable_tax:
+                  type: boolean
+                  example: false
+                tax_rate:
+                  type: number
+                  format: float
+                  example: 0
+                tax_inclusive:
+                  type: boolean
+                  example: false
+            social_media:
+              type: object
+              properties:
+                facebook:
+                  type: string
+                instagram:
+                  type: string
+                twitter:
+                  type: string
+                whatsapp:
+                  type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

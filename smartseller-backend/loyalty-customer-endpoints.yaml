@@ -1,0 +1,722 @@
+paths:
+  # Loyalty Product Referral Endpoints (Authentication Required)
+  /api/v1/storefront/{slug}/loyalty/referral/generate-product:
+    post:
+      tags:
+        - Loyalty - Product Referral
+      summary: Generate product referral link
+      description: |
+        Customer generates a unique shareable referral link for a product. 
+        When someone purchases through this link, the referrer earns loyalty points.
+        
+        **Business Logic**:
+        - Referral code: 16-character crypto-random code
+        - Validity: 90 days from generation
+        - Points: 50 points flat rate (configurable per storefront)
+        - Single use: Code becomes invalid after first successful order
+        - Self-purchase blocked: Referrer cannot use their own code
+        
+        **Prerequisites**:
+        - Customer must have active loyalty account
+        - Referral program must be enabled for storefront
+        - Customer account must not be frozen
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - product_id
+              properties:
+                product_id:
+                  type: string
+                  format: uuid
+                  description: UUID of the product to share
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Product referral link generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product referral link generated successfully"
+                  data:
+                    $ref: '#/components/schemas/GenerateProductReferralResponse'
+              examples:
+                successful:
+                  summary: Successful referral link generation
+                  value:
+                    success: true
+                    message: "Product referral link generated successfully"
+                    data:
+                      referral_id: "456e7890-e89b-12d3-a456-426614174001"
+                      referral_code: "ABC123DEF456GHIJ"
+                      share_url: "https://store.example.com/products/premium-widget?ref=ABC123DEF456GHIJ"
+                      product_id: "123e4567-e89b-12d3-a456-426614174000"
+                      points_potential: 50
+                      expires_at: "2025-02-11T12:00:00Z"
+                      validity_days: 90
+        '400':
+          description: Bad request - Invalid product ID or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_product_id:
+                  summary: Invalid product ID format
+                  value:
+                    success: false
+                    message: "Invalid product ID format"
+                    error: "validation_error"
+                limit_reached:
+                  summary: Maximum referral limit reached
+                  value:
+                    success: false
+                    message: "Maximum referral limit reached"
+                    error: "limit_exceeded"
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Authentication required"
+                error: "unauthorized"
+        '403':
+          description: Forbidden - Referral program disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                program_disabled:
+                  summary: Referral program not enabled
+                  value:
+                    success: false
+                    message: "Referral program is not enabled"
+                    error: "forbidden"
+                frozen_account:
+                  summary: Account frozen or inactive
+                  value:
+                    success: false
+                    message: "Account is frozen or inactive"
+                    error: "account_status_invalid"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Failed to generate referral link"
+                error: "internal_server_error"
+        '503':
+          description: Service unavailable - Referral service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Referral service not available"
+                error: "service_unavailable"
+
+  /api/v1/storefront/{slug}/loyalty/referrals/analytics:
+    get:
+      tags:
+        - Loyalty - Product Referral
+      summary: Get referral performance analytics
+      description: |
+        Retrieve comprehensive analytics for customer's product referral activity.
+        
+        **Data Sections**:
+        - **Summary**: Overall statistics (total referrals, conversion rate, points earned)
+        - **Performance**: Time-based metrics (last 30 days, 90 days, all time)
+        - **Top Products**: Best performing shared products by conversion rate
+        - **Recent Conversions**: Last 10 successful orders from referrals
+        - **Active Links**: Unexpired referral links with remaining validity
+        
+        **Metrics Calculated**:
+        - Total referrals created
+        - Active/completed/expired counts
+        - Conversion rate (completed / total)
+        - Points earned per period
+        - Sales generated per period
+        - Product-level performance
+        
+        **Use Cases**:
+        - Customer dashboard showing referral performance
+        - Insights on which products to share more
+        - Tracking referral earnings over time
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+      responses:
+        '200':
+          description: Referral analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Referral analytics retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/ReferralAnalyticsResponse'
+              examples:
+                with_data:
+                  summary: Customer with active referrals
+                  value:
+                    success: true
+                    message: "Referral analytics retrieved successfully"
+                    data:
+                      summary:
+                        total_referrals_created: 15
+                        active_referrals: 8
+                        completed_referrals: 5
+                        expired_referrals: 2
+                        total_points_earned: 250
+                        conversion_rate: 33.33
+                      performance:
+                        last_30_days:
+                          shares_count: 5
+                          conversions: 2
+                          points_earned: 100
+                          total_sales: 450.75
+                          conversion_rate: 40.0
+                        last_90_days:
+                          shares_count: 12
+                          conversions: 4
+                          points_earned: 200
+                          total_sales: 925.50
+                          conversion_rate: 33.33
+                        all_time:
+                          shares_count: 15
+                          conversions: 5
+                          points_earned: 250
+                          total_sales: 1234.00
+                          conversion_rate: 33.33
+                      top_products:
+                        - product_id: "123e4567-e89b-12d3-a456-426614174000"
+                          product_name: "Premium Widget"
+                          shares_count: 8
+                          conversions: 3
+                          conversion_rate: 37.5
+                          points_earned: 150
+                          total_sales: 725.50
+                        - product_id: "789e0123-e89b-12d3-a456-426614174002"
+                          product_name: "Deluxe Gadget"
+                          shares_count: 7
+                          conversions: 2
+                          conversion_rate: 28.57
+                          points_earned: 100
+                          total_sales: 508.50
+                      recent_conversions:
+                        - referral_id: "456e7890-e89b-12d3-a456-426614174001"
+                          referral_code: "ABC123DEF456GHIJ"
+                          product_id: "123e4567-e89b-12d3-a456-426614174000"
+                          product_name: "Premium Widget"
+                          order_id: "111e2222-e89b-12d3-a456-426614174003"
+                          order_amount: 245.75
+                          points_earned: 50
+                          order_date: "2025-11-12T15:30:00Z"
+                      active_links:
+                        - referral_id: "456e7890-e89b-12d3-a456-426614174001"
+                          referral_code: "ABC123DEF456GHIJ"
+                          product_id: "123e4567-e89b-12d3-a456-426614174000"
+                          product_name: "Premium Widget"
+                          share_url: "https://store.example.com/products/item?ref=ABC123DEF456GHIJ"
+                          points_potential: 50
+                          created_at: "2025-11-13T10:00:00Z"
+                          expires_at: "2025-02-11T10:00:00Z"
+                          days_remaining: 89
+                empty_data:
+                  summary: New customer with no referrals yet
+                  value:
+                    success: true
+                    message: "Referral analytics retrieved successfully"
+                    data:
+                      summary:
+                        total_referrals_created: 0
+                        active_referrals: 0
+                        completed_referrals: 0
+                        expired_referrals: 0
+                        total_points_earned: 0
+                        conversion_rate: 0
+                      performance:
+                        last_30_days:
+                          shares_count: 0
+                          conversions: 0
+                          points_earned: 0
+                          total_sales: 0
+                          conversion_rate: 0
+                        last_90_days:
+                          shares_count: 0
+                          conversions: 0
+                          points_earned: 0
+                          total_sales: 0
+                          conversion_rate: 0
+                        all_time:
+                          shares_count: 0
+                          conversions: 0
+                          points_earned: 0
+                          total_sales: 0
+                          conversion_rate: 0
+                      top_products: []
+                      recent_conversions: []
+                      active_links: []
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Authentication required"
+                error: "unauthorized"
+        '404':
+          description: Not found - Loyalty account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Loyalty account not found"
+                error: "not_found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Failed to retrieve referral analytics"
+                error: "internal_server_error"
+        '503':
+          description: Service unavailable - Referral service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Referral service not available"
+                error: "service_unavailable"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from customer authentication
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Operation failed"
+        error:
+          type: string
+          example: "error_code"
+        error_detail:
+          type: string
+          example: "Detailed error message"
+
+    GenerateProductReferralResponse:
+      type: object
+      required:
+        - referral_id
+        - referral_code
+        - share_url
+        - product_id
+        - points_potential
+        - expires_at
+        - validity_days
+      properties:
+        referral_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the referral record
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        referral_code:
+          type: string
+          minLength: 16
+          maxLength: 16
+          pattern: '^[A-Z0-9]{16}$'
+          description: Unique 16-character referral code (crypto-random, base32 encoded)
+          example: "ABC123DEF456GHIJ"
+        share_url:
+          type: string
+          format: uri
+          description: Complete shareable URL with embedded referral code
+          example: "https://store.example.com/products/premium-widget?ref=ABC123DEF456GHIJ"
+        product_id:
+          type: string
+          format: uuid
+          description: UUID of the product being shared
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        points_potential:
+          type: integer
+          minimum: 0
+          description: Points the referrer will earn when someone purchases
+          example: 50
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration timestamp (90 days from creation)
+          example: "2025-02-11T12:00:00Z"
+        validity_days:
+          type: integer
+          minimum: 1
+          description: Number of days the referral code is valid
+          example: 90
+
+    ReferralAnalyticsResponse:
+      type: object
+      required:
+        - summary
+        - performance
+        - top_products
+        - recent_conversions
+        - active_links
+      properties:
+        summary:
+          $ref: '#/components/schemas/ReferralSummary'
+        performance:
+          $ref: '#/components/schemas/ReferralPerformance'
+        top_products:
+          type: array
+          description: Products ranked by conversion rate (descending)
+          items:
+            $ref: '#/components/schemas/ProductShareStats'
+        recent_conversions:
+          type: array
+          description: Last 10 successful orders from referrals (newest first)
+          items:
+            $ref: '#/components/schemas/RecentConversion'
+        active_links:
+          type: array
+          description: Unexpired referral links sorted by creation date (newest first)
+          items:
+            $ref: '#/components/schemas/ActiveReferralLink'
+
+    ReferralSummary:
+      type: object
+      description: Overall referral statistics
+      required:
+        - total_referrals_created
+        - active_referrals
+        - completed_referrals
+        - expired_referrals
+        - total_points_earned
+        - conversion_rate
+      properties:
+        total_referrals_created:
+          type: integer
+          minimum: 0
+          description: Total number of referral links generated
+          example: 15
+        active_referrals:
+          type: integer
+          minimum: 0
+          description: Number of referrals that haven't expired or been used
+          example: 8
+        completed_referrals:
+          type: integer
+          minimum: 0
+          description: Number of referrals that resulted in successful orders
+          example: 5
+        expired_referrals:
+          type: integer
+          minimum: 0
+          description: Number of referrals that expired without being used
+          example: 2
+        total_points_earned:
+          type: integer
+          minimum: 0
+          description: Total loyalty points earned from all completed referrals
+          example: 250
+        conversion_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Percentage of referrals that converted to orders (completed / total * 100)
+          example: 33.33
+
+    ReferralPerformance:
+      type: object
+      description: Performance metrics across different time periods
+      required:
+        - last_30_days
+        - last_90_days
+        - all_time
+      properties:
+        last_30_days:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        last_90_days:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        all_time:
+          $ref: '#/components/schemas/PerformanceMetrics'
+
+    PerformanceMetrics:
+      type: object
+      description: Performance statistics for a time period
+      required:
+        - shares_count
+        - conversions
+        - points_earned
+        - total_sales
+        - conversion_rate
+      properties:
+        shares_count:
+          type: integer
+          minimum: 0
+          description: Number of referral links created in period
+          example: 5
+        conversions:
+          type: integer
+          minimum: 0
+          description: Number of successful orders in period
+          example: 2
+        points_earned:
+          type: integer
+          minimum: 0
+          description: Total points earned in period
+          example: 100
+        total_sales:
+          type: number
+          format: float
+          minimum: 0
+          description: Total sales value generated in period
+          example: 450.75
+        conversion_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Conversion rate for period (conversions / shares * 100)
+          example: 40.0
+
+    ProductShareStats:
+      type: object
+      description: Performance statistics for a shared product
+      required:
+        - product_id
+        - product_name
+        - shares_count
+        - conversions
+        - conversion_rate
+        - points_earned
+        - total_sales
+      properties:
+        product_id:
+          type: string
+          format: uuid
+          description: Product UUID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        product_name:
+          type: string
+          description: Product display name (may be empty if not available)
+          example: "Premium Widget"
+        shares_count:
+          type: integer
+          minimum: 0
+          description: Number of times this product was shared
+          example: 8
+        conversions:
+          type: integer
+          minimum: 0
+          description: Number of orders resulting from shares
+          example: 3
+        conversion_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Product-specific conversion rate
+          example: 37.5
+        points_earned:
+          type: integer
+          minimum: 0
+          description: Total points earned from this product
+          example: 150
+        total_sales:
+          type: number
+          format: float
+          minimum: 0
+          description: Total sales generated from this product
+          example: 725.50
+
+    RecentConversion:
+      type: object
+      description: Details of a successful referral order
+      required:
+        - referral_id
+        - referral_code
+        - order_id
+        - order_amount
+        - points_earned
+        - order_date
+      properties:
+        referral_id:
+          type: string
+          format: uuid
+          description: Referral record UUID
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        referral_code:
+          type: string
+          description: Referral code used
+          example: "ABC123DEF456GHIJ"
+        product_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Product UUID (may be null if not stored)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        product_name:
+          type: string
+          description: Product name (may be empty)
+          example: "Premium Widget"
+        order_id:
+          type: string
+          format: uuid
+          description: Order UUID
+          example: "111e2222-e89b-12d3-a456-426614174003"
+        order_amount:
+          type: number
+          format: float
+          minimum: 0
+          description: Order total value
+          example: 245.75
+        points_earned:
+          type: integer
+          minimum: 0
+          description: Points awarded for this order
+          example: 50
+        order_date:
+          type: string
+          format: date-time
+          description: When the order was completed
+          example: "2025-11-12T15:30:00Z"
+
+    ActiveReferralLink:
+      type: object
+      description: Details of an active (unexpired) referral link
+      required:
+        - referral_id
+        - referral_code
+        - share_url
+        - points_potential
+        - created_at
+        - expires_at
+        - days_remaining
+      properties:
+        referral_id:
+          type: string
+          format: uuid
+          description: Referral record UUID
+          example: "456e7890-e89b-12d3-a456-426614174001"
+        referral_code:
+          type: string
+          description: Referral code
+          example: "ABC123DEF456GHIJ"
+        product_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Product UUID (may be null)
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        product_name:
+          type: string
+          description: Product name (may be empty)
+          example: "Premium Widget"
+        share_url:
+          type: string
+          format: uri
+          description: Complete shareable URL
+          example: "https://store.example.com/products/item?ref=ABC123DEF456GHIJ"
+        points_potential:
+          type: integer
+          minimum: 0
+          description: Points that will be earned when used
+          example: 50
+        created_at:
+          type: string
+          format: date-time
+          description: When the referral was created
+          example: "2025-11-13T10:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          description: When the referral expires
+          example: "2025-02-11T10:00:00Z"
+        days_remaining:
+          type: integer
+          minimum: 0
+          description: Days until expiration
+          example: 89
+
+tags:
+  - name: Loyalty - Product Referral
+    description: |
+      Product referral system allows customers to share products and earn loyalty points 
+      when others purchase through their referral links.
+      
+      **Key Features**:
+      - Generate unique referral links for any product
+      - Earn points when purchases are made via referral
+      - Track referral performance with detailed analytics
+      - 90-day validity period for referral codes
+      - Self-purchase blocking for fraud prevention
+      
+      **How It Works**:
+      1. Customer generates referral link for product
+      2. Customer shares link via social media, messaging, etc.
+      3. Buyer clicks link and purchases product
+      4. Referrer earns points automatically when order completes
+      5. Points are reversed if order is cancelled

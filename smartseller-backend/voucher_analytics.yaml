@@ -1,0 +1,2378 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Voucher Analytics API
+  description: |
+    Comprehensive voucher analytics and reporting system for SmartSeller platform.
+    
+    This API provides endpoints for:
+    - Voucher performance analytics
+    - Usage patterns and trends
+    - Customer behavior analysis
+    - Report generation and scheduling
+    - Export functionality
+    - Real-time metrics and dashboards
+    
+    ## Authentication
+    
+    All endpoints require JWT authentication. Include the token in the Authorization header:
+    
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Rate Limiting
+    
+    API endpoints are rate-limited to ensure fair usage:
+    - Admin users: 200 requests per minute
+    - Business users: 100 requests per minute
+    - Customer users: 50 requests per minute
+    
+    ## Pagination
+    
+    List endpoints support pagination using these parameters:
+    - `page`: Page number (default: 1)
+    - `limit`: Items per page (default: 20, max: 100)
+    - `cursor`: Cursor for cursor-based pagination (for large datasets)
+    
+    ## Error Handling
+    
+    The API uses standard HTTP status codes and returns error responses in this format:
+    
+    ```json
+    {
+      "success": false,
+      "message": "Error description",
+      "code": "ERROR_CODE",
+      "details": "Additional error details"
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: SmartSeller API Team
+    email: api-support@smartseller.com
+    url: https://smartseller.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.smartseller.com/v1
+    description: Production server
+  - url: https://staging-api.smartseller.com/v1
+    description: Staging server
+  - url: http://localhost:8090/v1
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /admin/vouchers/analytics/dashboard:
+    get:
+      tags:
+        - Voucher Analytics
+      summary: Get voucher analytics dashboard
+      description: |
+        Retrieve comprehensive voucher analytics dashboard data including:
+        - Summary statistics (total vouchers, usage, customers, etc.)
+        - Top performing vouchers
+        - Usage trends over time
+        - Customer segmentation data
+        - Performance metrics
+        
+        This endpoint is cached for 15 minutes to improve performance.
+      operationId: getVoucherAnalyticsDashboard
+      parameters:
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront ID to filter analytics
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          required: true
+          description: Start date for analytics period (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: true
+          description: End date for analytics period (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: period_type
+          in: query
+          required: false
+          description: Period type for aggregation
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, yearly]
+            default: daily
+        - name: voucher_type
+          in: query
+          required: false
+          description: Filter by voucher type
+          schema:
+            type: string
+            enum: [discount, free_shipping, buy_x_get_y, loyalty_points]
+        - name: customer_tier
+          in: query
+          required: false
+          description: Filter by customer loyalty tier
+          schema:
+            type: string
+            enum: [bronze, silver, gold, platinum]
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherAnalyticsDashboardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/performance/{voucher_id}:
+    get:
+      tags:
+        - Voucher Analytics
+      summary: Get voucher performance metrics
+      description: |
+        Retrieve detailed performance metrics for a specific voucher including:
+        - Usage statistics
+        - Conversion rates
+        - Revenue impact
+        - Customer acquisition metrics
+        - ROI calculations
+        - Time-based performance trends
+      operationId: getVoucherPerformanceMetrics
+      parameters:
+        - name: voucher_id
+          in: path
+          required: true
+          description: Voucher ID to get performance metrics for
+          schema:
+            type: string
+            format: uuid
+        - name: days
+          in: query
+          required: false
+          description: Number of days to analyze (default: 30)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+        - name: include_comparison
+          in: query
+          required: false
+          description: Include comparison with previous period
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Performance metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherPerformanceMetricsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/usage-patterns:
+    get:
+      tags:
+        - Voucher Analytics
+      summary: Get voucher usage patterns
+      description: |
+        Analyze voucher usage patterns including:
+        - Time-based usage trends
+        - Customer behavior patterns
+        - Geographic distribution
+        - Device and channel breakdown
+        - Redemption patterns
+      operationId: getVoucherUsagePatterns
+      parameters:
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront ID to analyze
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          required: true
+          description: Start date for analysis (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: true
+          description: End date for analysis (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: analysis_type
+          in: query
+          required: false
+          description: Type of usage pattern analysis
+          schema:
+            type: string
+            enum: [temporal, geographic, demographic, behavioral]
+            default: temporal
+        - name: granularity
+          in: query
+          required: false
+          description: Time granularity for temporal analysis
+          schema:
+            type: string
+            enum: [hourly, daily, weekly, monthly]
+            default: daily
+      responses:
+        '200':
+          description: Usage patterns retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherUsagePatternsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/comparison:
+    post:
+      tags:
+        - Voucher Analytics
+      summary: Compare voucher performance
+      description: |
+        Compare performance metrics between multiple vouchers including:
+        - Usage comparison
+        - Revenue impact comparison
+        - Customer acquisition comparison
+        - ROI comparison
+        - Trend comparison over time
+      operationId: compareVoucherPerformance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherComparisonRequest'
+      responses:
+        '200':
+          description: Voucher comparison completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherComparisonResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/reports:
+    get:
+      tags:
+        - Voucher Reports
+      summary: List voucher analytics reports
+      description: |
+        Retrieve a list of available voucher analytics reports including:
+        - Scheduled reports
+        - Generated reports
+        - Report templates
+        - Report status and metadata
+      operationId: listVoucherReports
+      parameters:
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront ID to filter reports
+          schema:
+            type: string
+            format: uuid
+        - name: report_type
+          in: query
+          required: false
+          description: Filter by report type
+          schema:
+            type: string
+            enum: [performance, usage_patterns, loyalty_impact, roi_analysis, customer_segments]
+        - name: status
+          in: query
+          required: false
+          description: Filter by report status
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+        - name: page
+          in: query
+          required: false
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Reports list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherReportsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Voucher Reports
+      summary: Generate voucher analytics report
+      description: |
+        Generate a new voucher analytics report with specified parameters.
+        Supported report types include:
+        - Performance reports
+        - Usage pattern analysis
+        - Loyalty impact analysis
+        - ROI analysis
+        - Customer segmentation reports
+      operationId: generateVoucherReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherReportRequest'
+      responses:
+        '201':
+          description: Report generation started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/reports/{report_id}:
+    get:
+      tags:
+        - Voucher Reports
+      summary: Get voucher report details
+      description: |
+        Retrieve detailed information about a specific voucher report including:
+        - Report metadata
+        - Generation status
+        - Download links (if completed)
+        - Error details (if failed)
+      operationId: getVoucherReport
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          description: Report ID to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Report details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherReportDetailsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Voucher Reports
+      summary: Delete voucher report
+      description: |
+        Delete a voucher analytics report. This action cannot be undone.
+        Only reports owned by the user can be deleted.
+      operationId: deleteVoucherReport
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          description: Report ID to delete
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Report deleted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/reports/{report_id}/download:
+    get:
+      tags:
+        - Voucher Reports
+      summary: Download voucher report
+      description: |
+        Download a generated voucher analytics report in the specified format.
+        The report must be in 'completed' status before downloading.
+      operationId: downloadVoucherReport
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          description: Report ID to download
+          schema:
+            type: string
+            format: uuid
+        - name: format
+          in: query
+          required: false
+          description: Download format (if multiple formats available)
+          schema:
+            type: string
+            enum: [json, csv, pdf, excel]
+            default: json
+      responses:
+        '200':
+          description: Report downloaded successfully
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+            application/csv:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Report not ready for download
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/reports/schedule:
+    post:
+      tags:
+        - Voucher Reports
+      summary: Schedule voucher report
+      description: |
+        Schedule a recurring voucher analytics report with specified parameters.
+        Supported schedules include daily, weekly, monthly, and custom intervals.
+      operationId: scheduleVoucherReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherReportScheduleRequest'
+      responses:
+        '201':
+          description: Report scheduled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherReportScheduleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/reports/schedule/{schedule_id}:
+    get:
+      tags:
+        - Voucher Reports
+      summary: Get scheduled report details
+      description: |
+        Retrieve details of a scheduled voucher report including:
+        - Schedule configuration
+        - Next run time
+        - Historical runs
+        - Active status
+      operationId: getScheduledReport
+      parameters:
+        - name: schedule_id
+          in: path
+          required: true
+          description: Schedule ID to retrieve
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Scheduled report details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherReportScheduleDetailsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Voucher Reports
+      summary: Update scheduled report
+      description: |
+        Update configuration of an existing scheduled voucher report.
+        Only the owner can modify the schedule.
+      operationId: updateScheduledReport
+      parameters:
+        - name: schedule_id
+          in: path
+          required: true
+          description: Schedule ID to update
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherReportScheduleUpdateRequest'
+      responses:
+        '200':
+          description: Scheduled report updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherReportScheduleResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Voucher Reports
+      summary: Cancel scheduled report
+      description: |
+        Cancel a scheduled voucher report. This will stop future generations
+        but will not delete existing generated reports.
+      operationId: cancelScheduledReport
+      parameters:
+        - name: schedule_id
+          in: path
+          required: true
+          description: Schedule ID to cancel
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Scheduled report cancelled successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/export:
+    post:
+      tags:
+        - Voucher Analytics
+      summary: Export voucher analytics data
+      description: |
+        Export voucher analytics data in various formats. This endpoint supports:
+        - Large dataset exports (up to 100,000 records)
+        - Multiple export formats (JSON, CSV, PDF, Excel)
+        - Custom field selection
+        - Filtered exports
+        - Background processing for large exports
+      operationId: exportVoucherAnalytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherAnalyticsExportRequest'
+      responses:
+        '202':
+          description: Export job started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherAnalyticsExportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/export/{export_id}:
+    get:
+      tags:
+        - Voucher Analytics
+      summary: Get export status
+      description: |
+        Check the status of an export job and retrieve download information
+        when the export is completed.
+      operationId: getExportStatus
+      parameters:
+        - name: export_id
+          in: path
+          required: true
+          description: Export job ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherAnalyticsExportStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/export/{export_id}/download:
+    get:
+      tags:
+        - Voucher Analytics
+      summary: Download exported data
+      description: |
+        Download the exported data file. The export must be completed
+        before downloading.
+      operationId: downloadExportedData
+      parameters:
+        - name: export_id
+          in: path
+          required: true
+          description: Export job ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export file downloaded successfully
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+            application/csv:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Export not ready for download
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /admin/vouchers/analytics/metrics:
+    get:
+      tags:
+        - Voucher Analytics
+      summary: Get real-time analytics metrics
+      description: |
+        Retrieve real-time voucher analytics metrics including:
+        - Current usage rates
+        - Active vouchers
+        - Today's performance
+        - System health metrics
+        - Cache statistics
+      operationId: getRealTimeMetrics
+      parameters:
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront ID to get metrics for
+          schema:
+            type: string
+            format: uuid
+        - name: metric_types
+          in: query
+          required: false
+          description: Types of metrics to retrieve
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [usage, performance, revenue, customers, cache, system]
+            default: [usage, performance]
+      responses:
+        '200':
+          description: Real-time metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealTimeMetricsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    VoucherAnalyticsDashboardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherAnalyticsDashboardData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherAnalyticsDashboardData:
+      type: object
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        period_type:
+          $ref: '#/components/schemas/AnalyticsPeriodType'
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-01-31"
+        summary:
+          $ref: '#/components/schemas/VoucherAnalyticsSummary'
+        top_performing_vouchers:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoucherPerformanceMetrics'
+        usage_trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageTrendData'
+        customer_segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerSegmentData'
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+
+    VoucherAnalyticsSummary:
+      type: object
+      properties:
+        total_vouchers:
+          type: integer
+          example: 100
+        active_vouchers:
+          type: integer
+          example: 45
+        total_usage:
+          type: integer
+          example: 10000
+        unique_customers:
+          type: integer
+          example: 5000
+        total_discount:
+          type: string
+          format: decimal
+          example: "50000.00"
+        total_points:
+          type: integer
+          example: 25000
+        average_order_value:
+          type: string
+          format: decimal
+          example: "52.30"
+        conversion_rate:
+          type: string
+          format: decimal
+          example: "0.15"
+
+    VoucherPerformanceMetrics:
+      type: object
+      properties:
+        voucher_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        voucher_code:
+          type: string
+          example: "SUMMER2023"
+        voucher_name:
+          type: string
+          example: "Summer Sale 2023"
+        voucher_type:
+          $ref: '#/components/schemas/VoucherType'
+        total_usage:
+          type: integer
+          example: 1000
+        unique_customers:
+          type: integer
+          example: 800
+        conversion_rate:
+          type: string
+          format: decimal
+          example: "0.20"
+        revenue:
+          type: string
+          format: decimal
+          example: "10000.00"
+        roi:
+          type: string
+          format: decimal
+          example: "2.50"
+        average_discount:
+          type: string
+          format: decimal
+          example: "10.00"
+        customer_acquisition_cost:
+          type: string
+          format: decimal
+          example: "5.00"
+
+    UsageTrendData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        usage_count:
+          type: integer
+          example: 150
+        unique_customers:
+          type: integer
+          example: 120
+        total_discount:
+          type: string
+          format: decimal
+          example: "1500.00"
+        conversion_rate:
+          type: string
+          format: decimal
+          example: "0.18"
+
+    CustomerSegmentData:
+      type: object
+      properties:
+        segment_name:
+          type: string
+          example: "New Customers"
+        customer_count:
+          type: integer
+          example: 500
+        usage_count:
+          type: integer
+          example: 750
+        average_order_value:
+          type: string
+          format: decimal
+          example: "45.00"
+        conversion_rate:
+          type: string
+          format: decimal
+          example: "0.25"
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        cache_hit_rate:
+          type: number
+          format: float
+          example: 0.85
+        average_response_time:
+          type: number
+          format: float
+          example: 0.5
+        query_performance:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryPerformance'
+
+    QueryPerformance:
+      type: object
+      properties:
+        query_type:
+          type: string
+          example: "dashboard_summary"
+        average_duration:
+          type: number
+          format: float
+          example: 0.25
+        execution_count:
+          type: integer
+          example: 1000
+
+    VoucherPerformanceMetricsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherPerformanceMetricsData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherPerformanceMetricsData:
+      type: object
+      properties:
+        voucher_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        voucher_info:
+          $ref: '#/components/schemas/VoucherInfo'
+        current_period:
+          $ref: '#/components/schemas/PerformancePeriod'
+        previous_period:
+          $ref: '#/components/schemas/PerformancePeriod'
+        comparison:
+          $ref: '#/components/schemas/PerformanceComparison'
+        trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerformanceTrend'
+
+    VoucherInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        code:
+          type: string
+          example: "SUMMER2023"
+        name:
+          type: string
+          example: "Summer Sale 2023"
+        type:
+          $ref: '#/components/schemas/VoucherType'
+        discount_value:
+          type: string
+          format: decimal
+          example: "10.00"
+        discount_type:
+          type: string
+          enum: [percentage, fixed_amount, free_shipping]
+          example: "percentage"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          example: "2023-12-31T23:59:59Z"
+
+    PerformancePeriod:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-01-31"
+        total_usage:
+          type: integer
+          example: 1000
+        unique_customers:
+          type: integer
+          example: 800
+        total_revenue:
+          type: string
+          format: decimal
+          example: "10000.00"
+        total_discount:
+          type: string
+          format: decimal
+          example: "1000.00"
+        conversion_rate:
+          type: string
+          format: decimal
+          example: "0.20"
+        average_order_value:
+          type: string
+          format: decimal
+          example: "52.30"
+
+    PerformanceComparison:
+      type: object
+      properties:
+        usage_change_percent:
+          type: number
+          format: float
+          example: 15.5
+        revenue_change_percent:
+          type: number
+          format: float
+          example: 22.3
+        conversion_change_percent:
+          type: number
+          format: float
+          example: -5.2
+        aov_change_percent:
+          type: number
+          format: float
+          example: 8.7
+
+    PerformanceTrend:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        usage:
+          type: integer
+          example: 50
+        revenue:
+          type: string
+          format: decimal
+          example: "500.00"
+        conversion_rate:
+          type: string
+          format: decimal
+          example: "0.18"
+
+    VoucherUsagePatternsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherUsagePatternsData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherUsagePatternsData:
+      type: object
+      properties:
+        analysis_type:
+          type: string
+          enum: [temporal, geographic, demographic, behavioral]
+          example: "temporal"
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsagePattern'
+        insights:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageInsight'
+
+    UsagePattern:
+      type: object
+      properties:
+        pattern_type:
+          type: string
+          example: "peak_hours"
+        description:
+          type: string
+          example: "Most voucher usage occurs between 7-9 PM"
+        data_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatternDataPoint'
+        confidence_score:
+          type: number
+          format: float
+          example: 0.85
+
+    PatternDataPoint:
+      type: object
+      properties:
+        x_value:
+          type: string
+          example: "19:00"
+        y_value:
+          type: number
+          format: float
+          example: 150.5
+        label:
+          type: string
+          example: "7 PM"
+
+    UsageInsight:
+      type: object
+      properties:
+        insight_type:
+          type: string
+          enum: [opportunity, warning, trend, anomaly]
+          example: "opportunity"
+        title:
+          type: string
+          example: "High engagement during evening hours"
+        description:
+          type: string
+          example: "Consider running evening promotions to maximize voucher usage"
+        recommendation:
+          type: string
+          example: "Schedule flash sales between 7-9 PM"
+        impact_score:
+          type: number
+          format: float
+          example: 0.75
+
+    VoucherComparisonRequest:
+      type: object
+      required:
+        - voucher_ids
+        - start_date
+        - end_date
+      properties:
+        voucher_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 10
+          example:
+            - "123e4567-e89b-12d3-a456-426614174000"
+            - "123e4567-e89b-12d3-a456-426614174001"
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-01-31"
+        metrics:
+          type: array
+          items:
+            type: string
+            enum: [usage, revenue, conversion, roi, customer_acquisition]
+          default: [usage, revenue, conversion]
+        include_trends:
+          type: boolean
+          default: false
+
+    VoucherComparisonResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherComparisonData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherComparisonData:
+      type: object
+      properties:
+        comparison_period:
+          $ref: '#/components/schemas/ComparisonPeriod'
+        vouchers:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoucherComparisonItem'
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoucherRanking'
+        insights:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComparisonInsight'
+
+    ComparisonPeriod:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-01-31"
+        days:
+          type: integer
+          example: 31
+
+    VoucherComparisonItem:
+      type: object
+      properties:
+        voucher_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        voucher_info:
+          $ref: '#/components/schemas/VoucherInfo'
+        metrics:
+          $ref: '#/components/schemas/VoucherComparisonMetrics'
+
+    VoucherComparisonMetrics:
+      type: object
+      properties:
+        usage:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 1000
+            rank:
+              type: integer
+              example: 1
+            percentile:
+              type: number
+              format: float
+              example: 95.5
+        revenue:
+          type: object
+          properties:
+            total:
+              type: string
+              format: decimal
+              example: "10000.00"
+            rank:
+              type: integer
+              example: 2
+            percentile:
+              type: number
+              format: float
+              example: 87.3
+        conversion_rate:
+          type: object
+          properties:
+            value:
+              type: string
+              format: decimal
+              example: "0.20"
+            rank:
+              type: integer
+              example: 1
+            percentile:
+              type: number
+              format: float
+              example: 92.1
+        roi:
+          type: object
+          properties:
+            value:
+              type: string
+              format: decimal
+              example: "2.50"
+            rank:
+              type: integer
+              example: 3
+            percentile:
+              type: number
+              format: float
+              example: 78.9
+
+    VoucherRanking:
+      type: object
+      properties:
+        metric:
+          type: string
+          enum: [usage, revenue, conversion, roi]
+          example: "usage"
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/RankingItem'
+
+    RankingItem:
+      type: object
+      properties:
+        rank:
+          type: integer
+          example: 1
+        voucher_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        voucher_code:
+          type: string
+          example: "SUMMER2023"
+        value:
+          type: number
+          format: float
+          example: 1000.0
+
+    ComparisonInsight:
+      type: object
+      properties:
+        insight_type:
+          type: string
+          enum: [top_performer, underperformer, trend, recommendation]
+          example: "top_performer"
+        title:
+          type: string
+          example: "SUMMER2023 leads in usage and conversion"
+        description:
+          type: string
+          example: "This voucher has the highest usage count and conversion rate among compared vouchers"
+        voucher_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example:
+            - "123e4567-e89b-12d3-a456-426614174000"
+        confidence:
+          type: number
+          format: float
+          example: 0.95
+
+    VoucherReportsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoucherReportListItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherReportListItem:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        report_type:
+          $ref: '#/components/schemas/ReportType'
+        name:
+          type: string
+          example: "Monthly Performance Report"
+        description:
+          type: string
+          example: "Comprehensive voucher performance analysis for January 2023"
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:00:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:05:00Z"
+        file_size:
+          type: integer
+          example: 1024000
+        format:
+          type: string
+          enum: [json, csv, pdf, excel]
+          example: "pdf"
+        download_url:
+          type: string
+          format: uri
+          example: "https://api.smartseller.com/v1/admin/vouchers/analytics/reports/123e4567-e89b-12d3-a456-426614174000/download"
+
+    VoucherReportRequest:
+      type: object
+      required:
+        - storefront_id
+        - report_type
+        - start_date
+        - end_date
+        - format
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        report_type:
+          $ref: '#/components/schemas/ReportType'
+        name:
+          type: string
+          example: "Custom Performance Report"
+        description:
+          type: string
+          example: "Detailed analysis of voucher performance metrics"
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-01-31"
+        format:
+          type: string
+          enum: [json, csv, pdf, excel]
+          example: "pdf"
+        voucher_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: "Optional: Filter by specific vouchers"
+        customer_segments:
+          type: array
+          items:
+            type: string
+            enum: [new, returning, vip, inactive]
+          description: "Optional: Filter by customer segments"
+        include_charts:
+          type: boolean
+          default: true
+        include_recommendations:
+          type: boolean
+          default: true
+        email_recipients:
+          type: array
+          items:
+            type: string
+            format: email
+          description: "Optional: Email report to recipients when completed"
+
+    VoucherReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherReportData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherReportData:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        estimated_completion:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:05:00Z"
+        download_url:
+          type: string
+          format: uri
+          example: "https://api.smartseller.com/v1/admin/vouchers/analytics/reports/123e4567-e89b-12d3-a456-426614174000/download"
+
+    VoucherReportDetailsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherReportDetails'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherReportDetails:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        report_type:
+          $ref: '#/components/schemas/ReportType'
+        name:
+          type: string
+          example: "Monthly Performance Report"
+        description:
+          type: string
+          example: "Comprehensive voucher performance analysis for January 2023"
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        parameters:
+          $ref: '#/components/schemas/ReportParameters'
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:00:00Z"
+        started_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:01:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:05:00Z"
+        file_size:
+          type: integer
+          example: 1024000
+        format:
+          type: string
+          enum: [json, csv, pdf, excel]
+          example: "pdf"
+        download_url:
+          type: string
+          format: uri
+          example: "https://api.smartseller.com/v1/admin/vouchers/analytics/reports/123e4567-e89b-12d3-a456-426614174000/download"
+        error_message:
+          type: string
+          example: "Report generation failed due to insufficient data"
+        retry_count:
+          type: integer
+          example: 2
+
+    ReportParameters:
+      type: object
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-01-31"
+        voucher_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        customer_segments:
+          type: array
+          items:
+            type: string
+        include_charts:
+          type: boolean
+          example: true
+        include_recommendations:
+          type: boolean
+          example: true
+
+    VoucherReportScheduleRequest:
+      type: object
+      required:
+        - storefront_id
+        - report_type
+        - schedule
+        - format
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        report_type:
+          $ref: '#/components/schemas/ReportType'
+        name:
+          type: string
+          example: "Monthly Performance Report"
+        description:
+          type: string
+          example: "Monthly voucher performance analysis"
+        schedule:
+          $ref: '#/components/schemas/ReportSchedule'
+        format:
+          type: string
+          enum: [json, csv, pdf, excel]
+          example: "pdf"
+        voucher_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        customer_segments:
+          type: array
+          items:
+            type: string
+        include_charts:
+          type: boolean
+          default: true
+        include_recommendations:
+          type: boolean
+          default: true
+        email_recipients:
+          type: array
+          items:
+            type: string
+            format: email
+        timezone:
+          type: string
+          example: "UTC"
+
+    ReportSchedule:
+      type: object
+      required:
+        - frequency
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly, quarterly, yearly, custom]
+          example: "monthly"
+        day_of_month:
+          type: integer
+          minimum: 1
+          maximum: 31
+          example: 1
+        day_of_week:
+          type: string
+          enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+          example: "monday"
+        time:
+          type: string
+          pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+          example: "09:00"
+        custom_cron:
+          type: string
+          description: "Cron expression for custom schedules"
+          example: "0 9 1 * *"
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-12-31"
+
+    VoucherReportScheduleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherReportScheduleData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherReportScheduleData:
+      type: object
+      properties:
+        schedule_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        next_run:
+          type: string
+          format: date-time
+          example: "2023-02-01T09:00:00Z"
+        is_active:
+          type: boolean
+          example: true
+
+    VoucherReportScheduleDetailsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherReportScheduleDetails'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherReportScheduleDetails:
+      type: object
+      properties:
+        schedule_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        report_type:
+          $ref: '#/components/schemas/ReportType'
+        name:
+          type: string
+          example: "Monthly Performance Report"
+        description:
+          type: string
+          example: "Monthly voucher performance analysis"
+        schedule:
+          $ref: '#/components/schemas/ReportSchedule'
+        format:
+          type: string
+          enum: [json, csv, pdf, excel]
+          example: "pdf"
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:00:00Z"
+        next_run:
+          type: string
+          format: date-time
+          example: "2023-02-01T09:00:00Z"
+        last_run:
+          type: string
+          format: date-time
+          example: "2023-01-01T09:00:00Z"
+        total_runs:
+          type: integer
+          example: 5
+        successful_runs:
+          type: integer
+          example: 4
+        failed_runs:
+          type: integer
+          example: 1
+        email_recipients:
+          type: array
+          items:
+            type: string
+            format: email
+        recent_runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduledRunHistory'
+
+    VoucherReportScheduleUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Updated Monthly Performance Report"
+        description:
+          type: string
+          example: "Updated monthly voucher performance analysis"
+        schedule:
+          $ref: '#/components/schemas/ReportSchedule'
+        format:
+          type: string
+          enum: [json, csv, pdf, excel]
+          example: "excel"
+        voucher_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        customer_segments:
+          type: array
+          items:
+            type: string
+        include_charts:
+          type: boolean
+        include_recommendations:
+          type: boolean
+        email_recipients:
+          type: array
+          items:
+            type: string
+            format: email
+        is_active:
+          type: boolean
+
+    ScheduledRunHistory:
+      type: object
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        scheduled_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T09:00:00Z"
+        started_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T09:01:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T09:05:00Z"
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        report_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        error_message:
+          type: string
+          example: "Report generation failed due to insufficient data"
+
+    VoucherAnalyticsExportRequest:
+      type: object
+      required:
+        - storefront_id
+        - export_type
+        - format
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        export_type:
+          type: string
+          enum: [usage_data, performance_metrics, customer_data, raw_analytics]
+          example: "usage_data"
+        start_date:
+          type: string
+          format: date
+          example: "2023-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-01-31"
+        format:
+          type: string
+          enum: [json, csv, pdf, excel]
+          example: "csv"
+        voucher_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        customer_segments:
+          type: array
+          items:
+            type: string
+        fields:
+          type: array
+          items:
+            type: string
+          description: "Specific fields to include in export"
+        filters:
+          $ref: '#/components/schemas/ExportFilters'
+        max_records:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          example: 10000
+        email_recipient:
+          type: string
+          format: email
+          description: "Optional: Email export file when completed"
+
+    ExportFilters:
+      type: object
+      properties:
+        min_usage:
+          type: integer
+          example: 10
+        max_usage:
+          type: integer
+          example: 1000
+        min_conversion_rate:
+          type: number
+          format: float
+          example: 0.1
+        voucher_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoucherType'
+        customer_tiers:
+          type: array
+          items:
+            type: string
+            enum: [bronze, silver, gold, platinum]
+
+    VoucherAnalyticsExportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherAnalyticsExportData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherAnalyticsExportData:
+      type: object
+      properties:
+        export_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          $ref: '#/components/schemas/ExportStatus'
+        estimated_completion:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:05:00Z"
+        download_url:
+          type: string
+          format: uri
+          example: "https://api.smartseller.com/v1/admin/vouchers/analytics/export/123e4567-e89b-12d3-a456-426614174000/download"
+
+    VoucherAnalyticsExportStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VoucherAnalyticsExportStatus'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    VoucherAnalyticsExportStatus:
+      type: object
+      properties:
+        export_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          $ref: '#/components/schemas/ExportStatus'
+        progress:
+          type: object
+          properties:
+            percentage:
+              type: number
+              format: float
+              example: 75.5
+            records_processed:
+              type: integer
+              example: 7500
+            total_records:
+              type: integer
+              example: 10000
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:00:00Z"
+        started_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:01:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T10:05:00Z"
+        file_size:
+          type: integer
+          example: 2048000
+        download_url:
+          type: string
+          format: uri
+          example: "https://api.smartseller.com/v1/admin/vouchers/analytics/export/123e4567-e89b-12d3-a456-426614174000/download"
+        error_message:
+          type: string
+          example: "Export failed due to timeout"
+
+    RealTimeMetricsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/RealTimeMetricsData'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    RealTimeMetricsData:
+      type: object
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00Z"
+        metrics:
+          type: object
+          properties:
+            usage:
+              $ref: '#/components/schemas/UsageMetrics'
+            performance:
+              $ref: '#/components/schemas/PerformanceMetrics'
+            revenue:
+              $ref: '#/components/schemas/RevenueMetrics'
+            customers:
+              $ref: '#/components/schemas/CustomerMetrics'
+            cache:
+              $ref: '#/components/schemas/CacheMetrics'
+            system:
+              $ref: '#/components/schemas/SystemMetrics'
+
+    UsageMetrics:
+      type: object
+      properties:
+        current_rate:
+          type: number
+          format: float
+          example: 15.5
+        today_total:
+          type: integer
+          example: 500
+        active_vouchers:
+          type: integer
+          example: 25
+        peak_hour:
+          type: integer
+          example: 14
+
+    RevenueMetrics:
+      type: object
+      properties:
+        today_total:
+          type: string
+          format: decimal
+          example: "5000.00"
+        average_order_value:
+          type: string
+          format: decimal
+          example: "52.30"
+        total_discount_given:
+          type: string
+          format: decimal
+          example: "500.00"
+
+    CustomerMetrics:
+      type: object
+      properties:
+        unique_customers_today:
+          type: integer
+          example: 150
+        new_customers_today:
+          type: integer
+          example: 25
+        returning_customers_today:
+          type: integer
+          example: 125
+
+    CacheMetrics:
+      type: object
+      properties:
+        hit_rate:
+          type: number
+          format: float
+          example: 0.85
+        miss_rate:
+          type: number
+          format: float
+          example: 0.15
+        memory_usage:
+          type: number
+          format: float
+          example: 0.65
+
+    SystemMetrics:
+      type: object
+      properties:
+        api_response_time:
+          type: number
+          format: float
+          example: 0.25
+        database_response_time:
+          type: number
+          format: float
+          example: 0.15
+        error_rate:
+          type: number
+          format: float
+          example: 0.01
+
+    AnalyticsPeriodType:
+      type: string
+      enum: [daily, weekly, monthly, yearly]
+      example: "daily"
+
+    VoucherType:
+      type: string
+      enum: [discount, free_shipping, buy_x_get_y, loyalty_points]
+      example: "discount"
+
+    ReportType:
+      type: string
+      enum: [performance, usage_patterns, loyalty_impact, roi_analysis, customer_segments]
+      example: "performance"
+
+    ReportStatus:
+      type: string
+      enum: [pending, processing, completed, failed, cancelled]
+      example: "completed"
+
+    ExportStatus:
+      type: string
+      enum: [pending, processing, completed, failed, cancelled]
+      example: "processing"
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 5
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+
+    ResponseMeta:
+      type: object
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00Z"
+        version:
+          type: string
+          example: "1.0.0"
+        duration_ms:
+          type: integer
+          example: 250
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Invalid request parameters"
+        code:
+          type: string
+          example: "INVALID_REQUEST"
+        details:
+          type: string
+          example: "storefront_id is required"
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: Voucher Analytics
+    description: Voucher analytics and metrics endpoints
+  - name: Voucher Reports
+    description: Report generation and management endpoints

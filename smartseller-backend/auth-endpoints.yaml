@@ -1,0 +1,873 @@
+openapi: 3.1.0
+info:
+  title: SmartSeller Backend API
+  description: API documentation for the SmartSeller Backend service - E-commerce Management Platform.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+    description: Local development server
+  - url: https://api-seller.kirimku.app
+    description: Production server
+paths:
+  /api/v1/csrf-token:
+    get:
+      summary: Get CSRF token
+      description: Issues a CSRF token and sets it in an httpOnly cookie for the current origin.
+      tags:
+        - Security
+      responses:
+        '200':
+          description: CSRF token issued
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookie containing `csrf_token`
+              schema:
+                type: string
+              example: "csrf_token=abcdef...; HttpOnly; Path=/; Max-Age=1800"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "CSRF token generated"
+                  data:
+                    type: object
+                    properties:
+                      csrf_token:
+                        type: string
+                        description: CSRF token value also set in cookie
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/v1/auth/login:
+    options:
+      summary: CORS preflight for auth login
+      description: Returns CORS headers for preflight checks from allowed origins.
+      tags:
+        - Authentication
+      responses:
+        '204':
+          description: Preflight approved
+          headers:
+            Access-Control-Allow-Origin:
+              description: Allowed origin echo
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+              example: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+              example: "Authorization, Content-Type, X-Requested-With, X-Tenant-ID"
+            Access-Control-Allow-Credentials:
+              schema:
+                type: string
+              example: "true"
+            Access-Control-Max-Age:
+              schema:
+                type: string
+              example: "3600"
+    post:
+      summary: Login with email/phone and password
+      description: Authenticates a user with email/phone and password
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_or_phone
+                - password
+              properties:
+                email_or_phone:
+                  type: string
+                  description: User's email address or phone number
+                  example: user@example.com
+                password:
+                  type: string
+                  description: User's password
+                  example: password123
+                use_secure_tokens:
+                  type: boolean
+                  description: If true, tokens will be stored in httpOnly cookies for enhanced security
+                  example: false
+                  default: false
+      responses:
+        '200':
+          description: Successfully authenticated. If use_secure_tokens is true, tokens are also set as httpOnly cookies.
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookies containing access_token and refresh_token (only when use_secure_tokens is true)
+              schema:
+                type: string
+              example: "access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Login successful"
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        description: JWT token for API authentication
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refresh_token:
+                        type: string
+                        description: Token used to refresh the access token
+                      token_expiry:
+                        type: string
+                        format: date-time
+                        description: Expiration time of the access token
+                      user:
+                        $ref: '#/components/schemas/UserDTO'
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '400':
+          description: Bad request, invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized, invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+  /api/v1/auth/google/login:
+    get:
+      summary: Get Google Login URL
+      description: Returns the Google OAuth login URL for client-side redirection.
+      responses:
+        '200':
+          description: Successfully generated Google login URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Successfully generated login URL"
+                  data:
+                    type: object
+                    properties:
+                      redirect_url:
+                        type: string
+                        description: The Google OAuth URL to redirect to
+                        example: https://accounts.google.com/o/oauth2/v2/auth?...
+                      state:
+                        type: string
+                        description: CSRF protection state parameter
+                        example: 123e4567-e89b-12d3-a456-426614174000
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/google/callback:
+    post:
+      summary: Google Login Callback
+      description: Handles the callback from Google OAuth. Frontend should call this endpoint after receiving the authorization code from Google.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - state
+              properties:
+                code:
+                  type: string
+                  description: Authorization code from Google
+                state:
+                  type: string
+                  description: State parameter for CSRF protection
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User authenticated successfully"
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        description: Custom JWT token generated by our backend for API authentication (not the Google OAuth token)
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTIzZTQ1NjctZTg5Yi0xMmQzLWE0NTYtNDI2NjE0MTc0MDAwIiwiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwibmFtZSI6IkpvaG4gRG9lIiwiZXhwIjoxNjE5NzE5NjIxLCJpYXQiOjE2MTk2MzMyMjF9.8yF2Dq0_QYlA77Uq3nFxRZcm5-1Dy3bF4ojrPgQFdQY
+                      refresh_token:
+                        type: string
+                        description: Token used to refresh the access token
+                      token_expiry:
+                        type: string
+                        format: date-time
+                        description: Expiration time of the access token
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+                          email:
+                            type: string
+                            format: email
+                          picture:
+                            type: string
+                            format: uri
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /api/v1/auth/logout:
+    post:
+      summary: Logout
+      description: Logs out the user and invalidates the session.
+      responses:
+        '200':
+          description: Successfully logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh Token
+      description: Refresh the current access token using a refresh token
+      responses:
+        '200':
+          description: Successfully refreshed token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Token refreshed successfully"
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refresh_token:
+                        type: string
+                        example: bvQotRefjkEHkl3gEyIaM9...
+                      token_expiry:
+                        type: string
+                        format: date-time
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/forgot-password:
+    post:
+      summary: Initiate Password Reset
+      description: |
+        Initiates the password reset process by sending a reset email to the user's registered email address.
+        For security reasons, this endpoint always returns success regardless of whether the email exists in the system.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_or_phone
+              properties:
+                email_or_phone:
+                  type: string
+                  description: User's email address or phone number
+                  example: user@example.com
+            examples:
+              email:
+                summary: Using email
+                value:
+                  email_or_phone: "user@example.com"
+              phone:
+                summary: Using phone
+                value:
+                  email_or_phone: "+6281234567890"
+      responses:
+        '200':
+          description: Request processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Jika akun Anda terdaftar, kami telah mengirim instruksi reset password ke email Anda"
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '400':
+          description: Bad request, invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_email:
+                  summary: Missing email or phone
+                  value:
+                    success: false
+                    message: "Email atau nomor telepon wajib diisi"
+                    meta:
+                      http_status: 400
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                email_send_failed:
+                  summary: Email sending failed
+                  value:
+                    success: false
+                    message: "Gagal mengirim email reset password. Silakan coba lagi nanti."
+                    meta:
+                      http_status: 500
+
+  /api/v1/auth/reset-password:
+    post:
+      summary: Reset Password
+      description: |
+        Resets the user's password using a valid reset token received via email.
+        The token expires after 1 hour for security purposes.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - new_password
+                - confirm_password
+              properties:
+                token:
+                  type: string
+                  description: Password reset token received via email
+                  example: "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+                new_password:
+                  type: string
+                  description: New password (minimum 8 characters)
+                  example: "newpassword123"
+                  minLength: 8
+                confirm_password:
+                  type: string
+                  description: Confirm new password (must match new_password)
+                  example: "newpassword123"
+                  minLength: 8
+            examples:
+              valid_request:
+                summary: Valid password reset request
+                value:
+                  token: "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+                  new_password: "mynewpassword123"
+                  confirm_password: "mynewpassword123"
+      responses:
+        '200':
+          description: Password successfully reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Password berhasil direset. Silakan login dengan password baru"
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '400':
+          description: Bad request - invalid token or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_token:
+                  summary: Invalid or expired token
+                  value:
+                    success: false
+                    message: "Token reset password tidak valid atau sudah kedaluwarsa"
+                    meta:
+                      http_status: 400
+                expired_token:
+                  summary: Expired token
+                  value:
+                    success: false
+                    message: "Token reset password sudah kedaluwarsa. Silakan minta reset password baru"
+                    meta:
+                      http_status: 400
+                weak_password:
+                  summary: Password too short
+                  value:
+                    success: false
+                    message: "Password harus minimal 8 karakter"
+                    meta:
+                      http_status: 400
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    success: false
+                    message: "Token reset password wajib diisi"
+                    meta:
+                      http_status: 400
+                password_mismatch:
+                  summary: Password confirmation doesn't match
+                  value:
+                    success: false
+                    message: "Password konfirmasi tidak cocok"
+                    meta:
+                      http_status: 400
+                missing_confirm_password:
+                  summary: Missing confirm password
+                  value:
+                    success: false
+                    message: "ConfirmPassword: wajib diisi"
+                    meta:
+                      http_status: 400
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                generic_error:
+                  summary: Generic server error
+                  value:
+                    success: false
+                    message: "Gagal reset password. Silakan coba lagi"
+                    meta:
+                      http_status: 500
+
+  /api/v1/auth/set-secure-tokens:
+    post:
+      summary: Set Secure Authentication Tokens
+      description: |
+        Sets the current user's access and refresh tokens as httpOnly cookies for enhanced security.
+        This endpoint requires a valid Authorization header with a Bearer token.
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tokens successfully set as httpOnly cookies
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookies containing access_token and refresh_token
+              schema:
+                type: string
+              example: "access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Secure tokens set successfully"
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Unauthorized"
+                meta:
+                  http_status: 401
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/clear-secure-tokens:
+    post:
+      summary: Clear Secure Authentication Tokens
+      description: |
+        Clears the httpOnly cookies containing access and refresh tokens, effectively logging out the user
+        from the secure token session. This endpoint can be called without authentication.
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Tokens successfully cleared from httpOnly cookies
+          headers:
+            Set-Cookie:
+              description: Expired httpOnly cookies to clear access_token and refresh_token
+              schema:
+                type: string
+              example: "access_token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Secure tokens cleared successfully"
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/secure-check:
+    get:
+      summary: Check Secure Token Authentication
+      description: |
+        Validates the user's authentication status using httpOnly cookies containing access and refresh tokens.
+        This endpoint automatically reads tokens from cookies and validates them.
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: User is authenticated with valid secure tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User is authenticated"
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/UserDTO'
+                      authenticated:
+                        type: boolean
+                        example: true
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '401':
+          description: Unauthorized - invalid or missing secure tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Unauthorized"
+                meta:
+                  http_status: 401
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+components:
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        meta:
+          type: object
+          properties:
+            http_status:
+              type: integer
+              example: 200
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string
+        meta:
+          type: object
+          properties:
+            http_status:
+              type: integer
+
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Unique identifier for the user"
+        email:
+          type: string
+          format: email
+          description: "User's email address"
+        name:
+          type: string
+          description: "User's full name"
+        user_role:
+          type: string
+          enum: [owner, admin, manager, support, technician, warehouse_admin, user]
+          description: "Global user role (also reflected in JWT claims)"
+        is_admin:
+          type: boolean
+          description: "Administrative flag (also reflected in JWT claims)"
+        isActive:
+          type: boolean
+          description: "Whether the user account is active"
+        createdAt:
+          type: string
+          format: date-time
+          description: "When the user account was created"
+        updatedAt:
+          type: string
+          format: date-time
+          description: "When the user account was last updated"
+      required:
+        - id
+        - email
+        - name
+        - user_role
+        - is_admin
+        - isActive
+        - createdAt
+        - updatedAt
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        email: "john.doe@example.com"
+        name: "John Doe"
+        user_role: "manager"
+        is_admin: true
+        isActive: true
+        createdAt: "2023-01-01T00:00:00Z"
+        updatedAt: "2023-01-01T00:00:00Z"
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: "Whether the authentication was successful"
+        message:
+          type: string
+          description: "Human-readable message about the authentication result"
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/UserDTO'
+            token:
+              type: string
+              description: "JWT access token"
+            refreshToken:
+              type: string
+              description: "JWT refresh token"
+            expiresIn:
+              type: integer
+              description: "Token expiration time in seconds"
+          required:
+            - user
+            - token
+            - refreshToken
+            - expiresIn
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            version:
+              type: string
+      required:
+        - success
+        - message
+        - data
+      example:
+        success: true
+        message: "Authentication successful"
+        data:
+          user:
+            id: "123e4567-e89b-12d3-a456-426614174000"
+            email: "john.doe@example.com"
+            name: "John Doe"
+            role: "user"
+            isActive: true
+            createdAt: "2023-01-01T00:00:00Z"
+            updatedAt: "2023-01-01T00:00:00Z"
+          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          expiresIn: 3600
+        meta:
+          timestamp: "2023-01-01T00:00:00Z"
+          version: "1.0"
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validation:
+              value:
+                success: false
+                message: "Invalid request payload"
+                error: "Missing required parameters"
+                meta:
+                  http_status: 400
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Authentication failed"
+            error: "Invalid or expired token"
+            meta:
+              http_status: 401
+
+    ServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "An error occurred while processing your request"
+            error: "Internal server error"
+            meta:
+              http_status: 500
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication. Include the token in the Authorization header as 'Bearer <token>'.

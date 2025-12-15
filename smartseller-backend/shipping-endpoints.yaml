@@ -1,0 +1,1421 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Shipping API
+  description: |
+    General shipping API endpoints for SmartSeller platform.
+    These endpoints provide shipping-related functionality including location search,
+    courier rate calculations, shipment booking, and transaction tracking.
+    
+    All endpoints are public (no authentication required).
+  version: 1.0.0
+  contact:
+    name: SmartSeller API Support
+    email: api@smartseller.com
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Local development server
+  - url: https://api.smartseller.com/api/v1
+    description: Production server
+
+tags:
+  - name: Shipping
+    description: General shipping operations (public endpoints)
+
+paths:
+  /shipping/locations/search:
+    post:
+      tags:
+        - Shipping
+      summary: Search shipping locations
+      description: |
+        Search for provinces, cities, districts, or areas for shipping purposes.
+        This endpoint forwards requests to the Kirimku location search API and
+        returns standardized location data.
+      operationId: searchShippingLocations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShippingLocationSearchRequest'
+            examples:
+              searchCity:
+                summary: Search for a city
+                value:
+                  query: "Jakarta"
+                  type: "city"
+                  limit: 10
+              searchDistrict:
+                summary: Search for a district
+                value:
+                  query: "Cengkareng"
+                  limit: 5
+              generalSearch:
+                summary: General location search
+                value:
+                  query: "Bandung"
+      responses:
+        '200':
+          description: Locations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingLocationSearchResponse'
+              examples:
+                success:
+                  summary: Successful search
+                  value:
+                    success: true
+                    message: "Locations retrieved successfully"
+                    data:
+                      - province: "DKI Jakarta"
+                        city: "Jakarta Barat"
+                        district: "Cengkareng"
+                        postal_code: "11710"
+                        kelurahan:
+                          - "Cengkareng Barat"
+                          - "Cengkareng Timur"
+                      - province: "DKI Jakarta"
+                        city: "Jakarta Barat"
+                        district: "Cengkareng"
+                        postal_code: "11720"
+                        kelurahan:
+                          - "Kapuk"
+                          - "Duri Kosambi"
+        '400':
+          description: Bad request - Invalid input parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidQuery:
+                  summary: Query too short
+                  value:
+                    success: false
+                    message: "Validation failed"
+                    error: "Query must be at least 2 characters"
+                invalidType:
+                  summary: Invalid location type
+                  value:
+                    success: false
+                    message: "Validation failed"
+                    error: "Type must be one of: province, city, district, area"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serverError:
+                  summary: Server error
+                  value:
+                    success: false
+                    message: "Failed to search locations"
+                    error: "Internal server error"
+
+  /shipping/couriers:
+    get:
+      tags:
+        - Shipping
+      summary: Get available couriers with rates
+      description: |
+        Get available courier services with their rates for shipping from origin to destination.
+        Returns a list of couriers with their service options and pricing.
+        
+        **Important**: Requires separate city and district parameters for both origin and destination.
+      operationId: getCouriers
+      parameters:
+        - name: from_city
+          in: query
+          required: true
+          description: Origin city name
+          schema:
+            type: string
+            example: "Depok"
+        - name: from_district
+          in: query
+          required: true
+          description: Origin district/kecamatan name
+          schema:
+            type: string
+            example: "Sawangan"
+        - name: to_city
+          in: query
+          required: true
+          description: Destination city name
+          schema:
+            type: string
+            example: "Lebak"
+        - name: to_district
+          in: query
+          required: true
+          description: Destination district/kecamatan name
+          schema:
+            type: string
+            example: "Cibadak"
+        - name: weight
+          in: query
+          required: true
+          description: Package weight in grams
+          schema:
+            type: integer
+            minimum: 1
+            example: 1000
+        - name: length
+          in: query
+          required: false
+          description: Package length in centimeters
+          schema:
+            type: integer
+            minimum: 1
+            example: 20
+        - name: width
+          in: query
+          required: false
+          description: Package width in centimeters
+          schema:
+            type: integer
+            minimum: 1
+            example: 15
+        - name: height
+          in: query
+          required: false
+          description: Package height in centimeters
+          schema:
+            type: integer
+            minimum: 1
+            example: 10
+        - name: cod
+          in: query
+          required: false
+          description: Cash on Delivery
+          schema:
+            type: boolean
+            default: false
+        - name: order_price
+          in: query
+          required: false
+          description: Order price in IDR (required if COD is true)
+          schema:
+            type: integer
+            minimum: 0
+            example: 500000
+        - name: service_type
+          in: query
+          required: false
+          description: Preferred service type
+          schema:
+            type: string
+            example: "regular"
+        - name: package_category
+          in: query
+          required: false
+          description: Package category/type
+          schema:
+            type: string
+            example: "electronics"
+      responses:
+        '200':
+          description: Courier rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourierRatesResponse'
+              examples:
+                success:
+                  summary: Successful courier rates
+                  value:
+                    success: true
+                    message: "Courier rates retrieved successfully"
+                    data:
+                      origin:
+                        city: "Depok"
+                        district: "Sawangan"
+                        province: "Jawa Barat"
+                      destination:
+                        city: "Lebak"
+                        district: "Cibadak"
+                        province: "Banten"
+                      package:
+                        weight: 1000
+                        length: 20
+                        width: 15
+                        height: 10
+                      couriers:
+                        - courier_id: "jnt"
+                          courier_name: "J&T Express"
+                          services:
+                            - service_id: "jnt_reg"
+                              service_name: "Regular"
+                              cost: 15000
+                              estimated_delivery: "2-3 days"
+                              description: "Regular delivery service"
+                            - service_id: "jnt_yes"
+                              service_name: "YES"
+                              cost: 25000
+                              estimated_delivery: "1 day"
+                              description: "Express delivery service"
+                          insurance:
+                            available: true
+                            fee: 5000
+                            coverage: 1000000
+        '400':
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /shipping/bookings:
+    post:
+      tags:
+        - Shipping
+      summary: Create shipping booking
+      description: |
+        Create a new shipping booking with the selected courier and service.
+        Returns booking ID and payment information if applicable.
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShippingBookingRequest'
+            examples:
+              basicBooking:
+                summary: Basic booking without COD
+                value:
+                  courier_id: "jnt"
+                  service_id: "jnt_reg"
+                  origin:
+                    name: "John Sender"
+                    phone: "628123456789"
+                    email: "sender@example.com"
+                    address: "Jl. Sudirman No. 123"
+                    district: "Cakung"
+                    city: "Jakarta Timur"
+                    province: "DKI Jakarta"
+                    postal_code: "13910"
+                  destination:
+                    name: "Jane Receiver"
+                    phone: "628198765432"
+                    email: "receiver@example.com"
+                    address: "Jl. Asia Afrika No. 456"
+                    district: "Coblong"
+                    city: "Bandung"
+                    province: "Jawa Barat"
+                    postal_code: "40131"
+                  package:
+                    weight: 1000
+                    length: 20
+                    width: 15
+                    height: 10
+                    description: "Electronics"
+                    value: 500000
+                  cod: false
+                  insurance: false
+                  notes: "Handle with care"
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingBookingResponse'
+              examples:
+                success:
+                  summary: Successful booking
+                  value:
+                    success: true
+                    message: "Booking created successfully"
+                    data:
+                      booking_id: "ord_abc123def456"
+                      unique_id: "ORDER-123"
+                      status: "pending"
+                      courier: "jnt"
+                      service: "jnt_reg"
+                      total_amount: 15000
+                      invoice:
+                        invoice_id: "INV-123"
+                        invoice_number: "INV-1234567890"
+                        status: "draft"
+                        total_amount: 15000
+                        due_date: "2025-11-21T10:30:00+07:00"
+                        checkout_url: "https://payment.example.com/inv-123"
+                      created_at: "2025-11-20T10:30:00+07:00"
+        '400':
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    get:
+      tags:
+        - Shipping
+      summary: List shipping bookings
+      description: |
+        Retrieve a paginated list of shipping bookings with optional filters.
+        Supports filtering by status, courier, and booking ID.
+      operationId: listBookings
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number (minimum 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page (1-100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+        - name: status
+          in: query
+          required: false
+          description: Filter by booking status
+          schema:
+            type: string
+            enum:
+              - invoiced
+              - addressed
+              - pending
+              - processing
+              - shipped
+              - delivered
+            example: "invoiced"
+        - name: courier
+          in: query
+          required: false
+          description: Filter by courier code
+          schema:
+            type: string
+            enum:
+              - jnt
+              - sicepat
+              - ninja
+              - jne
+              - tiki
+              - pos
+              - anteraja
+              - wahana
+              - lion
+              - paxel
+            example: "jnt"
+        - name: booking_id
+          in: query
+          required: false
+          description: Filter by specific booking ID
+          schema:
+            type: integer
+            example: 520
+      responses:
+        '200':
+          description: Bookings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingsListResponse'
+              examples:
+                success:
+                  summary: Successful list with pagination
+                  value:
+                    success: true
+                    message: "Bookings retrieved successfully"
+                    data:
+                      data:
+                        - id: 520
+                          order_name: "Warranty Claim Package SS-1763624145"
+                          state: "invoiced"
+                          state_name: "Menunggu Pembayaran"
+                          courier: "jnt"
+                          courier_name: "J&T"
+                          booking_code: ""
+                          invoice:
+                            id: "INV-TX520-EWALLET-20251120143546-o3Gt"
+                            external_id: "ord_q54ixrqPng6476"
+                            amount: 7500
+                            status: "PENDING"
+                            checkout_url: "https://payment.example.com/..."
+                            expired_at: "2025-11-21T14:35:46+07:00"
+                            paid_at: null
+                          created_at: "2025-11-20T14:35:45+07:00"
+                          updated_at: "2025-11-20T14:35:46+07:00"
+                      pagination:
+                        current_page: 1
+                        last_page: 56
+                        per_page: 10
+                        total: 167
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /shipping/couriers/transactions/{id}:
+    get:
+      tags:
+        - Shipping
+      summary: Get shipping transaction details
+      description: |
+        Retrieve detailed information about a specific shipping transaction by ID.
+        Returns complete transaction data including delivery information, invoice with payment details,
+        products, and amounts.
+        
+        **Public endpoint** - No authentication required.
+        
+        **Use Cases:**
+        - Track shipment status and delivery information
+        - View payment invoice with QR codes for QRIS payments
+        - Check transaction amounts and product details
+        - Monitor package delivery progress
+        
+        **Invoice Payment Fields:**
+        The invoice object contains comprehensive payment information including:
+        - Payment method (QRCODE, VIRTUAL_ACCOUNT, EWALLET, API_CREDIT)
+        - Payment channel (QRIS, DANA, GOPAY, OVO, etc.)
+        - QR code data (base64 PNG image and text string for QRIS)
+        - Payment URLs and checkout links
+        - Payment gateway information
+        - Expiration and payment timestamps
+      operationId: getShippingTransaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+            example: 549
+      responses:
+        '200':
+          description: Transaction retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingTransactionResponse'
+              examples:
+                qrisPayment:
+                  summary: QRIS payment transaction
+                  value:
+                    success: true
+                    message: "Transaction retrieved successfully"
+                    data:
+                      id: 549
+                      transaction_code: "TX549"
+                      state: "invoiced"
+                      state_name: "Menunggu Pembayaran"
+                      order_name: "Warranty Claim Package SS-1763864586"
+                      delivery:
+                        courier: "jnt"
+                        courier_name: "J&T"
+                        booking_code: ""
+                        destination_address:
+                          name: "Aswin Abu Bakar"
+                          phone: "6281234567890"
+                          email: ""
+                          address: "Jl. Raya Sawangan No. 123"
+                          city: "Depok"
+                          district: "Sawangan"
+                          province: "Jawa Barat"
+                          postal_code: "16511"
+                      invoice:
+                        id: "INV-TX549-QRCODE-20251120175946-dGmT"
+                        external_id: "ord_xgXk7qWv7O6zXg"
+                        payment_url: "https://payment.kirimku.com/invoice/inv_123"
+                        amount: 7500
+                        status: "PENDING"
+                        payment_method: "QR_CODE"
+                        payment_channel: "QRIS"
+                        e_wallet: ""
+                        checkout_url: "https://checkout.kirimku.com/qr/inv_123"
+                        qr_string: "00020101021226660..."
+                        qr_code: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+                        payment_gateway: "XENDIT"
+                        expired_at: "2025-11-21T17:59:46+07:00"
+                        paid_at: null
+                      products:
+                        - id: 1
+                          name: "Warranty Claim Product"
+                          description: "Product for warranty claim shipping"
+                          quantity: 1
+                          weight: 500
+                          length: 15
+                          width: 10
+                          height: 8
+                          price: 0
+                      amounts:
+                        subtotal: 7500
+                        shipping_cost: 7500
+                        insurance_cost: 0
+                        cod_fee: 0
+                        total: 7500
+                      created_at: "2025-11-20T17:59:45+07:00"
+                      updated_at: "2025-11-20T17:59:46+07:00"
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  summary: Transaction not found
+                  value:
+                    success: false
+                    message: "Transaction not found"
+                    error: "No transaction found with ID 999"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /shipping/tracking/{tracking_number}/history:
+    get:
+      tags:
+        - Shipping
+      summary: Get shipment tracking history
+      description: |
+        Retrieve complete tracking history for a shipment by tracking/booking code.
+        Returns chronological list of tracking events from pickup to delivery.
+        
+        **Public endpoint** - No authentication required.
+        
+        **Use Cases:**
+        - Track package delivery progress
+        - View detailed event timeline
+        - Monitor pickup attempts and status changes
+        - Check delivery location history
+        - Access courier-specific metadata
+        
+        **Event Data:**
+        Each tracking event contains:
+        - Event ID and timestamp
+        - Status code (picked_up, in_transit, delivered, exception, etc.)
+        - Human-readable description
+        - Location information
+        - Courier code
+        - Metadata (weight, delivery estimates, source, status text)
+        
+        **Supported Couriers:**
+        Works with any courier service (J&T, SiCepat, JNE, Ninja, etc.)
+        
+        **Note:** Tracking number is the booking_code from transaction/booking data
+      operationId: getTrackingHistory
+      parameters:
+        - name: tracking_number
+          in: path
+          required: true
+          description: Shipment tracking/booking code
+          schema:
+            type: string
+            example: "JO9000372373"
+      responses:
+        '200':
+          description: Tracking history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingHistoryResponse'
+              examples:
+                jntTracking:
+                  summary: J&T tracking with 12 events
+                  value:
+                    success: true
+                    message: "Tracking history retrieved successfully"
+                    data:
+                      success: false
+                      data:
+                        - id: "117"
+                          timestamp: "2025-07-03T15:12:01"
+                          status: "picked_up"
+                          description: "Manifes"
+                          location: "JAKARTA"
+                          courier_code: "jnt"
+                          metadata:
+                            actual_weight: 1000
+                            source: "jnt_api"
+                        - id: "118"
+                          timestamp: "2025-07-05T10:30:00"
+                          status: "in_transit"
+                          description: "Dalam Perjalanan"
+                          location: "JAKARTA"
+                          courier_code: "jnt"
+                          metadata:
+                            actual_weight: 1000
+                            estimated_delivery: "2025-07-08"
+                            source: "jnt_cron_api"
+                            cron_update_time: "2025-07-05T11:00:00"
+                        - id: "119"
+                          timestamp: "2025-07-28T13:28:00"
+                          status: "exception"
+                          description: "Pickup Failed"
+                          location: "JAKARTA"
+                          courier_code: "jnt"
+                          metadata:
+                            actual_weight: 1000
+                            courier_status_text: "Penerima tidak ada"
+                            source: "jnt_api"
+                      message: ""
+        '400':
+          description: Bad request - Invalid tracking number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emptyTrackingNumber:
+                  summary: Empty tracking number
+                  value:
+                    success: false
+                    message: "Tracking number is required"
+                    error: "Tracking number cannot be empty"
+        '404':
+          description: Tracking information not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  summary: Tracking not found
+                  value:
+                    success: false
+                    message: "Tracking history not found"
+                    error: "No tracking information available for code: JT999999999"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ShippingLocationSearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: Search query for location name
+          minLength: 2
+          example: "Jakarta"
+        type:
+          type: string
+          description: Type of location to search for
+          enum:
+            - province
+            - city
+            - district
+            - area
+          example: "city"
+        limit:
+          type: integer
+          description: Maximum number of results to return
+          minimum: 1
+          maximum: 100
+          default: 10
+          example: 10
+
+    ShippingLocationSearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+          example: true
+        message:
+          type: string
+          description: Human-readable message
+          example: "Locations retrieved successfully"
+        data:
+          type: array
+          description: Array of matching locations
+          items:
+            $ref: '#/components/schemas/ShippingLocationItem'
+        meta:
+          $ref: '#/components/schemas/ShippingResponseMeta'
+
+    ShippingLocationItem:
+      type: object
+      description: A single location result with hierarchical data
+      properties:
+        province:
+          type: string
+          description: Province name
+          example: "Jawa Barat"
+        city:
+          type: string
+          description: City/Regency name
+          example: "Bandung"
+        district:
+          type: string
+          description: District/Kecamatan name
+          example: "Coblong"
+        postal_code:
+          type: string
+          description: Postal/ZIP code
+          example: "40131"
+        kelurahan:
+          type: array
+          description: Sub-districts/Villages in the area
+          items:
+            type: string
+          example:
+            - "Cipaganti"
+            - "Lebak Gede"
+
+    ShippingResponseMeta:
+      type: object
+      description: Response metadata
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier
+          example: "req_123456789"
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2025-11-19T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Validation failed"
+        error:
+          type: string
+          description: Detailed error information
+          example: "Query must be at least 2 characters"
+
+    CourierRatesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Courier rates retrieved successfully"
+        data:
+          $ref: '#/components/schemas/CourierRatesData'
+    
+    CourierRatesData:
+      type: object
+      properties:
+        origin:
+          $ref: '#/components/schemas/ShippingLocation'
+        destination:
+          $ref: '#/components/schemas/ShippingLocation'
+        package:
+          $ref: '#/components/schemas/PackageInfo'
+        couriers:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourierRate'
+    
+    ShippingLocation:
+      type: object
+      properties:
+        city:
+          type: string
+          example: "Jakarta Timur"
+        district:
+          type: string
+          example: "Cakung"
+        province:
+          type: string
+          example: "DKI Jakarta"
+    
+    PackageInfo:
+      type: object
+      properties:
+        weight:
+          type: integer
+          description: Weight in grams
+          example: 1000
+        length:
+          type: integer
+          description: Length in centimeters
+          example: 20
+        width:
+          type: integer
+          description: Width in centimeters
+          example: 15
+        height:
+          type: integer
+          description: Height in centimeters
+          example: 10
+        category:
+          type: string
+          example: "electronics"
+    
+    CourierRate:
+      type: object
+      properties:
+        courier_id:
+          type: string
+          example: "jnt"
+        courier_name:
+          type: string
+          example: "J&T Express"
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceRate'
+        insurance:
+          $ref: '#/components/schemas/InsuranceInfo'
+    
+    ServiceRate:
+      type: object
+      properties:
+        service_id:
+          type: string
+          example: "jnt_reg"
+        service_name:
+          type: string
+          example: "Regular"
+        cost:
+          type: integer
+          description: Cost in IDR
+          example: 15000
+        estimated_delivery:
+          type: string
+          example: "2-3 days"
+        description:
+          type: string
+          example: "Regular delivery service"
+    
+    InsuranceInfo:
+      type: object
+      properties:
+        available:
+          type: boolean
+          example: true
+        fee:
+          type: integer
+          description: Insurance fee in IDR
+          example: 5000
+        coverage:
+          type: integer
+          description: Coverage amount in IDR
+          example: 1000000
+
+    ShippingBookingRequest:
+      type: object
+      required:
+        - courier_id
+        - service_id
+        - origin
+        - destination
+        - package
+      properties:
+        courier_id:
+          type: string
+          description: Courier service identifier
+          example: "jnt"
+        service_id:
+          type: string
+          description: Service type identifier
+          example: "jnt_reg"
+        origin:
+          $ref: '#/components/schemas/AddressRequest'
+        destination:
+          $ref: '#/components/schemas/AddressRequest'
+        package:
+          $ref: '#/components/schemas/PackageRequest'
+        cod:
+          type: boolean
+          description: Cash on Delivery
+          default: false
+          example: false
+        insurance:
+          type: boolean
+          description: Insurance required
+          default: false
+          example: false
+        notes:
+          type: string
+          description: Additional notes for the booking
+          example: "Handle with care"
+        payment_method:
+          type: string
+          enum:
+            - API_CREDIT
+            - QRCODE
+            - VA
+            - EWALLET
+          description: |
+            Payment method for the booking:
+            - API_CREDIT: Pay using API credit balance (default)
+            - QRCODE: Pay using QR code (requires channel)
+            - VA: Pay using virtual account
+            - EWALLET: Pay using e-wallet (requires channel)
+            
+            Note: Values are converted to lowercase when calling Kirimku API
+            (QRCODE → qris, VA → va, EWALLET → ewallet, API_CREDIT → api_credit)
+          example: "API_CREDIT"
+        channel:
+          type: string
+          enum:
+            - QRIS
+            - DANA
+            - GOPAY
+            - OVO
+            - LINKAJA
+            - SHOPEEPAY
+          description: |
+            Payment channel for QRCODE or EWALLET payment methods:
+            - QRIS: All-in-one QR code
+            - DANA: DANA e-wallet
+            - GOPAY: GoPay e-wallet
+            - OVO: OVO e-wallet
+            - LINKAJA: LinkAja e-wallet
+            - SHOPEEPAY: ShopeePay e-wallet
+          example: "QRIS"
+    
+    AddressRequest:
+      type: object
+      required:
+        - name
+        - phone
+        - address
+        - district
+        - city
+        - province
+        - postal_code
+      properties:
+        name:
+          type: string
+          description: Contact person name
+          example: "John Doe"
+        phone:
+          type: string
+          description: Phone number in international format (62xxx)
+          example: "628123456789"
+        email:
+          type: string
+          format: email
+          description: Email address (optional)
+          example: "john@example.com"
+        address:
+          type: string
+          description: Full street address
+          example: "Jl. Sudirman No. 123"
+        district:
+          type: string
+          description: District/Kecamatan
+          example: "Cakung"
+        city:
+          type: string
+          description: City/Kabupaten
+          example: "Jakarta Timur"
+        province:
+          type: string
+          description: Province
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          description: Postal/ZIP code
+          example: "13910"
+    
+    PackageRequest:
+      type: object
+      required:
+        - weight
+        - length
+        - width
+        - height
+        - description
+        - value
+      properties:
+        weight:
+          type: integer
+          minimum: 1
+          description: Package weight in grams
+          example: 1000
+        length:
+          type: integer
+          minimum: 1
+          description: Package length in centimeters
+          example: 20
+        width:
+          type: integer
+          minimum: 1
+          description: Package width in centimeters
+          example: 15
+        height:
+          type: integer
+          minimum: 1
+          description: Package height in centimeters
+          example: 10
+        description:
+          type: string
+          description: Package contents description
+          example: "Electronics"
+        value:
+          type: integer
+          minimum: 0
+          description: Package value in IDR
+          example: 500000
+
+    ShippingBookingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Booking created successfully"
+        data:
+          $ref: '#/components/schemas/BookingData'
+    
+    BookingData:
+      type: object
+      properties:
+        booking_id:
+          type: string
+          description: Unique booking identifier
+          example: "ord_abc123def456"
+        unique_id:
+          type: string
+          description: Order unique ID
+          example: "ORDER-123"
+        status:
+          type: string
+          description: Current booking status
+          example: "pending"
+        courier:
+          type: string
+          description: Courier code
+          example: "jnt"
+        service:
+          type: string
+          description: Service code
+          example: "jnt_reg"
+        total_amount:
+          type: integer
+          description: Total amount in IDR
+          example: 15000
+        invoice:
+          $ref: '#/components/schemas/InvoiceData'
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-20T10:30:00+07:00"
+    
+    InvoiceData:
+      type: object
+      properties:
+        invoice_id:
+          type: string
+          example: "INV-123"
+        invoice_number:
+          type: string
+          example: "INV-1234567890"
+        status:
+          type: string
+          enum:
+            - draft
+            - pending
+            - paid
+            - expired
+            - cancelled
+          example: "draft"
+        total_amount:
+          type: integer
+          description: Invoice amount in IDR
+          example: 15000
+        due_date:
+          type: string
+          format: date-time
+          example: "2025-11-21T10:30:00+07:00"
+        checkout_url:
+          type: string
+          description: Payment checkout URL
+          example: "https://payment.example.com/inv-123"
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+
+    BookingsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Bookings retrieved successfully"
+        data:
+          $ref: '#/components/schemas/BookingsListData'
+    
+    BookingsListData:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingListItem'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+    
+    BookingListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 520
+        order_name:
+          type: string
+          example: "Warranty Claim Package SS-1763624145"
+        state:
+          type: string
+          description: Booking state code
+          example: "invoiced"
+        state_name:
+          type: string
+          description: Human-readable state name (Bahasa Indonesia)
+          example: "Menunggu Pembayaran"
+        courier:
+          type: string
+          description: Courier code
+          example: "jnt"
+        courier_name:
+          type: string
+          description: Courier display name
+          example: "J&T"
+        booking_code:
+          type: string
+          description: Courier tracking/booking code
+          example: "JT1234567890"
+        invoice:
+          $ref: '#/components/schemas/InvoiceListItem'
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-20T14:35:45+07:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-11-20T14:35:46+07:00"
+    
+    InvoiceListItem:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+          example: "INV-TX520-EWALLET-20251120143546-o3Gt"
+        external_id:
+          type: string
+          example: "ord_q54ixrqPng6476"
+        amount:
+          type: integer
+          description: Invoice amount in IDR
+          example: 7500
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PAID
+            - EXPIRED
+            - CANCELLED
+          example: "PENDING"
+        checkout_url:
+          type: string
+          example: "https://payment.example.com/..."
+        expired_at:
+          type: string
+          format: date-time
+          example: "2025-11-21T14:35:46+07:00"
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+    
+    PaginationInfo:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          description: Current page number
+          example: 1
+        last_page:
+          type: integer
+          description: Total number of pages
+          example: 56
+        per_page:
+          type: integer
+          description: Items per page
+          example: 10
+        total:
+          type: integer
+          description: Total number of items
+          example: 167
+
+    ShippingTransactionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Transaction retrieved successfully"
+        data:
+          $ref: '../schemas.yaml#/components/schemas/KirimkuTransaction'
+
+    TrackingHistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+          example: true
+        message:
+          type: string
+          description: Human-readable message
+          example: "Tracking history retrieved successfully"
+        data:
+          $ref: '#/components/schemas/TrackingHistoryData'
+    
+    TrackingHistoryData:
+      type: object
+      description: Tracking history data from courier API (nested response structure)
+      properties:
+        success:
+          type: boolean
+          description: Success status from courier API
+          example: false
+        data:
+          type: array
+          description: Array of tracking events in chronological order
+          items:
+            $ref: '#/components/schemas/TrackingEvent'
+        message:
+          type: string
+          description: Message from courier API
+          example: ""
+    
+    TrackingEvent:
+      type: object
+      description: Single tracking event with timestamp and location
+      properties:
+        id:
+          type: string
+          description: Unique event identifier
+          example: "117"
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp in ISO 8601 format
+          example: "2025-07-03T15:12:01"
+        status:
+          type: string
+          description: Event status code
+          enum:
+            - picked_up
+            - in_transit
+            - out_for_delivery
+            - delivered
+            - exception
+            - pickup_pending
+            - returned
+            - cancelled
+          example: "picked_up"
+        description:
+          type: string
+          description: Human-readable event description
+          example: "Manifes"
+        location:
+          type: string
+          description: Event location (city/area)
+          example: "JAKARTA"
+        courier_code:
+          type: string
+          description: Courier service code
+          example: "jnt"
+        metadata:
+          $ref: '#/components/schemas/TrackingEventMetadata'
+    
+    TrackingEventMetadata:
+      type: object
+      description: Additional event metadata (varies by courier and source)
+      properties:
+        actual_weight:
+          type: integer
+          description: Actual package weight in grams
+          example: 1000
+        actual_delivery:
+          type: string
+          format: date-time
+          description: Actual delivery timestamp
+          nullable: true
+          example: null
+        actual_fee:
+          type: integer
+          description: Actual shipping fee charged
+          nullable: true
+          example: null
+        estimated_delivery:
+          type: string
+          format: date
+          description: Estimated delivery date
+          example: "2025-07-08"
+        source:
+          type: string
+          description: Data source (API endpoint or cron job)
+          enum:
+            - jnt_api
+            - jnt_cron_api
+            - sicepat_api
+            - jne_api
+          example: "jnt_api"
+        courier_status_text:
+          type: string
+          description: Courier-specific status text
+          example: "Penerima tidak ada"
+        cron_update_time:
+          type: string
+          format: date-time
+          description: Last cron update timestamp
+          example: "2025-07-05T11:00:00"

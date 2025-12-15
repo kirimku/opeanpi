@@ -1,0 +1,560 @@
+schemas:
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          example: "+6281234567890"
+        picture:
+          type: string
+          format: uri
+          example: "https://lh3.googleusercontent.com/a/profile_picture"
+        user_type:
+          type: string
+          enum: [personal, bisnis, agen]
+          example: "personal"
+        accept_terms:
+          type: boolean
+          example: true
+        accept_promos:
+          type: boolean
+          example: false
+          
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Authentication successful"
+        data:
+          type: object
+          properties:
+            access_token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            refresh_token:
+              type: string
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            token_expiry:
+              type: string
+              format: date-time
+              example: "2023-05-31T14:30:00Z"
+            user:
+              $ref: '#/components/schemas/UserDTO'
+        meta:
+          type: object
+          properties:
+            http_status:
+              type: integer
+              example: 200
+              
+    # Invoice related schemas
+    EWalletChannel:
+      type: string
+      enum: [DANA, OVO, SHOPEEPAY, LINKAJA]
+      example: "DANA"
+      
+    InvoiceStatus:
+      type: string
+      enum: [PENDING, PAID, EXPIRED, CANCELLED]
+      example: "PENDING"
+      
+    # Kirimku related schemas
+    KirimkuAddressRequest:
+      type: object
+      required:
+        - name
+        - phone
+        - address
+        - area_id
+        - city_id
+        - province_id
+        - postal_code
+      properties:
+        name:
+          type: string
+          description: Recipient/sender name
+          example: "John Doe"
+        phone:
+          type: string
+          description: Phone number
+          example: "628123456789"
+        email:
+          type: string
+          format: email
+          description: Email address (optional)
+          example: "john.doe@example.com"
+        address:
+          type: string
+          description: Full address
+          example: "Jl. Sudirman No. 123, Gedung A, Lantai 5"
+        area_id:
+          type: string
+          description: Area/district ID
+          example: "1101"
+        city_id:
+          type: string
+          description: City ID
+          example: "11"
+        province_id:
+          type: string
+          description: Province ID
+          example: "1"
+        postal_code:
+          type: string
+          description: Postal code
+          example: "10110"
+        latitude:
+          type: string
+          description: Latitude coordinate (optional)
+          example: "-6.2088"
+        longitude:
+          type: string
+          description: Longitude coordinate (optional)
+          example: "106.8456"
+          
+    KirimkuPackageRequest:
+      type: object
+      required:
+        - weight
+        - length
+        - width
+        - height
+        - description
+        - value
+      properties:
+        weight:
+          type: integer
+          description: Package weight in grams
+          example: 1000
+          minimum: 1
+        length:
+          type: integer
+          description: Package length in centimeters
+          example: 20
+          minimum: 1
+        width:
+          type: integer
+          description: Package width in centimeters
+          example: 15
+          minimum: 1
+        height:
+          type: integer
+          description: Package height in centimeters
+          example: 10
+          minimum: 1
+        description:
+          type: string
+          description: Package description
+          example: "Electronics - Smartphone"
+        value:
+          type: integer
+          format: int64
+          description: Package value in rupiah
+          example: 5000000
+          minimum: 0
+        category:
+          type: string
+          description: Package category (optional)
+          example: "Electronics"
+          
+    KirimkuBookingRequest:
+      type: object
+      required:
+        - courier_id
+        - service_id
+        - origin
+        - package
+      properties:
+        courier_id:
+          type: string
+          description: Courier ID
+          example: "jnt"
+        service_id:
+          type: string
+          description: Service ID
+          example: "jnt_reg"
+        origin:
+          $ref: '#/components/schemas/KirimkuAddressRequest'
+        destination:
+          allOf:
+            - $ref: '#/components/schemas/KirimkuAddressRequest'
+            - description: "Optional for customer endpoints - auto-populated from warranty address"
+        package:
+          $ref: '#/components/schemas/KirimkuPackageRequest'
+        cod_amount:
+          type: integer
+          format: int64
+          description: Cash on delivery amount in rupiah (optional)
+          example: 0
+          minimum: 0
+        insurance:
+          type: boolean
+          description: Whether to include insurance (optional)
+          example: true
+        notes:
+          type: string
+          description: Additional notes (optional)
+          example: "Handle with care"
+        payment_method:
+          type: string
+          enum: [API_CREDIT, QRCODE, VA, EWALLET]
+          description: Payment method (optional)
+          example: "API_CREDIT"
+        channel:
+          type: string
+          description: Payment channel (optional, required for some payment methods)
+          example: "QRIS"
+          
+    KirimkuBooking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Internal booking ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        booking_id:
+          type: string
+          description: External booking ID from courier
+          example: "JNT123456789"
+        tracking_number:
+          type: string
+          description: Tracking number
+          example: "JT123456789"
+        courier_id:
+          type: string
+          description: Courier ID
+          example: "jnt"
+        service_id:
+          type: string
+          description: Service ID
+          example: "jnt_reg"
+        status:
+          type: string
+          enum: [pending, confirmed, picked_up, in_transit, delivered, cancelled, returned]
+          description: Booking status
+          example: "confirmed"
+        origin:
+          $ref: '#/components/schemas/KirimkuAddressRequest'
+        destination:
+          $ref: '#/components/schemas/KirimkuAddressRequest'
+        package:
+          $ref: '#/components/schemas/KirimkuPackageRequest'
+        shipping_cost:
+          type: integer
+          format: int64
+          description: Shipping cost in rupiah
+          example: 12000
+        insurance_cost:
+          type: integer
+          format: int64
+          description: Insurance cost in rupiah (optional)
+          example: 2500
+        cod_amount:
+          type: integer
+          format: int64
+          description: Cash on delivery amount in rupiah (optional)
+          example: 0
+        total_cost:
+          type: integer
+          format: int64
+          description: Total cost in rupiah
+          example: 14500
+        notes:
+          type: string
+          description: Additional notes (optional)
+          example: "Handle with care"
+        pickup_date:
+          type: string
+          format: date-time
+          description: Estimated pickup date (optional)
+          example: "2024-01-16T09:00:00Z"
+        delivery_date:
+          type: string
+          format: date-time
+          description: Estimated delivery date (optional)
+          example: "2024-01-18T17:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+    
+    KirimkuTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Transaction ID
+          example: "549"
+        unique_id:
+          type: string
+          description: Unique transaction identifier
+          example: "SS-1763858562"
+        state:
+          type: string
+          description: Transaction state
+          enum: [pending, addressed, invoiced, paid, cancelled]
+          example: "invoiced"
+        state_name:
+          type: string
+          description: Human-readable state name
+          example: "Menunggu Pembayaran"
+        state_information:
+          type: string
+          description: Detailed state information
+          example: "Menunggu pembayaran invoice"
+        user_id:
+          type: string
+          format: uuid
+          description: User ID who created the transaction
+          example: "3116fc5a-d512-4be7-9353-1c444c2af49b"
+        created_at:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+          example: "2025-11-23T07:42:42.182505+07:00"
+        updated_at:
+          type: string
+          format: date-time
+          description: Transaction last update timestamp
+          example: "2025-11-23T07:42:42.359848+07:00"
+        delivery:
+          type: object
+          description: Delivery information
+          properties:
+            from:
+              $ref: '#/components/schemas/KirimkuAddress'
+            consignee:
+              $ref: '#/components/schemas/KirimkuAddress'
+            booking_code:
+              type: string
+              description: Booking/tracking code
+              example: "JNT1234567890"
+            courier:
+              type: string
+              description: Courier code
+              example: "jnt"
+            courier_name:
+              type: string
+              description: Courier display name
+              example: "J&T"
+            service_name:
+              type: string
+              description: Service type name
+              example: "Regular"
+        products:
+          type: object
+          description: Package/product information
+          properties:
+            name:
+              type: string
+              description: Product/package name
+              example: "Warranty Claim Package SS-1763858562"
+            quantity:
+              type: integer
+              description: Quantity
+              example: 1
+            weight:
+              type: integer
+              description: Weight in grams
+              example: 1000
+            price:
+              type: integer
+              format: int64
+              description: Product value in IDR
+              example: 150000
+            length:
+              type: integer
+              description: Length in cm
+              example: 20
+            width:
+              type: integer
+              description: Width in cm
+              example: 15
+            height:
+              type: integer
+              description: Height in cm
+              example: 10
+        amount:
+          type: object
+          description: Transaction amount breakdown
+          properties:
+            total:
+              type: integer
+              format: int64
+              description: Total amount in IDR
+              example: 7500
+            details:
+              type: object
+              properties:
+                shipping:
+                  type: integer
+                  format: int64
+                  description: Shipping cost
+                  example: 7500
+                insurance:
+                  type: integer
+                  format: int64
+                  description: Insurance cost
+                  example: 0
+        invoice:
+          $ref: '#/components/schemas/KirimkuInvoice'
+    
+    KirimkuInvoice:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Invoice ID
+          example: "INV-TX549-QR_CODE-20251123074242-wSEg"
+        external_id:
+          type: string
+          description: External invoice reference ID
+          example: "ord_R1Px4zvvBm7761"
+        payment_url:
+          type: string
+          description: Direct payment URL (if available)
+          example: "https://payment.example.com/pay/abc123"
+        amount:
+          type: integer
+          format: int64
+          description: Invoice amount in IDR
+          example: 7500
+        status:
+          type: string
+          description: Invoice payment status
+          enum: [PENDING, PAID, EXPIRED, FAILED, CANCELLED]
+          example: "PENDING"
+        payment_method:
+          type: string
+          description: Payment method type
+          enum: [QR_CODE, VIRTUAL_ACCOUNT, EWALLET, API_CREDIT]
+          example: "QR_CODE"
+        payment_channel:
+          type: string
+          description: Specific payment channel
+          enum: [QRIS, DANA, GOPAY, OVO, LINKAJA, SHOPEEPAY, BCA, BNI, BRI, MANDIRI, PERMATA]
+          example: "QRIS"
+        e_wallet:
+          type: string
+          description: E-wallet specific data (if applicable)
+          example: ""
+        checkout_url:
+          type: string
+          description: Checkout page URL (if available)
+          example: "https://checkout.example.com/abc123"
+        qr_string:
+          type: string
+          description: Base64-encoded PNG image of QR code
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAA..."
+        qr_code:
+          type: string
+          description: Text representation of QR code (QRIS format)
+          example: "00020101021126...5802ID5915..."
+        payment_gateway:
+          type: string
+          description: Payment gateway provider
+          enum: [durianpay, KIRIMKU_QRIS, midtrans, xendit]
+          example: "durianpay"
+        expired_at:
+          type: string
+          format: date-time
+          description: Payment expiration timestamp
+          example: "2025-11-24T07:42:42.356819+07:00"
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Payment completion timestamp (null if not paid)
+          example: null
+    
+    KirimkuAddress:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Contact name
+          example: "Rexus Store"
+        phone:
+          type: string
+          description: Contact phone number
+          example: "62211234567"
+        email:
+          type: string
+          format: email
+          description: Contact email (optional)
+          example: "store@rexus.com"
+        address:
+          type: string
+          description: Complete address
+          example: "Jl. Default Address No. 123"
+        area:
+          type: string
+          description: Area/district
+          example: "Cempaka Putih"
+        city:
+          type: string
+          description: City
+          example: "Jakarta Pusat"
+        province:
+          type: string
+          description: Province
+          example: "DKI Jakarta"
+        post_code:
+          type: string
+          description: Postal code
+          example: "10510"
+        latitude:
+          type: number
+          format: float
+          description: Latitude coordinate
+          example: -6.175392
+        longitude:
+          type: number
+          format: float
+          description: Longitude coordinate
+          example: 106.827153
+          
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+        error:
+          type: string
+          example: "error_code"
+        meta:
+          type: object
+          properties:
+            request_id:
+              type: string
+              example: "req_123456789"
+            timestamp:
+              type: string
+              format: date-time
+              example: "2024-01-15T10:30:00Z"

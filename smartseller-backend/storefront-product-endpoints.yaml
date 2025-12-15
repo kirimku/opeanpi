@@ -1,0 +1,120 @@
+paths:
+  /api/v1/storefront/{slug}/products:
+    get:
+      tags: [Products]
+      summary: List storefront products
+      description: |
+        List products within a storefront context.
+        
+        Tenant scoping: Products are restricted to the storefront's seller via tenant context.
+        Optional customer auth; if authenticated as seller, results are scoped by `created_by` = seller.
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Storefront slug
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at, updated_at, base_price]
+          description: Sort field
+        - name: sort_desc
+          in: query
+          schema:
+            type: boolean
+          description: Sort in descending order
+        - name: page
+          in: query
+          schema:
+            type: integer
+          description: Page number (1-based)
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+          description: Items per page
+        - name: query
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, inactive, archived]
+          description: Filter by product status
+        - name: min_price
+          in: query
+          schema:
+            type: number
+            format: decimal
+          description: Minimum price filter
+        - name: max_price
+          in: query
+          schema:
+            type: number
+            format: decimal
+          description: Maximum price filter
+        - name: low_stock
+          in: query
+          schema:
+            type: boolean
+          description: Filter products with low stock
+      responses:
+        '200':
+          description: Products retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './product-schemas.yaml#/components/schemas/ProductListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/storefront/{slug}/products/{id}:
+    get:
+      tags: [Products]
+      summary: Get storefront product
+      description: |
+        Get a single product within a storefront context.
+        
+        Tenant scoping: Only returns the product if it belongs to the storefront's seller (matches `created_by`).
+      security: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Storefront slug
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product ID
+        - name: include
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [images, variants, all]
+          description: Include related resources
+      responses:
+        '200':
+          description: Product retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './product-schemas.yaml#/components/schemas/ProductResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

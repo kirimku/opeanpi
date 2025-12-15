@@ -1,0 +1,115 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Admin Account Settings API
+  version: 1.0.0
+tags:
+  - name: admin-account
+    description: Admin account profile and preferences
+paths:
+  /api/v1/admin/account/settings:
+    get:
+      summary: Get admin account settings
+      tags: [admin-account]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account settings retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AdminAccountSettingsResponse'
+        '401':
+          $ref: './schemas.yaml#/schemas/UnauthorizedError'
+    put:
+      summary: Update admin account settings
+      tags: [admin-account]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAccountSettingsRequest'
+      responses:
+        '200':
+          description: Account settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AdminAccountSettingsResponse'
+        '400':
+          $ref: './schemas.yaml#/schemas/BadRequestError'
+        '401':
+          $ref: './schemas.yaml#/schemas/UnauthorizedError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AdminAccountSettingsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        phone:
+          type: string
+          maxLength: 20
+        picture_url:
+          type: string
+          format: uri
+        accept_promos:
+          type: boolean
+        current_password:
+          type: string
+          minLength: 8
+        new_password:
+          type: string
+          minLength: 8
+    AdminAccountSettingsResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        picture_url:
+          type: string
+        user_type:
+          type: string
+        user_tier:
+          type: string
+        user_role:
+          type: string
+        is_admin:
+          type: boolean
+        accept_promos:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

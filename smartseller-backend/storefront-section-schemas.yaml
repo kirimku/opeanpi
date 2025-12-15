@@ -1,0 +1,553 @@
+components:
+  schemas:
+    # Request Schemas
+    CreateSectionRequest:
+      type: object
+      required:
+        - section_type
+        - title
+        - slug
+        - content
+      properties:
+        section_type:
+          type: string
+          enum: [image_slider, product_list, hero_banner, text_block, video_embed, category_grid, testimonial, countdown_timer, menu_navigation, loyalty_widget]
+          description: Type of section to create
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Section title
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique slug for URL-friendly identification
+        content:
+          type: object
+          description: Section content (structure varies by section_type)
+          additionalProperties: true
+        settings:
+          type: object
+          description: Section-specific settings (optional)
+          additionalProperties: true
+        is_active:
+          type: boolean
+          default: true
+          description: Whether section is active and visible
+        start_date:
+          type: string
+          format: date-time
+          description: Optional start date for scheduled content
+          nullable: true
+        end_date:
+          type: string
+          format: date-time
+          description: Optional end date for scheduled content
+          nullable: true
+        template_code:
+          type: string
+          description: Template code if section was created from template
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          description: Tags for categorization and filtering
+          example: [homepage, promotional, featured]
+
+    CreateSectionFromTemplateRequest:
+      type: object
+      required:
+        - template_code
+        - title
+        - slug
+      properties:
+        template_code:
+          type: string
+          description: Template code to use
+          example: featured_products_grid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Section title
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique slug
+        tags:
+          type: array
+          items:
+            type: string
+          description: Optional tags
+          example: [homepage]
+
+    UpdateSectionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Updated title
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Updated slug (must remain unique)
+        content:
+          type: object
+          description: Updated content
+          additionalProperties: true
+        settings:
+          type: object
+          description: Updated settings
+          additionalProperties: true
+        is_active:
+          type: boolean
+          description: Updated active status
+        start_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Updated start date
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Updated end date
+        tags:
+          type: array
+          items:
+            type: string
+          description: Updated tags
+
+    ReorderSectionsRequest:
+      type: object
+      required:
+        - section_ids
+      properties:
+        section_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          description: Section IDs in desired order
+          example:
+            - 550e8400-e29b-41d4-a716-446655440001
+            - 550e8400-e29b-41d4-a716-446655440002
+
+    DuplicateSectionRequest:
+      type: object
+      required:
+        - new_title
+        - new_slug
+      properties:
+        new_title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Title for the duplicated section
+        new_slug:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Slug for the duplicated section (must be unique)
+
+    BulkUpdateStatusRequest:
+      type: object
+      required:
+        - section_ids
+        - is_active
+      properties:
+        section_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          description: Section IDs to update
+        is_active:
+          type: boolean
+          description: New active status
+
+    # Response Schemas
+    SectionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Section ID
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID
+        section_type:
+          type: string
+          enum: [image_slider, product_list, hero_banner, text_block, video_embed, category_grid, testimonial, countdown_timer, menu_navigation, loyalty_widget]
+          description: Section type
+        title:
+          type: string
+          description: Section title
+        slug:
+          type: string
+          description: Section slug
+        content:
+          type: object
+          description: Section content (structure varies by type)
+          additionalProperties: true
+        settings:
+          type: object
+          description: Section settings
+          additionalProperties: true
+        is_active:
+          type: boolean
+          description: Active status
+        display_order:
+          type: integer
+          description: Display order (0-based)
+        start_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Scheduled start date
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Scheduled end date
+        template_code:
+          type: string
+          nullable: true
+          description: Template code if created from template
+        tags:
+          type: array
+          items:
+            type: string
+          description: Section tags
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductRef'
+          description: Enriched product data (for product_list sections)
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryRef'
+          description: Enriched category data (for category_grid sections)
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Deletion timestamp (if soft-deleted)
+
+    ProductRef:
+      type: object
+      description: Product reference with essential data
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Product ID
+        name:
+          type: string
+          description: Product name
+        slug:
+          type: string
+          description: Product slug
+        price:
+          type: number
+          format: decimal
+          description: Product price
+        image_url:
+          type: string
+          nullable: true
+          description: Primary product image URL
+        is_available:
+          type: boolean
+          description: Product availability
+        stock:
+          type: integer
+          nullable: true
+          description: Current stock level
+
+    CategoryRef:
+      type: object
+      description: Category reference with essential data
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Category ID
+        name:
+          type: string
+          description: Category name
+        slug:
+          type: string
+          description: Category slug
+        image_url:
+          type: string
+          nullable: true
+          description: Category image URL
+        product_count:
+          type: integer
+          description: Number of products in category
+
+    Metadata:
+      type: object
+      description: Computed metadata about the section
+      properties:
+        product_count:
+          type: integer
+          description: Total number of products (for product sections)
+        category_count:
+          type: integer
+          description: Total number of categories (for category sections)
+        is_scheduled:
+          type: boolean
+          description: Whether section has start/end dates
+        is_currently_active:
+          type: boolean
+          description: Whether section is currently active (considering dates)
+        has_expired:
+          type: boolean
+          description: Whether section has passed its end date
+
+    ListSectionsResponse:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionResponse'
+          description: Array of sections
+        total:
+          type: integer
+          description: Total count
+
+    TemplateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Template ID
+        template_code:
+          type: string
+          description: Unique template code
+        name:
+          type: string
+          description: Template name
+        description:
+          type: string
+          nullable: true
+          description: Template description
+        section_type:
+          type: string
+          enum: [image_slider, product_list, hero_banner, text_block, video_embed, category_grid, testimonial, countdown_timer, menu_navigation, loyalty_widget]
+          description: Section type this template creates
+        category:
+          type: string
+          description: Template category (e.g., ecommerce, marketing, content)
+        thumbnail_url:
+          type: string
+          nullable: true
+          description: Template preview image URL
+        default_content:
+          type: object
+          description: Default content structure
+          additionalProperties: true
+        default_settings:
+          type: object
+          description: Default settings
+          additionalProperties: true
+        is_active:
+          type: boolean
+          description: Whether template is active
+        is_system_template:
+          type: boolean
+          description: Whether this is a system-provided template
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    ListTemplatesResponse:
+      type: object
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateResponse'
+          description: Array of templates
+        total:
+          type: integer
+          description: Total count
+
+    # Content Type Schemas (Examples)
+    ImageSliderContent:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                description: Image URL
+              alt:
+                type: string
+                description: Alt text
+              link:
+                type: string
+                description: Click destination URL
+              order:
+                type: integer
+                description: Display order
+      example:
+        images:
+          - url: https://cdn.example.com/banner1.jpg
+            alt: Summer Sale
+            link: /products/sale
+            order: 0
+
+    ProductListContent:
+      type: object
+      properties:
+        source:
+          type: string
+          enum: [manual, featured, new_arrivals, best_sellers, on_sale, category]
+          description: Product source type
+        product_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Manual product IDs (for source=manual)
+        category_id:
+          type: string
+          format: uuid
+          description: Category ID (for source=category)
+        limit:
+          type: integer
+          description: Max products to show (for dynamic sources)
+      example:
+        source: best_sellers
+        limit: 8
+
+    HeroBannerContent:
+      type: object
+      properties:
+        image_url:
+          type: string
+          description: Banner image URL
+        heading:
+          type: string
+          description: Main heading
+        subheading:
+          type: string
+          description: Subheading text
+        cta_text:
+          type: string
+          description: Call-to-action button text
+        cta_link:
+          type: string
+          description: CTA destination URL
+      example:
+        image_url: https://cdn.example.com/hero.jpg
+        heading: Welcome to Our Store
+        subheading: Discover amazing products
+        cta_text: Shop Now
+        cta_link: /products
+
+    CategoryGridContent:
+      type: object
+      properties:
+        category_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Category IDs to display
+      example:
+        category_ids:
+          - 550e8400-e29b-41d4-a716-446655440001
+          - 550e8400-e29b-41d4-a716-446655440002
+
+    # Settings Type Schemas (Examples)
+    ImageSliderSettings:
+      type: object
+      properties:
+        autoplay:
+          type: boolean
+          default: true
+          description: Auto-advance slides
+        interval_ms:
+          type: integer
+          default: 5000
+          description: Time between slides (milliseconds)
+        show_arrows:
+          type: boolean
+          default: true
+          description: Show navigation arrows
+        show_dots:
+          type: boolean
+          default: true
+          description: Show dot indicators
+        loop:
+          type: boolean
+          default: true
+          description: Loop back to first slide
+      example:
+        autoplay: true
+        interval_ms: 5000
+        show_arrows: true
+        show_dots: true
+
+    ProductListSettings:
+      type: object
+      properties:
+        layout:
+          type: string
+          enum: [grid, list, carousel]
+          default: grid
+          description: Display layout
+        columns:
+          type: integer
+          default: 4
+          description: Number of columns (for grid layout)
+        show_prices:
+          type: boolean
+          default: true
+          description: Show product prices
+        show_add_to_cart:
+          type: boolean
+          default: true
+          description: Show add to cart button
+        show_sales_badge:
+          type: boolean
+          default: false
+          description: Show sale badge on discounted products
+      example:
+        layout: grid
+        columns: 4
+        show_prices: true

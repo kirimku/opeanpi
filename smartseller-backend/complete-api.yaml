@@ -1,0 +1,4425 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Backend API - Complete Specification
+  description: |
+    Complete API specification for SmartSeller e-commerce platform.
+    
+    ## Overview
+    SmartSeller is a comprehensive e-commerce platform that enables customers to create and manage their own storefronts. This API provides complete functionality for:
+    
+    - **Customer Management**: Registration, authentication, profile management
+    - **Storefront Operations**: Create, customize, and manage online stores
+    - **Address Management**: Customer address handling and validation
+    - **Authentication**: JWT-based security system
+    
+    ## Authentication
+    Most endpoints require authentication using Bearer tokens (JWT). Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-jwt-token>
+    ```
+    
+    ## Error Handling
+    All endpoints return consistent error responses with appropriate HTTP status codes:
+    - `400` - Bad Request (validation errors)
+    - `401` - Unauthorized (authentication required)
+    - `403` - Forbidden (insufficient permissions)
+    - `404` - Not Found (resource doesn't exist)
+    - `409` - Conflict (duplicate resource)
+    - `422` - Unprocessable Entity (business logic errors)
+    - `500` - Internal Server Error
+    
+    ## Rate Limiting
+    API requests are rate limited to prevent abuse:
+    - **Public endpoints**: 100 requests per minute
+    - **Authenticated endpoints**: 1000 requests per minute
+    - **Admin endpoints**: 5000 requests per minute
+    
+    ## Pagination
+    List endpoints support pagination with the following parameters:
+    - `page` - Page number (default: 1)
+    - `page_size` - Items per page (default: 20, max: 100)
+    
+    ## API Versioning
+    This API uses URL versioning with the `/api/v1/` prefix.
+    
+  version: 1.0.0
+  contact:
+    name: SmartSeller API Support
+    email: api-support@smartseller.com
+    url: https://docs.smartseller.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://smartseller.com/terms
+
+servers:
+  - url: http://localhost:8090
+    description: Development server
+  - url: https://staging-api.smartseller.com
+    description: Staging server
+  - url: https://api.smartseller.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer token authentication. Include the token in the Authorization header:
+        `Authorization: Bearer <your-jwt-token>`
+
+  schemas:
+    # Common Schemas
+    ErrorResponse:
+      type: object
+      description: Standard error response format
+      properties:
+        success:
+          type: boolean
+          example: false
+          description: Always false for error responses
+        message:
+          type: string
+          example: "Operation failed"
+          description: Human-readable error message
+        error:
+          type: string
+          example: "validation_error"
+          description: Error type identifier
+        error_detail:
+          type: string
+          example: "The email field is required"
+          description: Detailed error information
+        validation_errors:
+          type: array
+          items:
+            type: string
+          example: ["Email: wajib diisi", "Password: minimal 8 karakter"]
+          description: List of validation error messages
+        meta:
+          type: object
+          properties:
+            http_status:
+              type: integer
+              example: 400
+              description: HTTP status code
+            request_id:
+              type: string
+              example: "req_1234567890"
+              description: Unique request identifier for debugging
+            timestamp:
+              type: string
+              format: date-time
+              example: "2023-01-15T10:30:00Z"
+              description: Error timestamp
+
+    SuccessResponse:
+      type: object
+      description: Standard success response format
+      properties:
+        success:
+          type: boolean
+          example: true
+          description: Always true for successful responses
+        message:
+          type: string
+          example: "Operation completed successfully"
+          description: Human-readable success message
+        data:
+          type: object
+          nullable: true
+          description: Response data (can be null, object, or array)
+        meta:
+          type: object
+          nullable: true
+          properties:
+            request_id:
+              type: string
+              example: "req_1234567890"
+            timestamp:
+              type: string
+              format: date-time
+              example: "2023-01-15T10:30:00Z"
+
+    PaginationMeta:
+      type: object
+      description: Pagination metadata
+      properties:
+        total:
+          type: integer
+          example: 150
+          description: Total number of items
+        per_page:
+          type: integer
+          example: 20
+          description: Items per page
+        current_page:
+          type: integer
+          example: 1
+          description: Current page number
+        last_page:
+          type: integer
+          example: 8
+          description: Last page number
+        from:
+          type: integer
+          nullable: true
+          example: 1
+          description: First item number on current page
+        to:
+          type: integer
+          nullable: true
+          example: 20
+          description: Last item number on current page
+        has_more_pages:
+          type: boolean
+          example: true
+          description: Whether there are more pages
+
+    # RBAC / Sub-Accounts Schemas
+    PermissionDTO:
+      type: object
+      description: RBAC permission definition
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "8b8b1a9e-0b6a-4d39-9c7d-1c9e3ab5a7f2"
+        code:
+          type: string
+          example: "roles_list"
+          description: Unique permission code
+        name:
+          type: string
+          example: "List Roles"
+        description:
+          type: string
+          example: "Allows viewing the catalog of RBAC roles and their permissions"
+
+    RoleDTO:
+      type: object
+      description: RBAC role with associated permissions
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"
+        name:
+          type: string
+          example: "Technician"
+        code:
+          type: string
+          example: "technician"
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["sub_accounts_list", "sub_accounts_get"]
+
+    RoleCatalogResponse:
+      type: object
+      description: Catalog of RBAC roles and permissions available to the platform
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleDTO'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionDTO'
+
+    SubAccountMemberDTO:
+      type: object
+      description: Sub-account membership within a storefront
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Membership record ID
+          example: "2d0a9b7a-2c1b-4f8c-9d1e-7a6b5c4d3e2f"
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront identifier
+          example: "1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"
+        user_id:
+          type: string
+          description: User identifier (UUID string)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        user:
+          $ref: '#/components/schemas/AdminUserSummary'
+          description: Embedded user summary for convenience in list responses
+        role_name:
+          type: string
+          description: Assigned role name (e.g., owner, admin, manager, support)
+          example: "manager"
+        status:
+          type: string
+          description: Membership status
+          enum: [invited, active, disabled]
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-10-01T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-10-05T12:00:00Z"
+
+    MembershipListResponse:
+      type: object
+      description: Paginated list of sub-account memberships for a storefront
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubAccountMemberDTO'
+        total:
+          type: integer
+          example: 42
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 20
+        total_pages:
+          type: integer
+          example: 3
+
+    CreateSubAccountRequest:
+      type: object
+      description: Request to create a new sub-account and assign a role
+      required:
+        - name
+        - role_name
+      properties:
+        name:
+          type: string
+          description: Full name of the sub-account user
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Email address of the user (required if phone is not provided)
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          description: Phone number of the user (required if email is not provided)
+          example: "+1234567890"
+        password:
+          type: string
+          minLength: 8
+          description: Optional initial password for new users; existing users are not modified
+          example: "SecurePassword123"
+        role_name:
+          type: string
+          description: The role to assign to the sub-account
+          enum: [owner, admin, manager, support, technician, warehouse_admin, user]
+          example: "manager"
+
+    RoleAssignmentRequest:
+      type: object
+      description: Request to update a sub-account's role
+      required:
+        - role_name
+      properties:
+        role_name:
+          type: string
+          description: The role to assign to the sub-account
+          enum: [owner, admin, manager, support, technician, warehouse_admin, user]
+          example: "technician"
+
+    SubAccountResponse:
+      type: object
+      description: Response containing the user summary and membership details
+      properties:
+        user:
+          $ref: '#/components/schemas/AdminUserSummary'
+        membership:
+          $ref: '#/components/schemas/SubAccountMemberDTO'
+
+    AdminUserSummary:
+      type: object
+      description: Summary of a user account for admin views
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6"
+        name:
+          type: string
+          example: "Jane Doe"
+        email:
+          type: string
+          format: email
+          example: "jane.doe@example.com"
+        phone:
+          type: string
+          example: "+19876543210"
+        user_type:
+          type: string
+          example: "individual"
+        user_tier:
+          type: string
+          example: "premium"
+        user_role:
+          type: string
+          example: "admin"
+        is_admin:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00Z"
+
+    # Customer Schemas
+    CustomerRegistrationRequest:
+      type: object
+      description: Request payload for customer registration
+      required:
+        - email
+        - password
+        - first_name
+        - last_name
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+          description: Customer email address (must be unique)
+        password:
+          type: string
+          minLength: 8
+          example: "SecurePassword123"
+          description: Password (minimum 8 characters, must contain letters and numbers)
+        first_name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "John"
+          description: Customer first name
+        last_name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "Doe"
+          description: Customer last name
+        phone:
+          type: string
+          pattern: '^[0-9+\-\s()]+$'
+          example: "+62812345678"
+          description: Phone number (optional)
+        date_of_birth:
+          type: string
+          format: date
+          example: "1990-01-15"
+          description: Date of birth (optional)
+
+    CustomerResponse:
+      type: object
+      description: Customer data response
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Unique customer identifier
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+          description: Customer email address
+        first_name:
+          type: string
+          example: "John"
+          description: Customer first name
+        last_name:
+          type: string
+          example: "Doe"
+          description: Customer last name
+        phone:
+          type: string
+          nullable: true
+          example: "+62812345678"
+          description: Customer phone number
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+          example: "1990-01-15"
+          description: Customer date of birth
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          example: "active"
+          description: Customer account status
+        customer_type:
+          type: string
+          enum: [individual, business]
+          example: "individual"
+          description: Type of customer account
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-01-15T10:35:00Z"
+          description: Email verification timestamp
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-01-20T14:22:00Z"
+          description: Last login timestamp
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+          description: Account creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+          description: Last update timestamp
+
+    CustomerUpdateRequest:
+      type: object
+      description: Request payload for updating customer profile
+      properties:
+        first_name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "John"
+          description: Customer first name
+        last_name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "Doe"
+          description: Customer last name
+        phone:
+          type: string
+          pattern: '^[0-9+\-\s()]+$'
+          example: "+62812345678"
+          description: Customer phone number
+        date_of_birth:
+          type: string
+          format: date
+          example: "1990-01-15"
+          description: Customer date of birth
+
+    # Address Schemas
+    CreateAddressRequest:
+      type: object
+      description: Request payload for creating a new address
+      required:
+        - customer_id
+        - label
+        - recipient_name
+        - phone
+        - address_line_1
+        - city
+        - state
+        - postal_code
+        - country
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Customer ID who owns this address
+        label:
+          type: string
+          maxLength: 100
+          example: "Home"
+          description: Address label (e.g., Home, Office, Warehouse)
+        recipient_name:
+          type: string
+          maxLength: 100
+          example: "John Doe"
+          description: Name of the person who will receive deliveries
+        phone:
+          type: string
+          pattern: '^[0-9+\-\s()]+$'
+          example: "+62812345678"
+          description: Contact phone number for this address
+        address_line_1:
+          type: string
+          maxLength: 200
+          example: "Jl. Sudirman No. 123"
+          description: Primary address line (street, number)
+        address_line_2:
+          type: string
+          maxLength: 200
+          nullable: true
+          example: "Apartment 4B"
+          description: Secondary address line (apartment, suite, etc.)
+        city:
+          type: string
+          maxLength: 100
+          example: "Jakarta"
+          description: City name
+        state:
+          type: string
+          maxLength: 100
+          example: "DKI Jakarta"
+          description: State or province
+        postal_code:
+          type: string
+          maxLength: 20
+          example: "12190"
+          description: Postal or ZIP code
+        country:
+          type: string
+          maxLength: 100
+          example: "Indonesia"
+          description: Country name
+        is_default:
+          type: boolean
+          default: false
+          example: false
+          description: Whether this is the default address
+
+    CustomerAddressResponse:
+      type: object
+      description: Customer address data response
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Unique address identifier
+        customer_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Customer who owns this address
+        label:
+          type: string
+          example: "Home"
+          description: Address label
+        recipient_name:
+          type: string
+          example: "John Doe"
+          description: Recipient name
+        phone:
+          type: string
+          example: "+62812345678"
+          description: Contact phone
+        address_line_1:
+          type: string
+          example: "Jl. Sudirman No. 123"
+          description: Primary address line
+        address_line_2:
+          type: string
+          nullable: true
+          example: "Apartment 4B"
+          description: Secondary address line
+        city:
+          type: string
+          example: "Jakarta"
+          description: City
+        state:
+          type: string
+          example: "DKI Jakarta"
+          description: State or province
+        postal_code:
+          type: string
+          example: "12190"
+          description: Postal code
+        country:
+          type: string
+          example: "Indonesia"
+          description: Country
+        is_default:
+          type: boolean
+          example: true
+          description: Whether this is the default address
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          example: -6.2088
+          description: Geocoded latitude coordinate
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          example: 106.8456
+          description: Geocoded longitude coordinate
+        is_verified:
+          type: boolean
+          example: true
+          description: Whether the address has been verified
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+          description: Last update timestamp
+
+    # Storefront Schemas
+    CreateStorefrontRequest:
+      type: object
+      description: Request payload for creating a new storefront
+      required:
+        - customer_id
+        - name
+        - slug
+        - domain
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Customer ID who owns this storefront
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "My Awesome Store"
+          description: Display name of the storefront
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          minLength: 3
+          maxLength: 50
+          example: "my-awesome-store"
+          description: URL-friendly identifier (must be unique)
+        domain:
+          type: string
+          format: hostname
+          minLength: 3
+          maxLength: 100
+          example: "mystore.smartseller.com"
+          description: Custom domain for the storefront (must be unique)
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+          example: "Premium electronics and gadgets store"
+          description: Store description
+        logo_url:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://cdn.smartseller.com/logos/mystore.png"
+          description: URL to store logo image
+        theme:
+          type: string
+          enum: [default, modern, classic, minimal]
+          default: default
+          example: "modern"
+          description: Visual theme for the storefront
+
+    StorefrontResponse:
+      type: object
+      description: Storefront data response
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Unique storefront identifier
+        customer_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Owner customer ID
+        name:
+          type: string
+          example: "My Awesome Store"
+          description: Storefront display name
+        slug:
+          type: string
+          example: "my-awesome-store"
+          description: URL slug
+        domain:
+          type: string
+          example: "mystore.smartseller.com"
+          description: Custom domain
+        description:
+          type: string
+          nullable: true
+          example: "Premium electronics and gadgets store"
+          description: Store description
+        logo_url:
+          type: string
+          nullable: true
+          example: "https://cdn.smartseller.com/logos/mystore.png"
+          description: Logo URL
+        theme:
+          type: string
+          example: "modern"
+          description: Visual theme
+        status:
+          type: string
+          enum: [active, inactive, suspended, draft]
+          example: "active"
+          description: Storefront status
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-01-15T10:30:00Z"
+          description: Last update timestamp
+
+    # Product Management Schemas
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - description
+        - price
+        - category_id
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Product name
+          example: "Premium Gaming Headset"
+        description:
+          type: string
+          description: Product description
+          example: "High-quality gaming headset with noise cancellation"
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Product price
+          example: 299.99
+        category_id:
+          type: string
+          format: uuid
+          description: Product category ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        sku:
+          type: string
+          maxLength: 100
+          description: Stock Keeping Unit
+          example: "PGH-001"
+        stock_quantity:
+          type: integer
+          minimum: 0
+          description: Available stock quantity
+          example: 50
+        weight:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Product weight in kg
+          example: 0.5
+        dimensions:
+          type: object
+          properties:
+            length:
+              type: number
+              format: decimal
+              minimum: 0
+            width:
+              type: number
+              format: decimal
+              minimum: 0
+            height:
+              type: number
+              format: decimal
+              minimum: 0
+        images:
+          type: array
+          description: Product images with metadata
+          items:
+            $ref: '#/components/schemas/ProductImageSummary'
+          example:
+            - id: "a3fe0340-803e-49c0-9b1c-373e1b4bf4f1"
+              image_url: "https://smartseller-bucket.r2.cloudflarestorage.com/.../image1.png"
+              alt_text: "Product front view"
+              is_primary: true
+              sort_order: 1
+        is_active:
+          type: boolean
+          default: true
+          description: Whether the product is active
+          example: true
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Product name
+          example: "Premium Gaming Headset"
+        description:
+          type: string
+          description: Product description
+          example: "High-quality gaming headset with noise cancellation"
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Product price
+          example: 299.99
+        category_id:
+          type: string
+          format: uuid
+          description: Product category ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        sku:
+          type: string
+          maxLength: 100
+          description: Stock Keeping Unit
+          example: "PGH-001"
+        stock_quantity:
+          type: integer
+          minimum: 0
+          description: Available stock quantity
+          example: 50
+        weight:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Product weight in kg
+          example: 0.5
+        dimensions:
+          type: object
+          properties:
+            length:
+              type: number
+              format: decimal
+              minimum: 0
+            width:
+              type: number
+              format: decimal
+              minimum: 0
+            height:
+              type: number
+              format: decimal
+              minimum: 0
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Product image URLs
+          example: ["https://example.com/image1.jpg"]
+        is_active:
+          type: boolean
+          description: Whether the product is active
+          example: true
+
+    ProductResponse:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - price
+        - category_id
+        - sku
+        - stock_quantity
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Product unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Product name
+          example: "Premium Gaming Headset"
+        description:
+          type: string
+          description: Product description
+          example: "High-quality gaming headset with noise cancellation"
+        price:
+          type: number
+          format: decimal
+          description: Product price
+          example: 299.99
+        category_id:
+          type: string
+          format: uuid
+          description: Product category ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        sku:
+          type: string
+          description: Stock Keeping Unit
+          example: "PGH-001"
+        stock_quantity:
+          type: integer
+          description: Available stock quantity
+          example: 50
+        weight:
+          type: number
+          format: decimal
+          nullable: true
+          description: Product weight in kg
+          example: 0.5
+        dimensions:
+          type: object
+          nullable: true
+          properties:
+            length:
+              type: number
+              format: decimal
+            width:
+              type: number
+              format: decimal
+            height:
+              type: number
+              format: decimal
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Product image URLs
+          example: ["https://example.com/image1.jpg"]
+        is_active:
+          type: boolean
+          description: Whether the product is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Product creation timestamp
+          example: "2023-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Product last update timestamp
+          example: "2023-01-15T10:30:00Z"
+
+    ProductListItem:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - sku
+        - stock_quantity
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Product unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Product name
+          example: "Premium Gaming Headset"
+        price:
+          type: number
+          format: decimal
+          description: Product price
+          example: 299.99
+        sku:
+          type: string
+          description: Stock Keeping Unit
+          example: "PGH-001"
+        stock_quantity:
+          type: integer
+          description: Available stock quantity
+          example: 50
+        is_active:
+          type: boolean
+          description: Whether the product is active
+          example: true
+        thumbnail:
+          type: string
+          format: uri
+          nullable: true
+          description: Product thumbnail image URL
+          example: "https://example.com/thumbnail.jpg"
+        primary_image:
+          $ref: '#/components/schemas/ProductImageSummary'
+          description: Primary image summary for list views
+
+    ProductListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Products retrieved successfully"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    ProductImageSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Image ID
+          example: "a3fe0340-803e-49c0-9b1c-373e1b4bf4f1"
+        image_url:
+          type: string
+          format: uri
+          description: Original image URL
+          example: "https://smartseller-bucket.r2.cloudflarestorage.com/.../image1.png"
+        alt_text:
+          type: string
+          nullable: true
+          description: Alternative text for accessibility
+          example: "Product front view"
+        is_primary:
+          type: boolean
+          description: Marks the product's primary image
+          example: true
+        sort_order:
+          type: integer
+          description: Display order of the image
+          example: 1
+
+    # Product Variant Schemas
+    CreateVariantOptionRequest:
+      type: object
+      required:
+        - option_name
+        - option_values
+      properties:
+        option_name:
+          type: string
+          description: Name of the variant option (e.g., "Size", "Color")
+          example: "Size"
+          minLength: 1
+          maxLength: 50
+        option_values:
+          type: array
+          description: Array of possible values for this option
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+          example: ["S", "M", "L", "XL", "XXL"]
+          minItems: 1
+          maxItems: 50
+
+    VariantOptionResponse:
+      type: object
+      required:
+        - id
+        - product_id
+        - option_name
+        - option_values
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Variant option unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        product_id:
+          type: string
+          format: uuid
+          description: Product ID this option belongs to
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        option_name:
+          type: string
+          description: Name of the variant option
+          example: "Size"
+        option_values:
+          type: array
+          description: Array of possible values for this option
+          items:
+            type: string
+          example: ["S", "M", "L", "XL", "XXL"]
+        created_at:
+          type: string
+          format: date-time
+          description: Option creation timestamp
+          example: "2023-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Option last update timestamp
+          example: "2023-01-15T10:30:00Z"
+
+    CreateVariantRequest:
+      type: object
+      required:
+        - variant_options
+        - sku
+        - base_price
+        - stock_quantity
+      properties:
+        variant_options:
+          type: object
+          description: Key-value pairs of option names and selected values
+          additionalProperties:
+            type: string
+          example:
+            Size: "L"
+            Color: "Red"
+        sku:
+          type: string
+          description: Stock Keeping Unit for this variant
+          example: "TSHIRT-RED-L"
+          minLength: 1
+          maxLength: 100
+        base_price:
+          type: number
+          format: decimal
+          description: Base price for this variant
+          example: 29.99
+          minimum: 0
+        sale_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Sale price (optional, defaults to base_price)
+          example: 24.99
+          minimum: 0
+        cost_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Cost price for profit calculations
+          example: 15.00
+          minimum: 0
+        stock_quantity:
+          type: integer
+          description: Available stock quantity
+          example: 50
+          minimum: 0
+        weight:
+          type: number
+          format: decimal
+          nullable: true
+          description: Product weight in kg
+          example: 0.2
+          minimum: 0
+        dimensions:
+          type: object
+          nullable: true
+          description: Product dimensions
+          properties:
+            length:
+              type: number
+              format: decimal
+              example: 10.5
+            width:
+              type: number
+              format: decimal
+              example: 8.0
+            height:
+              type: number
+              format: decimal
+              example: 2.5
+        is_active:
+          type: boolean
+          description: Whether this variant is active
+          example: true
+          default: true
+
+    ProductVariantResponse:
+      type: object
+      required:
+        - id
+        - product_id
+        - variant_options
+        - sku
+        - base_price
+        - stock_quantity
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Variant unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        product_id:
+          type: string
+          format: uuid
+          description: Product ID this variant belongs to
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        variant_options:
+          type: object
+          description: Key-value pairs of option names and selected values
+          additionalProperties:
+            type: string
+          example:
+            Size: "L"
+            Color: "Red"
+        sku:
+          type: string
+          description: Stock Keeping Unit for this variant
+          example: "TSHIRT-RED-L"
+        base_price:
+          type: number
+          format: decimal
+          description: Base price for this variant
+          example: 29.99
+        sale_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Sale price
+          example: 24.99
+        cost_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Cost price
+          example: 15.00
+        stock_quantity:
+          type: integer
+          description: Available stock quantity
+          example: 50
+        weight:
+          type: number
+          format: decimal
+          nullable: true
+          description: Product weight in kg
+          example: 0.2
+        dimensions:
+          type: object
+          nullable: true
+          description: Product dimensions
+          properties:
+            length:
+              type: number
+              format: decimal
+              example: 10.5
+            width:
+              type: number
+              format: decimal
+              example: 8.0
+            height:
+              type: number
+              format: decimal
+              example: 2.5
+        is_active:
+          type: boolean
+          description: Whether this variant is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Variant creation timestamp
+          example: "2023-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Variant last update timestamp
+          example: "2023-01-15T10:30:00Z"
+
+    GenerateVariantsRequest:
+      type: object
+      required:
+        - base_price
+        - stock_quantity
+      properties:
+        base_price:
+          type: number
+          format: decimal
+          description: Base price for all generated variants
+          example: 29.99
+          minimum: 0
+        sale_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Sale price for all generated variants
+          example: 24.99
+          minimum: 0
+        cost_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Cost price for all generated variants
+          example: 15.00
+          minimum: 0
+        stock_quantity:
+          type: integer
+          description: Stock quantity for all generated variants
+          example: 25
+          minimum: 0
+        weight:
+          type: number
+          format: decimal
+          nullable: true
+          description: Weight for all generated variants
+          example: 0.2
+          minimum: 0
+        price_adjustments:
+          type: object
+          nullable: true
+          description: Price adjustments for specific option values
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: number
+              format: decimal
+          example:
+            Size:
+              XL: 5.00
+              XXL: 10.00
+            Color:
+              Premium: 15.00
+
+    GenerateVariantsResponse:
+      type: object
+      required:
+        - variants_created
+        - total_combinations
+        - skipped_combinations
+      properties:
+        variants_created:
+          type: integer
+          description: Number of variants successfully created
+          example: 8
+        total_combinations:
+          type: integer
+          description: Total possible combinations
+          example: 10
+        skipped_combinations:
+          type: integer
+          description: Number of combinations skipped (duplicates)
+          example: 2
+        created_variants:
+          type: array
+          description: List of created variant IDs
+          items:
+            type: string
+            format: uuid
+          example: ["550e8400-e29b-41d4-a716-446655440002", "550e8400-e29b-41d4-a716-446655440003"]
+
+  parameters:
+    # Common Parameters
+    CustomerIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Customer ID
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    StorefrontIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Storefront ID
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    AddressIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Address ID
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number for pagination
+      example: 1
+
+    PageSizeParam:
+      name: page_size
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+      example: 20
+
+    SearchQueryParam:
+      name: query
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Search query string
+      example: "search term"
+
+  responses:
+    # Common Responses
+    BadRequest:
+      description: Bad Request - Validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Validation failed"
+            error: "validation_error"
+            error_detail: "The request contains invalid data"
+            validation_errors:
+              - "Email: field is required"
+              - "Password: minimum length is 8 characters"
+            meta:
+              http_status: 400
+              request_id: "req_1234567890"
+              timestamp: "2023-01-15T10:30:00Z"
+
+    Unauthorized:
+      description: Unauthorized - Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Authentication required"
+            error: "unauthorized"
+            error_detail: "A valid authentication token is required"
+            meta:
+              http_status: 401
+              request_id: "req_1234567890"
+              timestamp: "2023-01-15T10:30:00Z"
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Access forbidden"
+            error: "forbidden"
+            error_detail: "You don't have permission to access this resource"
+            meta:
+              http_status: 403
+              request_id: "req_1234567890"
+              timestamp: "2023-01-15T10:30:00Z"
+
+    NotFound:
+      description: Not Found - Resource doesn't exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Resource not found"
+            error: "not_found"
+            error_detail: "The requested resource could not be found"
+            meta:
+              http_status: 404
+              request_id: "req_1234567890"
+              timestamp: "2023-01-15T10:30:00Z"
+
+    Conflict:
+      description: Conflict - Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Resource already exists"
+            error: "conflict"
+            error_detail: "A resource with these details already exists"
+            meta:
+              http_status: 409
+              request_id: "req_1234567890"
+              timestamp: "2023-01-15T10:30:00Z"
+
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Internal server error"
+            error: "internal_error"
+            error_detail: "An unexpected error occurred. Please try again later"
+            meta:
+              http_status: 500
+              request_id: "req_1234567890"
+              timestamp: "2023-01-15T10:30:00Z"
+
+tags:
+  - name: customers
+    description: |
+      Customer management operations including registration, profile management, 
+      and account operations. Customers are the primary users of the SmartSeller platform.
+  - name: addresses
+    description: |
+      Address management for customers including creation, validation, geocoding,
+      and setting default addresses. Supports both billing and shipping addresses.
+  - name: products
+    description: |
+      Product management operations including creation, listing, updating, and deletion.
+      Products are the core items that customers can sell through their storefronts.
+  - name: storefronts
+    description: |
+      Storefront creation and management operations. Storefronts are customer-owned
+      online stores that can be customized with themes, domains, and content.
+  - name: authentication
+    description: |
+      Authentication and authorization endpoints including login, logout, 
+      token refresh, and password management.
+  - name: analytics
+    description: |
+      Analytics and reporting endpoints for storefronts including views, 
+      orders, revenue, and performance metrics.
+  - name: admin-sub-accounts
+    description: |
+      Admin RBAC sub-accounts endpoints for listing roles and permissions, and managing sub-account memberships.
+
+paths:
+  # Authentication Endpoints
+  /api/v1/auth/login:
+    post:
+      summary: Login with email/phone and password
+      description: Authenticates a user with email/phone and password
+      tags:
+        - authentication
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_or_phone
+                - password
+              properties:
+                email_or_phone:
+                  type: string
+                  description: User's email address or phone number
+                  example: user@example.com
+                password:
+                  type: string
+                  description: User's password
+                  example: password123
+                use_secure_tokens:
+                  type: boolean
+                  description: If true, tokens will be stored in httpOnly cookies for enhanced security
+                  example: false
+                  default: false
+      responses:
+        '200':
+          description: Successfully authenticated. If use_secure_tokens is true, tokens are also set as httpOnly cookies.
+          headers:
+            Set-Cookie:
+              description: HttpOnly cookies containing access_token and refresh_token (only when use_secure_tokens is true)
+              schema:
+                type: string
+              example: "access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Login successful"
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        description: JWT token for API authentication
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refresh_token:
+                        type: string
+                        description: Token used to refresh the access token
+                      token_expiry:
+                        type: string
+                        format: date-time
+                        description: Expiration time of the access token
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          email:
+                            type: string
+                            format: email
+                          first_name:
+                            type: string
+                          last_name:
+                            type: string
+                          phone:
+                            type: string
+                            nullable: true
+                          status:
+                            type: string
+                            enum: [active, inactive, suspended]
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/auth/logout:
+    post:
+      summary: Logout
+      description: Logs out the user and invalidates the session.
+      tags:
+        - authentication
+      responses:
+        '200':
+          description: Successfully logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh Token
+      description: Refresh the current access token using a refresh token
+      tags:
+        - authentication
+      responses:
+        '200':
+          description: Successfully refreshed token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Token refreshed successfully"
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refresh_token:
+                        type: string
+                        example: bvQotRefjkEHkl3gEyIaM9...
+                      token_expiry:
+                        type: string
+                        format: date-time
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/forgot-password:
+    post:
+      summary: Initiate Password Reset
+      description: |
+        Initiates the password reset process by sending a reset email to the user's registered email address.
+        For security reasons, this endpoint always returns success regardless of whether the email exists in the system.
+      tags:
+        - authentication
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email_or_phone
+              properties:
+                email_or_phone:
+                  type: string
+                  description: User's email address or phone number
+                  example: user@example.com
+      responses:
+        '200':
+          description: Request processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Jika akun Anda terdaftar, kami telah mengirim instruksi reset password ke email Anda"
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/auth/reset-password:
+    post:
+      summary: Reset Password
+      description: |
+        Resets the user's password using a valid reset token received via email.
+        The token expires after 1 hour for security purposes.
+      tags:
+        - authentication
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - new_password
+                - confirm_password
+              properties:
+                token:
+                  type: string
+                  description: Password reset token received via email
+                  example: "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+                new_password:
+                  type: string
+                  description: New password (minimum 8 characters)
+                  example: "newpassword123"
+                  minLength: 8
+                confirm_password:
+                  type: string
+                  description: Confirm new password (must match new_password)
+                  example: "newpassword123"
+                  minLength: 8
+      responses:
+        '200':
+          description: Password successfully reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Password berhasil direset. Silakan login dengan password baru"
+                  meta:
+                    type: object
+                    properties:
+                      http_status:
+                        type: integer
+                        example: 200
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Customer Management Endpoints
+  /customers/register:
+    post:
+      tags:
+        - customers
+      summary: Register a new customer
+      description: |
+        Register a new customer account with email and password.
+        This endpoint is public and doesn't require authentication.
+        
+        **Validation Rules:**
+        - Email must be unique across the platform
+        - Password must be at least 8 characters
+        - First name and last name are required
+        - Phone number format must be valid if provided
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRegistrationRequest'
+            example:
+              email: "john.doe@example.com"
+              password: "SecurePassword123"
+              first_name: "John"
+              last_name: "Doe"
+              phone: "+62812345678"
+              date_of_birth: "1990-01-15"
+      responses:
+        '201':
+          description: Customer registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Customer registered successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  parameters:
+    StorefrontIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Storefront ID
+      example: "550e8400-e29b-41d4-a716-446655440000"
+    
+    AddressIdParam:
+      name: address_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Address ID
+      example: "550e8400-e29b-41d4-a716-446655440001"
+    
+    CustomerIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Customer ID
+      example: "550e8400-e29b-41d4-a716-446655440000"
+    
+    PageParam:
+      name: page
+      in: query
+      description: Page number (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+    
+    PageSizeParam:
+      name: page_size
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      example: 20
+    
+    SearchQueryParam:
+      name: search
+      in: query
+      description: Search query string
+      schema:
+        type: string
+      example: "search term"
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Invalid input data"
+            error_code: "VALIDATION_ERROR"
+            details:
+              - field: "email"
+                message: "Invalid email format"
+    
+    Unauthorized:
+      description: Unauthorized - Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Authentication required"
+            error_code: "UNAUTHORIZED"
+    
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Insufficient permissions"
+            error_code: "FORBIDDEN"
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Resource not found"
+            error_code: "NOT_FOUND"
+    
+    Conflict:
+      description: Conflict - Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Resource already exists"
+            error_code: "CONFLICT"
+    
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Internal server error"
+            error_code: "INTERNAL_ERROR"
+
+    # Additional schemas from the second section
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - message
+        - error_code
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Human-readable error message
+          example: "An error occurred"
+        error_code:
+          type: string
+          description: Machine-readable error code
+          example: "VALIDATION_ERROR"
+        details:
+          type: array
+          description: Additional error details
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field name that caused the error
+              message:
+                type: string
+                description: Field-specific error message
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Operation completed successfully"
+        data:
+          description: Response data (varies by endpoint)
+
+    PaginationMeta:
+      type: object
+      required:
+        - current_page
+        - per_page
+        - total
+        - last_page
+      properties:
+        current_page:
+          type: integer
+          description: Current page number
+          example: 1
+        per_page:
+          type: integer
+          description: Items per page
+          example: 20
+        total:
+          type: integer
+          description: Total number of items
+          example: 150
+        last_page:
+          type: integer
+          description: Last page number
+          example: 8
+        from:
+          type: integer
+          description: First item number on current page
+          example: 1
+        to:
+          type: integer
+          description: Last item number on current page
+          example: 20
+
+    # Customer Schemas
+    CustomerRegistrationRequest:
+      type: object
+      required:
+        - email
+        - password
+        - first_name
+        - last_name
+        - phone
+      properties:
+        email:
+          type: string
+          format: email
+          description: Customer email address
+          example: "john.doe@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: Customer password (minimum 8 characters)
+          example: "SecurePass123!"
+        first_name:
+          type: string
+          maxLength: 50
+          description: Customer first name
+          example: "John"
+        last_name:
+          type: string
+          maxLength: 50
+          description: Customer last name
+          example: "Doe"
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: Customer phone number (E.164 format)
+          example: "+62812345678"
+        date_of_birth:
+          type: string
+          format: date
+          description: Customer date of birth
+          example: "1990-01-15"
+
+    CustomerResponse:
+      type: object
+      required:
+        - id
+        - email
+        - first_name
+        - last_name
+        - phone
+        - email_verified_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Customer unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          description: Customer email address
+          example: "john.doe@example.com"
+        first_name:
+          type: string
+          description: Customer first name
+          example: "John"
+        last_name:
+          type: string
+          description: Customer last name
+          example: "Doe"
+        phone:
+          type: string
+          description: Customer phone number
+          example: "+62812345678"
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+          description: Customer date of birth
+          example: "1990-01-15"
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Email verification timestamp
+          example: "2024-01-15T10:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: Customer creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Customer last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    CustomerUpdateRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          maxLength: 50
+          description: Customer first name
+          example: "John"
+        last_name:
+          type: string
+          maxLength: 50
+          description: Customer last name
+          example: "Doe"
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: Customer phone number (E.164 format)
+          example: "+62812345678"
+        date_of_birth:
+          type: string
+          format: date
+          description: Customer date of birth
+          example: "1990-01-15"
+
+    # Address Schemas
+    CreateAddressRequest:
+      type: object
+      required:
+        - customer_id
+        - label
+        - recipient_name
+        - phone
+        - address_line_1
+        - city
+        - state
+        - postal_code
+        - country
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        label:
+          type: string
+          maxLength: 50
+          description: Address label (e.g., Home, Office)
+          example: "Home"
+        recipient_name:
+          type: string
+          maxLength: 100
+          description: Recipient name
+          example: "John Doe"
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: Recipient phone number
+          example: "+62812345678"
+        address_line_1:
+          type: string
+          maxLength: 255
+          description: Primary address line
+          example: "Jl. Sudirman No. 123"
+        address_line_2:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Secondary address line (optional)
+          example: "Apartment 4B"
+        city:
+          type: string
+          maxLength: 100
+          description: City name
+          example: "Jakarta"
+        state:
+          type: string
+          maxLength: 100
+          description: State or province
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          maxLength: 20
+          description: Postal or ZIP code
+          example: "12190"
+        country:
+          type: string
+          maxLength: 100
+          description: Country name
+          example: "Indonesia"
+        is_default:
+          type: boolean
+          default: false
+          description: Whether this is the default address
+          example: false
+
+    CustomerAddressResponse:
+      type: object
+      required:
+        - id
+        - customer_id
+        - label
+        - recipient_name
+        - phone
+        - address_line_1
+        - city
+        - state
+        - postal_code
+        - country
+        - is_default
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Address unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        customer_id:
+          type: string
+          format: uuid
+          description: Customer ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        label:
+          type: string
+          description: Address label
+          example: "Home"
+        recipient_name:
+          type: string
+          description: Recipient name
+          example: "John Doe"
+        phone:
+          type: string
+          description: Recipient phone number
+          example: "+62812345678"
+        address_line_1:
+          type: string
+          description: Primary address line
+          example: "Jl. Sudirman No. 123"
+        address_line_2:
+          type: string
+          nullable: true
+          description: Secondary address line
+          example: "Apartment 4B"
+        city:
+          type: string
+          description: City name
+          example: "Jakarta"
+        state:
+          type: string
+          description: State or province
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          description: Postal or ZIP code
+          example: "12190"
+        country:
+          type: string
+          description: Country name
+          example: "Indonesia"
+        is_default:
+          type: boolean
+          description: Whether this is the default address
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Address creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Address last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    # Storefront Schemas
+    CreateStorefrontRequest:
+      type: object
+      required:
+        - name
+        - slug
+        - description
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          description: Storefront name
+          example: "My Awesome Store"
+        slug:
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          maxLength: 50
+          description: URL-friendly storefront identifier
+          example: "my-awesome-store"
+        description:
+          type: string
+          maxLength: 500
+          description: Storefront description
+          example: "A store selling awesome products"
+        logo_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Storefront logo URL
+          example: "https://example.com/logo.png"
+        banner_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Storefront banner URL
+          example: "https://example.com/banner.png"
+        theme_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Primary theme color (hex)
+          example: "#3B82F6"
+        is_active:
+          type: boolean
+          default: true
+          description: Whether the storefront is active
+          example: true
+
+    StorefrontResponse:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - description
+        - is_active
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Storefront unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Storefront name
+          example: "My Awesome Store"
+        slug:
+          type: string
+          description: URL-friendly storefront identifier
+          example: "my-awesome-store"
+        description:
+          type: string
+          description: Storefront description
+          example: "A store selling awesome products"
+        logo_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Storefront logo URL
+          example: "https://example.com/logo.png"
+        banner_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Storefront banner URL
+          example: "https://example.com/banner.png"
+        theme_color:
+          type: string
+          nullable: true
+          description: Primary theme color (hex)
+          example: "#3B82F6"
+        is_active:
+          type: boolean
+          description: Whether the storefront is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Storefront creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Storefront last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    # Product Management Schemas
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - sku
+        - category_id
+        - base_price
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Product name
+          example: "Wireless Bluetooth Headphones"
+        description:
+          type: string
+          description: Product description
+          example: "High-quality wireless headphones with noise cancellation"
+        sku:
+          type: string
+          maxLength: 100
+          description: Stock Keeping Unit (unique identifier)
+          example: "WBH-001"
+        category_id:
+          type: string
+          format: uuid
+          description: Product category ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        brand:
+          type: string
+          maxLength: 100
+          description: Product brand
+          example: "AudioTech"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Product tags for categorization
+          example: ["electronics", "audio", "wireless"]
+        base_price:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Base price of the product
+          example: 199.99
+        sale_price:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Sale price (if on sale)
+          example: 149.99
+        cost_price:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Cost price for profit calculation
+          example: 100.00
+        stock_quantity:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Current stock quantity
+          example: 50
+        low_stock_threshold:
+          type: integer
+          minimum: 0
+          default: 10
+          description: Low stock alert threshold
+          example: 10
+        track_inventory:
+          type: boolean
+          default: true
+          description: Whether to track inventory for this product
+          example: true
+        weight:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product weight in kg
+          example: 0.25
+        dimensions_length:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product length in cm
+          example: 20.0
+        dimensions_width:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product width in cm
+          example: 15.0
+        dimensions_height:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product height in cm
+          example: 8.0
+        status:
+          type: string
+          enum: [draft, active, inactive, archived]
+          default: draft
+          description: Product status
+          example: active
+        meta_title:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: SEO meta title
+          example: "Best Wireless Bluetooth Headphones - AudioTech"
+        meta_description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: SEO meta description
+          example: "Experience premium sound quality with our wireless Bluetooth headphones featuring noise cancellation technology."
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Product name
+          example: "Premium Wireless Bluetooth Headphones"
+        description:
+          type: string
+          description: Product description
+          example: "Updated description with new features"
+        sku:
+          type: string
+          maxLength: 100
+          description: Stock Keeping Unit (unique identifier)
+          example: "WBH-001-V2"
+        category_id:
+          type: string
+          format: uuid
+          description: Product category ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        brand:
+          type: string
+          maxLength: 100
+          description: Product brand
+          example: "AudioTech Pro"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Product tags for categorization
+          example: ["electronics", "audio", "wireless", "premium"]
+        base_price:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Base price of the product
+          example: 229.99
+        sale_price:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Sale price (if on sale)
+          example: 179.99
+        cost_price:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Cost price for profit calculation
+          example: 120.00
+        stock_quantity:
+          type: integer
+          minimum: 0
+          description: Current stock quantity
+          example: 75
+        low_stock_threshold:
+          type: integer
+          minimum: 0
+          description: Low stock alert threshold
+          example: 15
+        track_inventory:
+          type: boolean
+          description: Whether to track inventory for this product
+          example: true
+        weight:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product weight in kg
+          example: 0.3
+        dimensions_length:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product length in cm
+          example: 22.0
+        dimensions_width:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product width in cm
+          example: 16.0
+        dimensions_height:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Product height in cm
+          example: 9.0
+        status:
+          type: string
+          enum: [draft, active, inactive, archived]
+          description: Product status
+          example: active
+        meta_title:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: SEO meta title
+          example: "Premium Wireless Bluetooth Headphones - AudioTech Pro"
+        meta_description:
+          type: string
+          maxLength: 500
+          nullable: true
+          description: SEO meta description
+          example: "Experience premium sound quality with our upgraded wireless Bluetooth headphones featuring advanced noise cancellation."
+
+    ProductResponse:
+      type: object
+      required:
+        - id
+        - name
+        - sku
+        - category_id
+        - base_price
+        - status
+        - stock_quantity
+        - track_inventory
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Product unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Product name
+          example: "Wireless Bluetooth Headphones"
+        description:
+          type: string
+          nullable: true
+          description: Product description
+          example: "High-quality wireless headphones with noise cancellation"
+        sku:
+          type: string
+          description: Stock Keeping Unit
+          example: "WBH-001"
+        category_id:
+          type: string
+          format: uuid
+          description: Product category ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        brand:
+          type: string
+          nullable: true
+          description: Product brand
+          example: "AudioTech"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Product tags
+          example: ["electronics", "audio", "wireless"]
+        base_price:
+          type: number
+          format: decimal
+          description: Base price of the product
+          example: 199.99
+        sale_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Sale price (if on sale)
+          example: 149.99
+        cost_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Cost price for profit calculation
+          example: 100.00
+        stock_quantity:
+          type: integer
+          description: Current stock quantity
+          example: 50
+        low_stock_threshold:
+          type: integer
+          description: Low stock alert threshold
+          example: 10
+        track_inventory:
+          type: boolean
+          description: Whether inventory is tracked
+          example: true
+        weight:
+          type: number
+          format: decimal
+          nullable: true
+          description: Product weight in kg
+          example: 0.25
+        dimensions_length:
+          type: number
+          format: decimal
+          nullable: true
+          description: Product length in cm
+          example: 20.0
+        dimensions_width:
+          type: number
+          format: decimal
+          nullable: true
+          description: Product width in cm
+          example: 15.0
+        dimensions_height:
+          type: number
+          format: decimal
+          nullable: true
+          description: Product height in cm
+          example: 8.0
+        status:
+          type: string
+          enum: [draft, active, inactive, archived]
+          description: Product status
+          example: active
+        meta_title:
+          type: string
+          nullable: true
+          description: SEO meta title
+          example: "Best Wireless Bluetooth Headphones - AudioTech"
+        meta_description:
+          type: string
+          nullable: true
+          description: SEO meta description
+          example: "Experience premium sound quality with our wireless Bluetooth headphones."
+        images:
+          type: array
+          description: Product images with metadata
+          items:
+            $ref: '#/components/schemas/ProductImageSummary'
+          example:
+            - id: "a3fe0340-803e-49c0-9b1c-373e1b4bf4f1"
+              image_url: "https://smartseller-bucket.r2.cloudflarestorage.com/.../image1.png"
+              alt_text: "Product front view"
+              is_primary: true
+              sort_order: 1
+        is_low_stock:
+          type: boolean
+          description: Whether the product is low in stock
+          example: false
+        primary_image:
+          $ref: '#/components/schemas/ProductImageSummary'
+          description: Primary image summary for list views
+        profit_margin:
+          type: number
+          format: decimal
+          nullable: true
+          description: Calculated profit margin percentage
+          example: 49.995
+        created_at:
+          type: string
+          format: date-time
+          description: Product creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Product last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    ProductListItem:
+      type: object
+      required:
+        - id
+        - name
+        - sku
+        - base_price
+        - status
+        - stock_quantity
+        - is_low_stock
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Product unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Product name
+          example: "Wireless Bluetooth Headphones"
+        sku:
+          type: string
+          description: Stock Keeping Unit
+          example: "WBH-001"
+        brand:
+          type: string
+          nullable: true
+          description: Product brand
+          example: "AudioTech"
+        base_price:
+          type: number
+          format: decimal
+          description: Base price of the product
+          example: 199.99
+        sale_price:
+          type: number
+          format: decimal
+          nullable: true
+          description: Sale price (if on sale)
+          example: 149.99
+        status:
+          type: string
+          enum: [draft, active, inactive, archived]
+          description: Product status
+          example: active
+        stock_quantity:
+          type: integer
+          description: Current stock quantity
+          example: 50
+        is_low_stock:
+          type: boolean
+          description: Whether the product is low in stock
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Product creation timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    # Category Schemas
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Category ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          description: Category name
+          example: "Electronics"
+        description:
+          type: string
+          nullable: true
+          description: Category description
+          example: "Electronic devices and accessories"
+        slug:
+          type: string
+          description: URL-friendly identifier
+          example: "electronics"
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent category ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        path:
+          type: string
+          description: Full category path
+          example: "/electronics/smartphones"
+        level:
+          type: integer
+          description: Hierarchy level (0 for root)
+          example: 1
+        sort_order:
+          type: integer
+          description: Sort order within parent
+          example: 1
+        is_active:
+          type: boolean
+          description: Whether category is active
+          example: true
+        product_count:
+          type: integer
+          description: Number of products in category
+          example: 25
+        children_count:
+          type: integer
+          description: Number of child categories
+          example: 3
+        meta_title:
+          type: string
+          nullable: true
+          description: SEO meta title
+          example: "Electronics - SmartSeller"
+        meta_description:
+          type: string
+          nullable: true
+          description: SEO meta description
+          example: "Browse our wide selection of electronic devices"
+        meta_keywords:
+          type: array
+          items:
+            type: string
+          description: SEO keywords
+          example: ["electronics", "devices", "technology"]
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-09-24T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-09-24T10:00:00Z"
+        children:
+          type: array
+          items:
+            type: object
+          description: Child categories (if included)
+
+    CategoryListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Categories retrieved successfully"
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              description:
+                type: string
+                nullable: true
+              slug:
+                type: string
+              parent_id:
+                type: string
+                format: uuid
+                nullable: true
+              is_active:
+                type: boolean
+              product_count:
+                type: integer
+              children_count:
+                type: integer
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    ProductListResponse:
+      type: object
+      required:
+        - items
+        - pagination
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+          description: List of products
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+
+  # Category Management Endpoints
+  /api/v1/categories:
+    get:
+      summary: List product categories
+      description: Retrieve a list of product categories with optional filtering and pagination
+      tags:
+        - Product Categories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: parent_id
+          in: query
+          description: Filter by parent category ID (use 'null' for root categories)
+          schema:
+            type: string
+            format: uuid
+        - name: is_active
+          in: query
+          description: Filter by active status
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          description: Search categories by name or description
+          schema:
+            type: string
+        - name: include_children
+          in: query
+          description: Include child categories in response
+          schema:
+            type: boolean
+            default: false
+        - name: include_products
+          in: query
+          description: Include product count for each category
+          schema:
+            type: boolean
+            default: false
+        - name: max_depth
+          in: query
+          description: Maximum depth for hierarchical results
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Categories retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        description:
+                          type: string
+                          nullable: true
+                        slug:
+                          type: string
+                        parent_id:
+                          type: string
+                          format: uuid
+                          nullable: true
+                        is_active:
+                          type: boolean
+                        product_count:
+                          type: integer
+                        children_count:
+                          type: integer
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Product Management Endpoints
+  /api/v1/products:
+    post:
+      summary: Create a new product
+      description: Creates a new product with the provided details. Requires authentication.
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+            examples:
+              basic_product:
+                summary: Basic product example
+                value:
+                  name: "Wireless Bluetooth Headphones"
+                  description: "High-quality wireless headphones with noise cancellation"
+                  sku: "WBH-001"
+                  category_id: "550e8400-e29b-41d4-a716-446655440001"
+                  brand: "AudioTech"
+                  tags: ["electronics", "audio", "wireless"]
+                  base_price: 199.99
+                  sale_price: 149.99
+                  cost_price: 100.00
+                  stock_quantity: 50
+                  low_stock_threshold: 10
+                  track_inventory: true
+                  weight: 0.25
+                  dimensions_length: 20.0
+                  dimensions_width: 15.0
+                  dimensions_height: 8.0
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product created successfully"
+                  data:
+                    $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    get:
+      summary: List products with filtering and pagination
+      description: |
+        Retrieves a paginated list of products with optional filtering, sorting, and search capabilities.
+        
+        Scoping: When authenticated as a seller, results are scoped to your products (created_by = seller). Admins can query across sellers and may explicitly filter by `created_by`.
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - name: sort_by
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [name, created_at, updated_at, base_price]
+            default: created_at
+          example: created_at
+        - name: sort_desc
+          in: query
+          description: Sort in descending order
+          schema:
+            type: boolean
+            default: true
+          example: true
+        - name: search
+          in: query
+          description: Search term for product name, description, or SKU
+          schema:
+            type: string
+          example: "wireless headphones"
+        - name: category_id
+          in: query
+          description: Filter by category ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        - name: brand
+          in: query
+          description: Filter by brand
+          schema:
+            type: string
+          example: "AudioTech"
+        - name: status
+          in: query
+          description: Filter by product status
+          schema:
+            type: string
+            enum: [draft, active, inactive, archived]
+          example: active
+        - name: min_price
+          in: query
+          description: Minimum price filter
+          schema:
+            type: number
+            format: decimal
+          example: 50.00
+        - name: max_price
+          in: query
+          description: Maximum price filter
+          schema:
+            type: number
+            format: decimal
+          example: 500.00
+        - name: low_stock
+          in: query
+          description: Filter products with low stock
+          schema:
+            type: boolean
+          example: false
+        - name: include
+          in: query
+          description: Include related data (comma-separated: images, variants, category)
+          schema:
+            type: string
+          example: "images"
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Products retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/ProductListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/products/{id}:
+    get:
+      summary: Get product by ID
+      description: Retrieves a specific product by its ID with optional related data inclusion
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: include
+          in: query
+          description: Include related data (comma-separated)
+          schema:
+            type: string
+          example: "category,variants,images"
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    put:
+      summary: Update an existing product
+      description: Updates an existing product with the provided details. Only provided fields will be updated.
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+            examples:
+              partial_update:
+                summary: Partial update example
+                value:
+                  name: "Premium Wireless Bluetooth Headphones"
+                  sale_price: 129.99
+                  stock_quantity: 75
+              price_update:
+                summary: Price update example
+                value:
+                  base_price: 229.99
+                  sale_price: 179.99
+                  cost_price: 120.00
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product updated successfully"
+                  data:
+                    $ref: '#/components/schemas/ProductResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete a product
+      description: Soft deletes a product by marking it as deleted. Products with active variants cannot be deleted.
+      tags:
+        - Products
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product deleted successfully"
+                  data:
+                    type: "null"
+                    example: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Product Variant Option Endpoints
+  /api/v1/products/{product_id}/variant-options:
+    post:
+      summary: Create variant options for a product
+      description: |
+        Creates variant options (like Size, Color) for a product. These options define the available
+        variations that can be used to create product variants.
+        
+        **Business Rules:**
+        - A product can have multiple variant options (e.g., Size and Color)
+        - Each option can have multiple values (e.g., Size: S, M, L, XL)
+        - Option names must be unique within a product
+        - At least one option value must be provided
+      tags:
+        - Product Variants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVariantOptionRequest'
+            examples:
+              size_option:
+                summary: Size variant option
+                value:
+                  option_name: "Size"
+                  option_values: ["S", "M", "L", "XL", "XXL"]
+              color_option:
+                summary: Color variant option
+                value:
+                  option_name: "Color"
+                  option_values: ["Red", "Blue", "Green", "Black", "White"]
+      responses:
+        '201':
+          description: Variant option created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Variant option created successfully"
+                  data:
+                    $ref: '#/components/schemas/VariantOptionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Product Variant Endpoints
+  /api/v1/products/{product_id}/variants:
+    post:
+      summary: Create a specific product variant
+      description: |
+        Creates a single product variant with specific option combinations.
+        Use this endpoint when you want to create variants individually with custom pricing and stock.
+        
+        **Business Rules:**
+        - Variant option combinations must be unique within a product
+        - All referenced variant options must exist for the product
+        - SKU must be unique across all products and variants
+        - Stock quantity cannot be negative
+      tags:
+        - Product Variants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVariantRequest'
+            examples:
+              red_large_tshirt:
+                summary: Red Large T-Shirt variant
+                value:
+                  variant_options:
+                    Size: "L"
+                    Color: "Red"
+                  sku: "TSHIRT-RED-L"
+                  base_price: 29.99
+                  sale_price: 24.99
+                  cost_price: 15.00
+                  stock_quantity: 50
+                  weight: 0.2
+                  is_active: true
+      responses:
+        '201':
+          description: Product variant created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product variant created successfully"
+                  data:
+                    $ref: '#/components/schemas/ProductVariantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/products/{product_id}/variants/generate:
+    post:
+      summary: Auto-generate multiple product variants
+      description: |
+        Automatically generates all possible combinations of variant options for a product.
+        This is useful when you want to create many variants at once with similar pricing.
+        
+        **Business Rules:**
+        - Generates all combinations of existing variant options
+        - Uses provided base pricing with optional adjustments per option
+        - SKUs are auto-generated based on product SKU and option values
+        - All generated variants start as active by default
+      tags:
+        - Product Variants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          description: Product ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateVariantsRequest'
+            examples:
+              basic_generation:
+                summary: Basic variant generation
+                value:
+                  base_price: 29.99
+                  sale_price: 24.99
+                  cost_price: 15.00
+                  stock_quantity: 25
+                  weight: 0.2
+              with_price_adjustments:
+                summary: Generation with price adjustments
+                value:
+                  base_price: 29.99
+                  sale_price: 24.99
+                  cost_price: 15.00
+                  stock_quantity: 25
+                  weight: 0.2
+                  price_adjustments:
+                    Size:
+                      XL: 5.00
+                      XXL: 10.00
+                    Color:
+                      Premium: 15.00
+      responses:
+        '201':
+          description: Product variants generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Product variants generated successfully"
+                  data:
+                    $ref: '#/components/schemas/GenerateVariantsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /customers/{id}:
+    get:
+      tags:
+        - customers
+      summary: Get customer by ID
+      description: |
+        Retrieve detailed customer information by customer ID.
+        Requires authentication and customers can only access their own data.
+      parameters:
+        - $ref: '#/components/parameters/CustomerIdParam'
+      responses:
+        '200':
+          description: Customer retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Customer retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - customers
+      summary: Update customer profile
+      description: |
+        Update customer profile information. Customers can only update their own profiles.
+        Email address cannot be changed through this endpoint.
+      parameters:
+        - $ref: '#/components/parameters/CustomerIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdateRequest'
+            example:
+              first_name: "John"
+              last_name: "Smith"
+              phone: "+62812345679"
+              date_of_birth: "1990-01-15"
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Customer updated successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Customer Address Endpoints  
+  /customers/{id}/addresses:
+    get:
+      tags:
+        - customers
+        - addresses
+      summary: Get all customer addresses
+      description: |
+        Retrieve all addresses associated with a customer account.
+        Results are ordered by default address first, then by creation date.
+      parameters:
+        - $ref: '#/components/parameters/CustomerIdParam'
+      responses:
+        '200':
+          description: Addresses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Addresses retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomerAddressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - customers
+        - addresses
+      summary: Create a new address
+      description: |
+        Create a new address for a customer. If this is the first address,
+        it will automatically be set as the default address.
+      parameters:
+        - $ref: '#/components/parameters/CustomerIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAddressRequest'
+            example:
+              customer_id: "550e8400-e29b-41d4-a716-446655440000"
+              label: "Home"
+              recipient_name: "John Doe"
+              phone: "+62812345678"
+              address_line_1: "Jl. Sudirman No. 123"
+              address_line_2: "Apartment 4B"
+              city: "Jakarta"
+              state: "DKI Jakarta"
+              postal_code: "12190"
+              country: "Indonesia"
+              is_default: false
+      responses:
+        '201':
+          description: Address created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Address created successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerAddressResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Individual Address Management
+  /addresses/{id}:
+    get:
+      tags:
+        - addresses
+      summary: Get address by ID
+      description: Retrieve specific address details by address ID
+      parameters:
+        - $ref: '#/components/parameters/AddressIdParam'
+      responses:
+        '200':
+          description: Address retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Address retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/CustomerAddressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - addresses
+      summary: Delete an address
+      description: |
+        Delete a customer address. If the deleted address was the default,
+        another address will automatically be set as default if available.
+      parameters:
+        - $ref: '#/components/parameters/AddressIdParam'
+      responses:
+        '200':
+          description: Address deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: './product-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Storefront Management Endpoints
+  /storefronts:
+    post:
+      tags:
+        - storefronts
+      summary: Create a new storefront
+      description: |
+        Create a new storefront for a customer. Each customer can have multiple storefronts.
+        The slug and domain must be unique across the platform.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStorefrontRequest'
+            example:
+              customer_id: "550e8400-e29b-41d4-a716-446655440000"
+              name: "My Awesome Store"
+              slug: "my-awesome-store"
+              domain: "mystore.smartseller.com"
+              description: "Premium electronics and gadgets store"
+              theme: "modern"
+      responses:
+        '201':
+          description: Storefront created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Storefront created successfully"
+                  data:
+                    $ref: '#/components/schemas/StorefrontResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /storefronts/{id}:
+    get:
+      tags:
+        - storefronts
+      summary: Get storefront by ID
+      description: Retrieve detailed storefront information by storefront ID
+      parameters:
+        - $ref: '#/components/parameters/StorefrontIdParam'
+      responses:
+        '200':
+          description: Storefront retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Storefront retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/StorefrontResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - storefronts
+      summary: Delete a storefront
+      description: |
+        Soft delete a storefront. The storefront will be marked as deleted but
+        data will be preserved for recovery purposes.
+      parameters:
+        - $ref: '#/components/parameters/StorefrontIdParam'
+      responses:
+        '200':
+          description: Storefront deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Public Storefront Access
+  /storefronts/slug/{slug}:
+    get:
+      tags:
+        - storefronts
+      summary: Get storefront by slug (Public)
+      description: |
+        Retrieve storefront details by slug. This is a public endpoint
+        used for displaying storefronts to visitors.
+      security: []  # Public endpoint
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+          description: Storefront slug
+          example: "my-awesome-store"
+      responses:
+        '200':
+          description: Storefront retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Storefront retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/StorefrontResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Admin Sub-Accounts
+  /api/v1/admin/sub-accounts/roles:
+    get:
+      tags:
+        - admin-sub-accounts
+      summary: List RBAC roles and permissions catalog
+      description: |
+        Returns the catalog of RBAC roles and their associated default permissions,
+        along with the global permission catalog. Requires appropriate admin RBAC permissions.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Roles and permissions catalog retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RoleCatalogResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/admin/sub-accounts:
+    post:
+      tags:
+        - admin-sub-accounts
+      summary: Create a new sub-account
+      description: |
+        Creates a new sub-account for a user and assigns them a role within a storefront.
+        If the user does not exist, a new user account is created.
+        Requires appropriate admin RBAC permissions.
+        Note: Newly created sub-accounts are marked as global admins (`is_admin=true`) to allow access to admin routes. Existing users assigned as sub-accounts are also elevated (`is_admin=true`).
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: storefront_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional. Storefront ID (UUID). If omitted, the server infers the storefront from the authenticated admin's membership.
+        - in: query
+          name: storefront_slug
+          required: false
+          schema:
+            type: string
+          description: Optional. Storefront slug to resolve tenant. Overrides membership inference when provided.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubAccountRequest'
+      responses:
+        '201':
+          description: Sub-account created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubAccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - admin-sub-accounts
+      summary: List sub-account memberships
+      description: |
+        Lists sub-account memberships for a storefront with optional filters.
+        Requires appropriate admin RBAC permissions.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: storefront_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Storefront ID to scope memberships
+        - in: query
+          name: role_name
+          required: false
+          schema:
+            type: string
+          description: Filter by role name
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [invited, active, disabled]
+          description: Filter by membership status
+        - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+          description: Search by email or name
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: page_size
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Items per page
+      responses:
+        '200':
+          description: Memberships retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MembershipListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/admin/sub-accounts/{user_id}/role:
+    put:
+      tags:
+        - admin-sub-accounts
+      summary: Update sub-account role
+      description: |
+        Assign or update a sub-account's role within the resolved storefront context.
+        Requires appropriate admin RBAC permissions.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target sub-account user ID
+        - in: query
+          name: storefront_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional storefront ID; inferred from admin membership when omitted. Overridden by `storefront_slug` when provided.
+        - in: query
+          name: storefront_slug
+          required: false
+          schema:
+            type: string
+          description: Optional storefront slug to resolve tenant context.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignmentRequest'
+      responses:
+        '200':
+          description: Sub-account role updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubAccountResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/admin/sub-accounts/{user_id}:
+    delete:
+      tags:
+        - admin-sub-accounts
+      summary: Disable sub-account
+      description: |
+        Disables a sub-account membership for the resolved storefront context.
+        This sets the membership status to `disabled`. The user account is not deleted.
+        Requires appropriate admin RBAC permissions.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target sub-account user ID
+        - in: query
+          name: storefront_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional storefront ID; inferred from admin membership when omitted.
+        - in: query
+          name: storefront_slug
+          required: false
+          schema:
+            type: string
+          description: Optional storefront slug to resolve tenant context.
+      responses:
+        '200':
+          description: Sub-account disabled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubAccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
