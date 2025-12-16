@@ -12,6 +12,7 @@ info:
     ## Features
     - **Rule Management**: Create, update, delete, and list special loyalty rules
     - **Customer Assignment**: Assign rules to specific customers with time-based validity
+    - **Automatic Loyalty Account Creation**: Automatically creates loyalty accounts for customers who don't have them
     - **Referral Code Management**: Assign unique referral codes to customers with custom rewards
     - **Analytics & Reporting**: Comprehensive analytics on rule performance and usage
     - **Multi-tenant Support**: Full storefront isolation and RBAC integration
@@ -741,7 +742,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/{slug}/loyalty/special-rules/{id}/assign:
+  /admin/loyalty/special-rules/{id}/assign:
     post:
       tags:
         - Special Loyalty Rules Assignments
@@ -749,9 +750,13 @@ paths:
       description: |
         Assigns a special loyalty rule to multiple customers. Each customer will receive
         the rule with the specified validity period and assignment details.
-        
+
+        **Automatic Loyalty Account Creation**: If a customer doesn't have a loyalty account,
+        the system will automatically create one with a starting balance of 0 points and bronze tier.
+        This ensures all customers can receive special rule assignments without manual setup.
+
         **Permission Required**: `manage_roles`
-        
+
         **Rate Limiting**: 50 requests per minute
       operationId: assignSpecialRuleToCustomers
       security:
@@ -791,6 +796,14 @@ paths:
                     - "678e9012-e89b-12d3-a456-426614174006"
                   assignment_reason: "Premium customer onboarding"
                   notes: "New premium customer welcome bonus"
+              customer_no_loyalty_account:
+                summary: Assign to customer without loyalty account
+                description: Assign rule to customer - system automatically creates loyalty account
+                value:
+                  customer_ids:
+                    - "789e9012-e89b-12d3-a456-426614174007"
+                  assignment_reason: "New customer onboarding"
+                  notes: "System will automatically create loyalty account with bronze tier and 0 points"
       responses:
         '200':
           description: Rule assignment completed
@@ -862,7 +875,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/{slug}/loyalty/special-rules/{id}/unassign/{customerId}:
+  /admin/loyalty/special-rules/{id}/unassign/{customerId}:
     delete:
       tags:
         - Special Loyalty Rules Assignments
@@ -939,7 +952,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /admin/{slug}/loyalty/special-rules/{id}/assignments:
+  /admin/loyalty/special-rules/{id}/assignments:
     get:
       tags:
         - Special Loyalty Rules Assignments
