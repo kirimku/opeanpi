@@ -1,0 +1,492 @@
+openapi: 3.0.3
+info:
+  title: Marketplace OAuth API
+  description: |
+    Secure OAuth API for connecting multiple marketplace platforms to SmartSeller.
+    Supports Shopify with extensible architecture for additional marketplaces.
+
+    ## Security Features
+    - CSRF protection with secure state tokens
+    - Encrypted token storage
+    - Multi-tenant storefront isolation
+    - Comprehensive error handling and validation
+  version: 1.0.0
+
+paths:
+  /api/v1/admin/marketplaces/oauth/initiate:
+    post:
+      tags:
+        - Marketplace OAuth
+      summary: Initiate marketplace OAuth flow
+      description: |
+        Initiates OAuth connection flow for a marketplace platform.
+        Generates a secure authorization URL with state parameter for CSRF protection.
+
+        ## Process Flow
+        1. Validate user authentication and storefront access
+        2. Generate secure state token (64-byte hex string)
+        3. Store state with expiration (10 minutes)
+        4. Build marketplace-specific OAuth URL
+        5. Return authorization URL and state for frontend redirect
+
+        ## Usage Example
+        ```javascript
+        const response = await fetch('/api/v1/admin/marketplaces/oauth/initiate', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            marketplace_type: 'shopify',
+            store_domain: 'your-store.myshopify.com',
+            scopes: ['read_products', 'write_products']
+          })
+        });
+
+        const { data } = await response.json();
+        // Redirect user to data.oauth_url
+        window.location.href = data.oauth_url;
+        ```
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceOAuthInitiateRequest'
+            examples:
+              shopify:
+                summary: Shopify OAuth initiation
+                value:
+                  marketplace_type: "shopify"
+                  store_domain: "your-store.myshopify.com"
+                  scopes: ["read_products", "write_products", "read_orders"]
+              shopifyMinimal:
+                summary: Shopify with default scopes
+                value:
+                  marketplace_type: "shopify"
+                  store_domain: "your-store"
+              customRedirect:
+                summary: Custom redirect URI
+                value:
+                  marketplace_type: "shopify"
+                  store_domain: "your-store.myshopify.com"
+                  redirect_uri: "https://your-domain.com/oauth/callback"
+                  scopes: ["read_products"]
+      responses:
+        '200':
+          description: OAuth flow initiated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MarketplaceOAuthInitiateResponse'
+                  message:
+                    type: string
+                    example: "OAuth flow initiated successfully"
+                  success:
+                    type: boolean
+                    example: true
+              examples:
+                shopify:
+                  summary: Shopify OAuth response
+                  value:
+                    data:
+                      oauth_url: "https://your-store.myshopify.com/admin/oauth/authorize?client_id=abc123&redirect_uri=https://localhost:8090/api/v1/admin/marketplaces/oauth/callback&response_type=code&scope=read_products,write_products&state=568c14cfc5712aa0bde07dddd128c4d8c0fd789b8a62b273495c690736180ac7"
+                      state: "568c14cfc5712aa0bde07dddd128c4d8c0fd789b8a62b273495c690736180ac7"
+                    message: "OAuth flow initiated successfully"
+                    success: true
+        '400':
+          description: Bad Request - Invalid input parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidMarketplace:
+                  summary: Unsupported marketplace type
+                  value:
+                    error: "bad_request"
+                    message: "marketplace_type must be one of: shopify, tokopedia, shopee, lazada"
+                    success: false
+                invalidDomain:
+                  summary: Invalid store domain
+                  value:
+                    error: "bad_request"
+                    message: "store domain is required for Shopify"
+                    success: false
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "unauthorized"
+                message: "Authentication required"
+                success: false
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/admin/marketplaces/oauth/callback:
+    post:
+      tags:
+        - Marketplace OAuth
+      summary: Process OAuth callback from marketplace
+      description: |
+        Processes OAuth callback from marketplace platform after user authorization.
+        Exchanges authorization code for access token and creates marketplace connection.
+
+        ## Security Features
+        - Validates state parameter to prevent CSRF attacks
+        - Verifies store domain matches initiation request
+        - Secure token exchange with marketplace API
+        - Encrypted storage of access tokens
+
+        ## Process Flow
+        1. Validate request parameters (state, code, store_domain)
+        2. Retrieve and validate stored OAuth state
+        3. Exchange authorization code for access token
+        4. Get marketplace store information
+        5. Create encrypted connection record in database
+        6. Clean up used state token
+        7. Return connection details
+
+        ## Usage Example
+        ```javascript
+        const response = await fetch('/api/v1/admin/marketplaces/oauth/callback', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            marketplace_type: 'shopify',
+            state: '568c14cfc5712aa0bde07dddd128c4d8c0fd789b8a62b273495c690736180ac7',
+            code: 'authorization_code_from_shopify',
+            store_domain: 'your-store.myshopify.com'
+          })
+        });
+
+        const { data } = await response.json();
+        console.log('Connected:', data.connection_id);
+        ```
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarketplaceOAuthCallbackRequest'
+            examples:
+              shopify:
+                summary: Shopify OAuth callback
+                value:
+                  marketplace_type: "shopify"
+                  state: "568c14cfc5712aa0bde07dddd128c4d8c0fd789b8a62b273495c690736180ac7"
+                  code: "authorization_code_from_shopify"
+                  store_domain: "your-store.myshopify.com"
+      responses:
+        '200':
+          description: Marketplace connected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MarketplaceOAuthCallbackResponse'
+                  message:
+                    type: string
+                    example: "Marketplace connected successfully"
+                  success:
+                    type: boolean
+                    example: true
+              examples:
+                shopify:
+                  summary: Shopify connection success
+                  value:
+                    data:
+                      connection_id: "d8df5ab0-da62-489c-98ed-5aa372e15cd7"
+                      marketplace_type: "shopify"
+                      store_domain: "your-store.myshopify.com"
+                      status: "connected"
+                    message: "Marketplace connected successfully"
+                    success: true
+        '400':
+          description: Bad Request - Invalid callback parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidState:
+                  summary: Invalid or expired state
+                  value:
+                    error: "bad_request"
+                    message: "Invalid state parameter"
+                    success: false
+                stateExpired:
+                  summary: State token expired
+                  value:
+                    error: "bad_request"
+                    message: "state expired"
+                    success: false
+                domainMismatch:
+                  summary: Store domain mismatch
+                  value:
+                    error: "bad_request"
+                    message: "store domain mismatch"
+                    success: false
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "unauthorized"
+                message: "Authentication required"
+                success: false
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    MarketplaceType:
+      type: string
+      enum:
+        - shopify
+        - tokopedia
+        - shopee
+        - lazada
+      description: |
+        Supported marketplace platforms for OAuth integration.
+
+        **shopify**: Full e-commerce platform (currently supported)
+        **tokopedia**: Indonesian marketplace (planned)
+        **shopee**: Southeast Asian marketplace (planned)
+        **lazada**: Southeast Asian marketplace (planned)
+
+    MarketplaceOAuthInitiateRequest:
+      type: object
+      required:
+        - marketplace_type
+        - store_domain
+      properties:
+        marketplace_type:
+          $ref: '#/components/schemas/MarketplaceType'
+          description: Type of marketplace to connect
+        store_domain:
+          type: string
+          description: |
+            Store domain for the marketplace.
+
+            **Shopify**: Accepts both formats:
+            - `your-store` (will append .myshopify.com)
+            - `your-store.myshopify.com` (used as-is)
+          minLength: 3
+          maxLength: 255
+          pattern: '^[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9](\.myshopify\.com)?$'
+          example: "your-store.myshopify.com"
+        redirect_uri:
+          type: string
+          format: uri
+          description: |
+            Custom redirect URI for OAuth callback.
+            If not provided, uses default: `{base_url}/api/v1/admin/marketplaces/oauth/callback`
+          example: "https://your-domain.com/oauth/callback"
+        scopes:
+          type: array
+          items:
+            type: string
+          description: |
+            OAuth permission scopes requested from marketplace.
+            If not provided, uses platform-specific defaults.
+          example: ["read_products", "write_products", "read_orders"]
+        state:
+          type: string
+          description: |
+            Optional custom state parameter for CSRF protection.
+            If not provided, generates a secure 64-character hex string.
+          pattern: '^[a-f0-9]{64}$'
+          example: "custom_state_parameter_12345"
+
+    MarketplaceOAuthInitiateResponse:
+      type: object
+      required:
+        - oauth_url
+        - state
+      properties:
+        oauth_url:
+          type: string
+          format: uri
+          description: |
+            Complete OAuth authorization URL to redirect user to.
+            Includes all required parameters: client_id, redirect_uri, scope, state.
+          example: "https://your-store.myshopify.com/admin/oauth/authorize?client_id=abc123&redirect_uri=https://localhost:8090/api/v1/admin/marketplaces/oauth/callback&response_type=code&scope=read_products,write_products&state=568c14cfc5712aa0bde07dddd128c4d8c0fd789b8a62b273495c690736180ac7"
+        state:
+          type: string
+          description: |
+            State parameter for CSRF protection.
+            Must be returned unchanged in the OAuth callback.
+          minLength: 64
+          maxLength: 64
+          pattern: '^[a-f0-9]{64}$'
+          example: "568c14cfc5712aa0bde07dddd128c4d8c0fd789b8a62b273495c690736180ac7"
+
+    MarketplaceOAuthCallbackRequest:
+      type: object
+      required:
+        - marketplace_type
+        - state
+        - code
+        - store_domain
+      properties:
+        marketplace_type:
+          $ref: '#/components/schemas/MarketplaceType'
+          description: Type of marketplace for callback processing
+        state:
+          type: string
+          description: |
+            State parameter returned from OAuth provider.
+            Must match the state generated during initiation.
+          minLength: 64
+          maxLength: 64
+          pattern: '^[a-f0-9]{64}$'
+          example: "568c14cfc5712aa0bde07dddd128c4d8c0fd789b8a62b273495c690736180ac7"
+        code:
+          type: string
+          description: |
+            Authorization code returned from OAuth provider.
+            Used to exchange for access token.
+          minLength: 10
+          maxLength: 500
+          example: "authorization_code_from_shopify"
+        store_domain:
+          type: string
+          description: |
+            Store domain matching the initiation request.
+            Used for validation and connection record.
+          minLength: 3
+          maxLength: 255
+          example: "your-store.myshopify.com"
+
+    MarketplaceOAuthCallbackResponse:
+      type: object
+      required:
+        - connection_id
+        - marketplace_type
+        - store_domain
+        - status
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+          description: |
+            Unique identifier for the marketplace connection.
+            Can be used to manage the connection (disconnect, sync, etc.).
+          example: "d8df5ab0-da62-489c-98ed-5aa372e15cd7"
+        marketplace_type:
+          $ref: '#/components/schemas/MarketplaceType'
+          description: Type of connected marketplace
+        store_domain:
+          type: string
+          description: Store domain of the connected marketplace
+          example: "your-store.myshopify.com"
+        status:
+          type: string
+          enum:
+            - connected
+            - pending
+            - error
+          description: Connection status
+          example: "connected"
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - success
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          enum:
+            - bad_request
+            - unauthorized
+            - forbidden
+            - not_found
+            - internal_error
+          example: "bad_request"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request parameters"
+        success:
+          type: boolean
+          description: Always false for error responses
+          example: false
+        meta:
+          type: object
+          properties:
+            http_status:
+              type: integer
+              description: HTTP status code
+              example: 400
+            request_id:
+              type: string
+              description: Unique request identifier for debugging
+              example: "req_abc123def456"
+          description: Additional error metadata
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Detailed validation error messages
+          example: ["store_domain is required", "marketplace_type is invalid"]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT authentication token required for all endpoints.
+
+        Include in request header:
+        `Authorization: Bearer <your_jwt_token>`
+
+tags:
+  - name: Marketplace OAuth
+    description: |
+      Secure OAuth integration for marketplace platforms.
+
+      ## Authentication
+      All endpoints require a valid JWT token from admin authentication.
+
+      ## Security
+      - CSRF protection with state tokens
+      - Encrypted credential storage
+      - Multi-tenant data isolation
+      - Rate limiting and request validation
+
+      ## Usage Flow
+      1. **Initiate**: Call `/oauth/initiate` to get authorization URL
+      2. **Redirect**: Send user to the returned `oauth_url`
+      3. **Callback**: After user approves, process `/oauth/callback`
+      4. **Connected**: Marketplace appears in `/marketplaces` list
