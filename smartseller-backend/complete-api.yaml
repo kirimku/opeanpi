@@ -1620,6 +1620,10 @@ tags:
   - name: admin-sub-accounts
     description: |
       Admin RBAC sub-accounts endpoints for listing roles and permissions, and managing sub-account memberships.
+  - name: marketplace
+    description: |
+      Marketplace integration management operations for connecting and managing external e-commerce platforms
+      like Shopify, Tokopedia, Shopee, etc. Handles authentication, synchronization, and configuration.
 
 paths:
   # Authentication Endpoints
@@ -4421,5 +4425,32 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  # Marketplace Management Endpoints
+  /api/v1/admin/marketplaces:
+    get:
+      tags:
+        - marketplace
+      summary: List all marketplaces
+      description: |
+        Retrieves all connected and available marketplace integrations for the authenticated user's storefront.
+        Returns connected marketplaces, available marketplaces to connect, and summary statistics.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Marketplaces retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MarketplaceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'

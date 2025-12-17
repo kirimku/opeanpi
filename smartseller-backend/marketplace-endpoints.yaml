@@ -1,0 +1,492 @@
+openapi: 3.0.3
+info:
+  title: Marketplace Management API
+  description: |
+    Complete API for managing marketplace integrations in SmartSeller platform.
+    Supports multiple marketplace types including Shopify, Tokopedia, Shopee, etc.
+  version: 1.0.0
+
+paths:
+  /api/v1/admin/marketplaces:
+    get:
+      tags:
+        - Marketplace
+      summary: List all marketplaces
+      description: |
+        Retrieves all connected and available marketplace integrations for the authenticated user's storefront.
+        Returns connected marketplaces, available marketplaces to connect, and summary statistics.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Marketplaces retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MarketplaceListResponse'
+                  message:
+                    type: string
+                    example: "Marketplaces retrieved successfully"
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /api/v1/admin/marketplaces/connect:
+    post:
+      tags:
+        - Marketplace
+      summary: Connect a marketplace
+      description: |
+        Initiates connection to a new marketplace. Returns OAuth URLs or setup instructions
+        based on the marketplace type.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectMarketplaceRequest'
+      responses:
+        '200':
+          description: Marketplace connection initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConnectMarketplaceResponse'
+                  message:
+                    type: string
+                    example: "Marketplace connection initiated"
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /api/v1/admin/marketplaces/{connectionId}:
+    get:
+      tags:
+        - Marketplace
+      summary: Get marketplace details
+      description: Retrieves detailed information about a specific marketplace connection.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          description: Unique identifier for the marketplace connection
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Marketplace details retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ConnectedMarketplace'
+                  message:
+                    type: string
+                    example: "Marketplace details retrieved"
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: Marketplace connection not found
+        '500':
+          description: Internal server error
+
+    delete:
+      tags:
+        - Marketplace
+      summary: Disconnect marketplace
+      description: Disconnects and removes a marketplace connection.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          description: Unique identifier for the marketplace connection
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Marketplace disconnected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      connection_id:
+                        type: string
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                  message:
+                    type: string
+                    example: "Marketplace disconnected successfully"
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: Marketplace connection not found
+        '500':
+          description: Internal server error
+
+  /api/v1/admin/marketplaces/{connectionId}/sync/status:
+    get:
+      tags:
+        - Marketplace
+      summary: Get marketplace sync status
+      description: Retrieves the current synchronization status for a marketplace connection.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          description: Unique identifier for the marketplace connection
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Sync status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MarketplaceSyncStatus'
+                  message:
+                    type: string
+                    example: "Sync status retrieved"
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: Marketplace connection not found
+        '500':
+          description: Internal server error
+
+  /api/v1/admin/marketplaces/{connectionId}/sync:
+    post:
+      tags:
+        - Marketplace
+      summary: Trigger marketplace sync
+      description: |
+        Triggers synchronization for the specified marketplace connection.
+        Supports different sync types and dry-run mode.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: connectionId
+          in: path
+          required: true
+          description: Unique identifier for the marketplace connection
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          description: Type of synchronization to trigger
+          schema:
+            type: string
+            enum: [products, orders, inventory, all]
+            default: products
+        - name: dry_run
+          in: query
+          description: Perform dry run without making actual changes
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Sync initiated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MarketplaceSyncResponse'
+                  message:
+                    type: string
+                    example: "Marketplace sync initiated"
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: Marketplace connection not found
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    MarketplaceType:
+      type: string
+      enum:
+        - shopify
+        - tokopedia
+        - shopee
+        - lazada
+      description: Supported marketplace platforms
+
+    ConnectionStatus:
+      type: string
+      enum:
+        - connected
+        - disconnected
+        - error
+        - pending
+      description: Connection status of marketplace integration
+
+    MarketplaceInfo:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/MarketplaceType'
+        name:
+          type: string
+          example: "Shopify"
+        logo:
+          type: string
+          example: "/assets/logos/shopify.svg"
+        description:
+          type: string
+          example: "Complete e-commerce platform for building and managing online stores"
+        website:
+          type: string
+          example: "https://www.shopify.com"
+        features:
+          type: array
+          items:
+            type: string
+          example: ["product_sync", "order_sync", "inventory_sync", "customer_sync"]
+
+    ConnectedMarketplace:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          $ref: '#/components/schemas/MarketplaceType'
+        name:
+          type: string
+          example: "Shopify"
+        logo:
+          type: string
+          example: "/assets/logos/shopify.svg"
+        store_domain:
+          type: string
+          example: "wisnu-development.myshopify.com"
+        status:
+          $ref: '#/components/schemas/ConnectionStatus'
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-17T11:30:00Z"
+        connected_at:
+          type: string
+          format: date-time
+          example: "2025-12-16T10:00:00Z"
+        features:
+          type: array
+          items:
+            type: string
+          example: ["product_sync", "order_sync", "inventory_sync"]
+        configuration:
+          type: object
+          example:
+            api_version: "2024-10"
+            webhooks_configured: true
+            scopes: ["read_products", "write_products"]
+            has_token: true
+        error:
+          type: string
+          nullable: true
+          example: null
+
+    MarketplaceSummary:
+      type: object
+      properties:
+        total_connected:
+          type: integer
+          example: 1
+        total_available:
+          type: integer
+          example: 1
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-17T11:30:00Z"
+        active_connections:
+          type: integer
+          example: 1
+
+    MarketplaceListResponse:
+      type: object
+      properties:
+        connected:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectedMarketplace'
+        available:
+          type: array
+          items:
+            $ref: '#/components/schemas/MarketplaceInfo'
+        summary:
+          $ref: '#/components/schemas/MarketplaceSummary'
+
+    ConnectMarketplaceRequest:
+      type: object
+      required:
+        - type
+        - store_domain
+      properties:
+        type:
+          $ref: '#/components/schemas/MarketplaceType'
+        store_domain:
+          type: string
+          example: "wisnu-development.myshopify.com"
+        configuration:
+          type: object
+          description: Additional configuration specific to marketplace type
+          example:
+            api_version: "2024-10"
+            scopes: ["read_products", "write_products"]
+
+    ConnectMarketplaceResponse:
+      type: object
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          $ref: '#/components/schemas/MarketplaceType'
+        status:
+          $ref: '#/components/schemas/ConnectionStatus'
+        message:
+          type: string
+          example: "OAuth flow initiated for Shopify connection"
+        action:
+          type: string
+          enum: [oauth, manual_setup, none]
+          example: oauth
+        data:
+          type: object
+          nullable: true
+          properties:
+            store_domain:
+              type: string
+              example: "wisnu-development.myshopify.com"
+            oauth_url:
+              type: string
+              example: "/api/v1/admin/storefronts/660e8400-e29b-41d4-a716-446655440000/integrations/shopify/oauth/initiate"
+
+    MarketplaceSyncStatus:
+      type: object
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+        marketplace_type:
+          $ref: '#/components/schemas/MarketplaceType'
+        store_domain:
+          type: string
+          example: "wisnu-development.myshopify.com"
+        status:
+          type: string
+          enum: [connected, syncing, error, idle]
+          example: connected
+        last_sync_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-12-17T11:30:00Z"
+        sync_in_progress:
+          type: boolean
+          example: false
+        last_sync_result:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            message:
+              type: string
+              example: "Last sync completed successfully"
+
+    MarketplaceSyncResponse:
+      type: object
+      properties:
+        sync_id:
+          type: string
+          example: "sync_123e4567-e89b-12d3-a456-426614174000_20251217111500"
+        connection_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        marketplace_type:
+          $ref: '#/components/schemas/MarketplaceType'
+        sync_type:
+          type: string
+          example: products
+        dry_run:
+          type: boolean
+          example: false
+        status:
+          type: string
+          enum: [initiated, running, completed, failed]
+          example: initiated
+        message:
+          type: string
+          example: "Sync process initiated successfully"
+        estimated_duration:
+          type: string
+          example: "2-5 minutes"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+tags:
+  - name: Marketplace
+    description: Marketplace integration management operations
