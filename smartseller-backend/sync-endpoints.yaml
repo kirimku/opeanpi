@@ -1,0 +1,933 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Shopify Sync API
+  version: 3.0.0
+  description: |
+    Enterprise-grade Shopify synchronization API with auto-mapping to user's storefront.
+    Endpoints automatically detect user context and map to appropriate store.
+    Features dedicated product and order sync with advanced job management, performance monitoring, and loyalty referral processing.
+
+    ## Key Features:
+    - **Auto-Storefront Mapping**: Automatically uses user's storefront
+    - **Dedicated Sync Types**: Separate endpoints for products and orders
+    - **High Performance**: Parallel processing, configurable batch sizes
+    - **Real-time Monitoring**: Job tracking, progress metrics, performance analytics
+    - **Loyalty Integration**: Automatic referral code processing and point awards
+    - **Rate Limiting**: Built-in Shopify API rate limit handling
+
+    ## Usage Notes:
+    - All endpoints require admin authentication
+    - Storefront is auto-detected from user context or specified in request body
+    - Supports query parameters and JSON body for configuration
+    - Real-time progress tracking via job status endpoints
+
+tags:
+  - name: Sync API
+    description: Shopify synchronization with automatic storefront mapping
+
+paths:
+  # Dedicated Product Sync Endpoint
+  /api/v1/admin/shopify/sync/products/high-performance:
+    post:
+      summary: Trigger high-performance Shopify product sync
+      description: |
+        Initiates a high-performance product synchronization that automatically maps to the user's storefront.
+
+        Features:
+        - Auto-detects user's storefront context
+        - Configurable batch processing and parallel jobs
+        - Real-time progress tracking
+        - Rate limiting and performance optimization
+        - Support for incremental and full sync
+
+        Use Cases:
+        - Regular product catalog updates
+        - Initial product import from Shopify
+        - Bulk product synchronization with performance monitoring
+      tags:
+        - Sync API
+      parameters:
+        - in: query
+          name: batch_size
+          required: false
+          description: Number of products to process per batch (10-250)
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 250
+            default: 50
+        - in: query
+          name: parallel_jobs
+          required: false
+          description: Number of parallel processing jobs (1-10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 3
+        - in: query
+          name: full_sync
+          required: false
+          description: Force full resync instead of incremental
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: dry_run
+          required: false
+          description: Simulate sync without making changes
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: shop_domain
+          required: false
+          description: Shop domain hint for integration selection
+          schema:
+            type: string
+            example: "mystore.myshopify.com"
+        - in: query
+          name: since_id
+          required: false
+          description: Start from specific product ID (for incremental sync)
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: false
+        description: Optional storefront override and additional configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoSlugSyncRequest'
+      responses:
+        '200':
+          description: Product sync job started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopifySyncJobResponse'
+        '400':
+          description: Bad Request - Invalid parameters or storefront not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+        '429':
+          description: Rate limit exceeded
+        '500':
+          description: Internal Server Error
+
+  # Dedicated Order Sync Endpoint (No Slug)
+  /api/v1/admin/shopify/sync/orders/high-performance:
+    post:
+      summary: Trigger high-performance Shopify order sync (no slug required)
+      description: |
+        Initiates a high-performance order synchronization with automatic storefront mapping.
+
+        Features:
+        - Auto-detects user's storefront context
+        - Loyalty referral code processing and point awards
+        - Configurable batch processing and parallel jobs
+        - Order status filtering support
+        - Real-time progress tracking
+        - Automatic customer creation and linking
+
+        Use Cases:
+        - Regular order synchronization
+        - Historical order import
+        - Loyalty point processing from referral codes
+        - Customer data synchronization
+      tags:
+        - Sync API
+      parameters:
+        - in: query
+          name: batch_size
+          required: false
+          description: Number of orders to process per batch (10-250)
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 250
+            default: 50
+        - in: query
+          name: parallel_jobs
+          required: false
+          description: Number of parallel processing jobs (1-10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 2
+        - in: query
+          name: status
+          required: false
+          description: Filter orders by status
+          schema:
+            type: string
+            enum: [open, closed, cancelled, any]
+            default: any
+        - in: query
+          name: full_sync
+          required: false
+          description: Force full resync instead of incremental
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: dry_run
+          required: false
+          description: Simulate sync without making changes
+          schema:
+            type: boolean
+            default: false
+        - in: query
+          name: since_date
+          required: false
+          description: Start from specific date (YYYY-MM-DD format)
+          schema:
+            type: string
+            format: date
+            example: "2024-01-01"
+      requestBody:
+        required: false
+        description: Optional storefront override and additional configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoSlugSyncRequest'
+      responses:
+        '200':
+          description: Order sync job started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopifySyncJobResponse'
+        '400':
+          description: Bad Request - Invalid parameters or storefront not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+        '429':
+          description: Rate limit exceeded
+        '500':
+          description: Internal Server Error
+
+  # Unified Sync Endpoint (No Slug)
+  /api/v1/admin/shopify/sync/unified:
+    post:
+      summary: Trigger unified Shopify sync (products + orders, no slug required)
+      description: |
+        Initiates a unified synchronization that handles multiple sync types in a single request.
+
+        Features:
+        - Auto-detects user's storefront context
+        - Sync products and orders simultaneously
+        - Unified job tracking for all sync types
+        - Loyalty referral processing for orders
+        - Performance monitoring and analytics
+
+        Use Cases:
+        - Complete Shopify store synchronization
+        - Initial store setup with products and orders
+        - Comprehensive data synchronization
+      tags:
+        - Sync API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnifiedSyncRequest'
+      responses:
+        '200':
+          description: Unified sync job started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnifiedSyncResponse'
+        '400':
+          description: Bad Request - Invalid parameters or storefront not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+        '429':
+          description: Rate limit exceeded
+        '500':
+          description: Internal Server Error
+
+  # Performance Monitoring Endpoints (No Slug)
+  /api/v1/admin/shopify/sync/metrics:
+    get:
+      summary: Get sync performance metrics (no slug required)
+      description: |
+        Retrieves comprehensive performance metrics for all sync operations.
+        Includes success rates, average duration, items per second, and active jobs.
+
+        Use Cases:
+        - Performance monitoring dashboards
+        - Sync operation analytics
+        - Troubleshooting performance issues
+      tags:
+        - Sync API
+      responses:
+        '200':
+          description: Sync metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncMetricsResponse'
+        '400':
+          description: Bad Request - Storefront not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+
+  /api/v1/admin/shopify/sync/jobs:
+    get:
+      summary: List sync jobs (no slug required)
+      description: |
+        Retrieves a list of all sync jobs with filtering and pagination options.
+        Supports filtering by status, job type, and date range.
+
+        Use Cases:
+        - Job monitoring dashboards
+        - Sync operation history
+        - Debugging failed jobs
+      tags:
+        - Sync API
+      parameters:
+        - in: query
+          name: status
+          required: false
+          description: Filter by job status
+          schema:
+            type: string
+            enum: [pending, running, paused, completed, failed, cancelled]
+        - in: query
+          name: job_type
+          required: false
+          description: Filter by job type
+          schema:
+            type: string
+            enum: [products, orders, unified]
+        - in: query
+          name: limit
+          required: false
+          description: Maximum number of jobs to return (1-100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: offset
+          required: false
+          description: Number of jobs to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - in: query
+          name: order_by
+          required: false
+          description: Field to order results by
+          schema:
+            type: string
+            enum: [created_at, started_at, completed_at, status, job_type]
+            default: created_at
+        - in: query
+          name: order_dir
+          required: false
+          description: Sort direction
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Sync jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobListResponse'
+        '400':
+          description: Bad Request - Invalid parameters or storefront not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+
+  /api/v1/admin/shopify/sync/status:
+    get:
+      summary: Get sync job status (no slug required)
+      description: |
+        Retrieves detailed status and progress information for a specific sync job.
+        Includes progress percentage, processed/failed items, and error details.
+
+        Use Cases:
+        - Real-time progress tracking
+        - Job completion monitoring
+        - Error diagnosis
+      tags:
+        - Sync API
+      parameters:
+        - in: query
+          name: job_id
+          required: true
+          description: Job ID to get status for
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobStatusResponse'
+        '400':
+          description: Bad Request - Missing job_id or storefront not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+        '404':
+          description: Job not found
+
+  /api/v1/admin/shopify/sync/performance:
+    get:
+      summary: Get detailed sync job performance metrics (no slug required)
+      description: |
+        Retrieves comprehensive performance metrics for a specific sync job.
+        Includes processing speed, success rate, API calls, and recent logs.
+
+        Use Cases:
+        - Performance analysis
+        - Bottleneck identification
+        - Sync optimization
+      tags:
+        - Sync API
+      parameters:
+        - in: query
+          name: job_id
+          required: true
+          description: Job ID to analyze
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Performance metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncJobPerformanceResponse'
+        '400':
+          description: Bad Request - Missing job_id or storefront not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+        '404':
+          description: Job not found
+
+components:
+  schemas:
+    # Request Schemas
+    NoSlugSyncRequest:
+      type: object
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          description: Optional storefront ID override (auto-detected if not provided)
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        batch_size:
+          type: integer
+          minimum: 10
+          maximum: 250
+          description: Number of items to process per batch
+          default: 50
+        parallel_jobs:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Number of parallel processing jobs
+          default: 3
+        full_sync:
+          type: boolean
+          description: Force full resync instead of incremental
+          default: false
+        dry_run:
+          type: boolean
+          description: Simulate sync without making changes
+          default: false
+        shop_domain:
+          type: string
+          description: Shop domain hint for integration selection
+          example: "mystore.myshopify.com"
+
+    UnifiedSyncRequest:
+      type: object
+      required: [sync_types]
+      properties:
+        storefront_id:
+          type: string
+          format: uuid
+          description: Optional storefront ID override (auto-detected if not provided)
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        sync_types:
+          type: array
+          items:
+            type: string
+            enum: [products, orders, inventory]
+          description: Types of data to sync
+          minItems: 1
+          maxItems: 3
+          example: ["products", "orders"]
+        batch_size:
+          type: integer
+          minimum: 10
+          maximum: 250
+          description: Number of items to process per batch
+          default: 50
+        parallel_jobs:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Number of parallel processing jobs
+          default: 3
+        full_sync:
+          type: boolean
+          description: Force full resync instead of incremental
+          default: false
+        dry_run:
+          type: boolean
+          description: Simulate sync without making changes
+          default: false
+        referral_code_processing:
+          type: boolean
+          description: Enable loyalty referral code processing for orders
+          default: true
+        shop_domain:
+          type: string
+          description: Shop domain hint for integration selection
+          example: "mystore.myshopify.com"
+        since_id:
+          type: integer
+          description: Start from specific product ID
+        since_date:
+          type: string
+          format: date
+          description: Start from specific date for orders
+          example: "2024-01-01"
+        status_filter:
+          type: string
+          enum: [open, closed, cancelled, any]
+          description: Filter orders by status
+          default: any
+
+    # Response Schemas
+    UnifiedSyncResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the unified sync job
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          enum: [started, running, completed, failed]
+          description: Initial status of the unified sync job
+          example: "started"
+        message:
+          type: string
+          description: Status message
+          example: "Unified sync initiated successfully"
+        sync_types:
+          type: array
+          items:
+            type: string
+          description: Types of sync being performed
+          example: ["products", "orders"]
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID being synchronized
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        started_at:
+          type: string
+          format: date-time
+          description: When the sync was started
+          example: "2024-01-15T10:30:00Z"
+
+    ShopifySyncJobResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the sync job
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          enum: [pending, running, paused, completed, failed, cancelled]
+          description: Current status of the sync job
+          example: "running"
+        job_type:
+          type: string
+          enum: [products, orders, unified]
+          description: Type of synchronization being performed
+          example: "products"
+        storefront_id:
+          type: string
+          format: uuid
+          description: Storefront ID being synchronized
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        total_items:
+          type: integer
+          description: Total items to process
+          example: 1250
+        processed_items:
+          type: integer
+          description: Number of items processed so far
+          example: 450
+        failed_items:
+          type: integer
+          description: Number of items that failed to process
+          example: 5
+        created_at:
+          type: string
+          format: date-time
+          description: When the job was created
+          example: "2024-01-15T10:30:00Z"
+        started_at:
+          type: string
+          format: date-time
+          description: When the job started processing
+          example: "2024-01-15T10:30:05Z"
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+          example: "2024-01-15T11:15:00Z"
+        metadata:
+          type: object
+          description: Additional job metadata
+          properties:
+            batch_size:
+              type: integer
+              description: Batch size being used
+              example: 50
+            parallel_jobs:
+              type: integer
+              description: Number of parallel jobs
+              example: 3
+            shop_domain:
+              type: string
+              description: Shopify domain being synced
+              example: "mystore.myshopify.com"
+
+    SyncMetricsResponse:
+      type: object
+      properties:
+        total_syncs:
+          type: integer
+          description: Total number of sync operations
+          example: 125
+        successful_syncs:
+          type: integer
+          description: Number of successful sync operations
+          example: 118
+        failed_syncs:
+          type: integer
+          description: Number of failed sync operations
+          example: 7
+        active_jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncJobStatusResponse'
+          description: Currently running sync jobs
+        average_duration:
+          type: number
+          format: float
+          description: Average duration in seconds
+          example: 245.5
+        items_per_second:
+          type: number
+          format: float
+          description: Average processing speed
+          example: 12.8
+        success_rate:
+          type: number
+          format: float
+          description: Success rate percentage
+          example: 94.4
+        last_sync_at:
+          type: string
+          format: date-time
+          description: When the last sync completed
+          example: "2024-01-15T09:45:00Z"
+        last_product_sync:
+          type: string
+          format: date-time
+          description: When the last product sync completed
+          example: "2024-01-15T09:30:00Z"
+        last_order_sync:
+          type: string
+          format: date-time
+          description: When the last order sync completed
+          example: "2024-01-15T09:45:00Z"
+
+    SyncJobListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncJobStatusResponse'
+          description: List of sync jobs
+        total:
+          type: integer
+          description: Total number of jobs
+          example: 45
+        limit:
+          type: integer
+          description: Number of jobs returned
+          example: 20
+        offset:
+          type: integer
+          description: Number of jobs skipped
+          example: 0
+
+    SyncJobStatusResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the sync job
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          enum: [pending, running, paused, completed, failed, cancelled]
+          description: Current status of the sync job
+          example: "running"
+        sync_type:
+          type: string
+          enum: [products, orders, unified]
+          description: Type of synchronization being performed
+          example: "products"
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Progress percentage (0-100)
+          example: 36.8
+        total_items:
+          type: integer
+          description: Total items to process
+          example: 1250
+        processed_items:
+          type: integer
+          description: Number of items processed so far
+          example: 450
+        failed_items:
+          type: integer
+          description: Number of items that failed to process
+          example: 5
+        started_at:
+          type: string
+          format: date-time
+          description: When the job started processing
+          example: "2024-01-15T10:30:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          description: When the job completed
+        error_message:
+          type: string
+          description: Error message if job failed
+        estimated_eta:
+          type: integer
+          description: Estimated time to completion in seconds
+          example: 1800
+        current_item_info:
+          type: string
+          description: Information about currently processing item
+          example: "Processing product SKU: SS-TEST-001"
+
+    SyncJobPerformanceResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          description: Job ID being analyzed
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        job_type:
+          type: string
+          enum: [products, orders, unified]
+          description: Job type
+          example: "products"
+        status:
+          type: string
+          enum: [pending, running, paused, completed, failed, cancelled]
+          description: Current job status
+          example: "completed"
+        total_items:
+          type: integer
+          description: Total items to process
+          example: 1250
+        processed_items:
+          type: integer
+          description: Items processed successfully
+          example: 1245
+        failed_items:
+          type: integer
+          description: Items that failed to process
+          example: 5
+        duration_seconds:
+          type: number
+          format: float
+          description: Total job duration in seconds
+          example: 245.8
+        items_per_second:
+          type: number
+          format: float
+          description: Items processed per second
+          example: 5.1
+        success_rate:
+          type: number
+          format: float
+          description: Success rate percentage (0-100)
+          example: 99.6
+        created_at:
+          type: string
+          format: date-time
+          description: When the job was created
+          example: "2024-01-15T10:30:00Z"
+        started_at:
+          type: string
+          format: date-time
+          description: When the job started
+          example: "2024-01-15T10:30:05Z"
+        completed_at:
+          type: string
+          format: date-time
+          description: When the job completed
+          example: "2024-01-15T10:34:10Z"
+        error_message:
+          type: string
+          description: Error message if job failed
+        recent_logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncLog'
+          description: Recent log entries
+        performance_metrics:
+          type: object
+          properties:
+            api_calls_made:
+              type: integer
+              description: Total API calls made
+              example: 1250
+            api_calls_successful:
+              type: integer
+              description: Successful API calls
+              example: 1245
+            rate_limit_hits:
+              type: integer
+              description: Number of rate limit hits
+              example: 12
+            throughput_mb_per_second:
+              type: number
+              format: float
+              description: Data throughput in MB/s
+              example: 2.4
+            peak_memory_usage_mb:
+              type: number
+              format: float
+              description: Peak memory usage in MB
+              example: 128.5
+
+    SyncLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Log entry ID
+        job_id:
+          type: string
+          format: uuid
+          description: Associated job ID
+        level:
+          type: string
+          enum: [debug, info, warn, error]
+          description: Log level
+        message:
+          type: string
+          description: Log message
+        details:
+          type: object
+          description: Additional log details
+        created_at:
+          type: string
+          format: date-time
+          description: When the log was created
+          example: "2024-01-15T10:32:15Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "Storefront context not found"
+        error_code:
+          type: string
+          description: Error code for programmatic handling
+          example: "STOREFRONT_NOT_FOUND"
+        details:
+          type: object
+          description: Additional error details
+          example:
+            user_id: "1a161391-61b7-4940-a207-d76c48b3dff3"
+            hint: "Provide storefront_id in request body or call from storefront-specific route"
+
+  # Security Schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT authentication token required for all endpoints.
+        Include admin token in Authorization header: `Bearer <token>`
+
+security:
+  - BearerAuth: []

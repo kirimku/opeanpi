@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Sync API Documentation
+  version: 3.0.0
+  description: |
+    ## Shopify Synchronization API Documentation
+
+    SmartSeller provides a modern Shopify synchronization API with automatic storefront mapping:
+
+    ## **Shopify Sync API** 🚀
+    - **Auto-mapping**: Automatically detects user's storefront context
+    - **Simplified endpoints**: No need to specify storefront slug
+    - **Dedicated sync**: Separate endpoints for products and orders
+    - **Performance monitoring**: Built-in metrics and job tracking
+
+    **Key Benefits:**
+    - ✅ No storefront slug required
+    - ✅ Auto-maps to user's storefront
+    - ✅ Admin override capability
+    - ✅ Real-time performance monitoring
+    - ✅ Loyalty integration
+    - ✅ Production-ready error handling
+
+    **Documentation**: [sync-endpoints.yaml](./sync-endpoints.yaml)
+
+    **Main Endpoints:**
+    - `POST /api/v1/admin/shopify/sync/products/high-performance` - Product sync
+    - `POST /api/v1/admin/shopify/sync/orders/high-performance` - Order sync
+    - `POST /api/v1/admin/shopify/sync/unified` - Combined products + orders
+    - `GET /api/v1/admin/shopify/sync/metrics` - Performance metrics
+    - `GET /api/v1/admin/shopify/sync/jobs` - Job listing
+    - `GET /api/v1/admin/shopify/sync/status` - Job status
+
+  
+    ### 2. **Quick Start Examples**
+
+    **Product Sync:**
+    ```bash
+    curl -X POST http://localhost:8090/api/v1/admin/shopify/sync/products/high-performance \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "storefront_id": "660e8400-e29b-41d4-a716-446655440000",
+        "batch_size": 50,
+        "parallel_jobs": 3,
+        "full_sync": false
+      }'
+    ```
+
+    **Order Sync:**
+    ```bash
+    curl -X POST http://localhost:8090/api/v1/admin/shopify/sync/orders/high-performance \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "storefront_id": "660e8400-e29b-41d4-a716-446655440000",
+        "batch_size": 50,
+        "parallel_jobs": 2,
+        "full_sync": false,
+        "status": "any"
+      }'
+    ```
+
+    **Unified Sync:**
+    ```bash
+    curl -X POST http://localhost:8090/api/v1/admin/shopify/sync/unified \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "storefront_id": "660e8400-e29b-41d4-a716-446655440000",
+        "sync_types": ["products", "orders"],
+        "batch_size": 50,
+        "referral_code_processing": true
+      }'
+    ```
+
+    **Performance Monitoring:**
+    ```bash
+    # Get sync metrics
+    curl -H "Authorization: Bearer YOUR_TOKEN" \
+      "http://localhost:8090/api/v1/admin/shopify/sync/metrics"
+
+    # List active jobs
+    curl -H "Authorization: Bearer YOUR_TOKEN" \
+      "http://localhost:8090/api/v1/admin/shopify/sync/jobs"
+
+    # Check job status
+    curl -H "Authorization: Bearer YOUR_TOKEN" \
+      "http://localhost:8090/api/v1/admin/shopify/sync/status?job_id=YOUR_JOB_ID"
+    ```
+
+    ### 4. **Performance Features**
+
+    **High-Performance Processing:**
+    - **Parallel Jobs**: Up to 10 parallel processing threads
+    - **Batch Processing**: Configurable batch sizes (10-250 items)
+    - **Rate Limiting**: Built-in Shopify API rate limit handling
+    - **Incremental Sync**: Only process new/updated items
+
+    **Real-Time Monitoring:**
+    - **Progress Tracking**: Live progress percentage and item counts
+    - **Performance Metrics**: Items/second, success rates, API call stats
+    - **Error Tracking**: Detailed error logging and diagnostics
+    - **Job Management**: Start, pause, resume, cancel operations
+
+    **Loyalty Integration:**
+    - **Referral Code Extraction**: Automatically detect codes from Shopify orders
+    - **Point Awards**: Automatic loyalty point allocation
+    - **Self-Purchase Protection**: Prevent users from referring themselves
+    - **Transaction History**: Complete audit trail for all loyalty transactions
+
+servers:
+  - url: http://localhost:8090
+    description: Development server
+  - url: https://staging-api.smartseller.com
+    description: Staging server
+  - url: https://api.smartseller.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer token authentication. Include the token in the Authorization header:
+        `Authorization: Bearer <your-jwt-token>`
+
+tags:
+  - name: Sync API
+    description: Shopify synchronization endpoints with auto-mapping
