@@ -210,6 +210,13 @@ components:
         display_order:
           type: integer
           description: Display order (0-based)
+        display_on_pages:
+          type: array
+          items:
+            type: string
+          description: Pages where this section should be displayed. Empty array means show on all pages.
+          example: [home, category]
+          nullable: true
         start_date:
           type: string
           format: date-time
@@ -254,6 +261,34 @@ components:
           format: date-time
           nullable: true
           description: Deletion timestamp (if soft-deleted)
+      example:
+        id: "c3ee7a96-572c-410a-a402-524c8e8a6caf"
+        storefront_id: "660e8400-e29b-41d4-a716-446655440000"
+        section_type: "menu_navigation"
+        title: "Icon Menu Navigation"
+        slug: "icon-menu-navigation-2"
+        content:
+          layout: "horizontal"
+          columns: 4
+          menu_items:
+            - title: "Home"
+              link_url: "/"
+              display_order: 1
+        settings: {}
+        is_active: true
+        display_order: 5
+        display_on_pages: ["home"]
+        template_code: "menu_navigation_icon"
+        tags: null
+        products: []
+        categories: []
+        metadata:
+          is_scheduled: false
+          is_currently_active: true
+          has_expired: false
+        created_at: "2025-11-24T20:34:48.740524Z"
+        updated_at: "2025-11-24T20:34:48.740524Z"
+        deleted_at: null
 
     ProductRef:
       type: object

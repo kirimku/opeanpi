@@ -23,7 +23,17 @@ paths:
           required: false
           schema:
             type: string
-          description: Optional page filter (e.g. 'home', 'category', 'all')
+            enum: [home, category, product, about, contact, all]
+          description: |
+            Optional page filter to return sections configured for specific pages.
+            - 'home': Homepage sections
+            - 'category': Category listing pages
+            - 'product': Product detail pages
+            - 'about': About page
+            - 'contact': Contact page
+            - 'all': All pages (special value)
+            If not provided, returns all active sections regardless of page configuration.
+          example: home
       responses:
         '200':
           description: Active sections retrieved successfully
