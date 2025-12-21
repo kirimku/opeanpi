@@ -301,28 +301,28 @@ paths:
 
   # Admin Drop Point Management Endpoints
   /api/v1/admin/drop-points/claims:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1claims'
 
   /api/v1/admin/drop-points/claims/{id}:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1claims~1{id}'
 
   /api/v1/admin/drop-points/claims/{id}/validate:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1validate'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1claims~1{id}~1validate'
 
   /api/v1/admin/drop-points/claims/{id}/reject:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1reject'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1claims~1{id}~1reject'
 
   /api/v1/admin/drop-points/claims/{id}/generate-replacement:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1generate-replacement'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1claims~1{id}~1generate-replacement'
 
   /api/v1/admin/drop-points/claims/{id}/execute-replacement:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1execute-replacement'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1claims~1{id}~1execute-replacement'
 
   /api/v1/admin/drop-points/profile:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1profile'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1profile'
 
   /api/v1/admin/drop-points/barcodes/{id}/replacements:
-    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1barcodes~1{id}~1replacements'
+    $ref: './admin-drop-point-claims.yaml#/paths/~1api~1v1~1admin~1drop-points~1barcodes~1{id}~1replacements'
 
 # Tag definitions
 tags:

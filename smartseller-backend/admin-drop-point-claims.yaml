@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: SmartSeller API - Admin Drop Point Management
+  title: SmartSeller API - Admin Drop Point Claim Management
   description: |
-    Admin drop point management endpoints for warranty claim processing.
+    Admin drop point claim management endpoints for warranty claim processing.
     These endpoints are used by drop point admins to manage warranty claims assigned to their drop points.
   version: 1.0.0
 
@@ -18,10 +18,10 @@ security:
   - BearerAuth: []
 
 paths:
-  /admin/drop-points/claims:
+  /api/v1/admin/drop-points/claims:
     get:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: List assigned claims
       description: |
         Retrieve all warranty claims assigned to the drop point admin.
@@ -87,10 +87,10 @@ paths:
         '500':
           $ref: './common.yaml#/components/responses/InternalServerError'
 
-  /admin/drop-points/claims/{id}:
+  /api/v1/admin/drop-points/claims/{id}:
     get:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: Get claim details
       description: Retrieve detailed information about a specific warranty claim.
       security:
@@ -122,10 +122,10 @@ paths:
         '404':
           $ref: './common.yaml#/components/responses/NotFound'
 
-  /admin/drop-points/claims/{id}/validate:
+  /api/v1/admin/drop-points/claims/{id}/validate:
     post:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: Validate warranty claim
       description: |
         Validate a warranty claim and approve it for processing.
@@ -186,10 +186,10 @@ paths:
         '404':
           $ref: './common.yaml#/components/responses/NotFound'
 
-  /admin/drop-points/claims/{id}/reject:
+  /api/v1/admin/drop-points/claims/{id}/reject:
     post:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: Reject warranty claim
       description: |
         Reject a warranty claim with a specified reason.
@@ -246,10 +246,10 @@ paths:
         '404':
           $ref: './common.yaml#/components/responses/NotFound'
 
-  /admin/drop-points/claims/{id}/generate-replacement:
+  /api/v1/admin/drop-points/claims/{id}/generate-replacement:
     post:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: Generate replacement barcode
       description: |
         Generate a new replacement barcode for a validated claim.
@@ -314,10 +314,10 @@ paths:
               schema:
                 $ref: './common.yaml#/components/schemas/ErrorResponse'
 
-  /admin/drop-points/claims/{id}/execute-replacement:
+  /api/v1/admin/drop-points/claims/{id}/execute-replacement:
     post:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: Execute barcode replacement
       description: |
         Execute the actual replacement by assigning the new barcode.
@@ -390,10 +390,10 @@ paths:
         '404':
           $ref: './common.yaml#/components/responses/NotFound'
 
-  /admin/drop-points/profile:
+  /api/v1/admin/drop-points/profile:
     get:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: Get drop point admin profile
       description: |
         Retrieve profile information for the drop point admin,
@@ -455,10 +455,10 @@ paths:
         '403':
           $ref: './common.yaml#/components/responses/Forbidden'
 
-  /admin/drop-points/barcodes/{id}/replacements:
+  /api/v1/admin/drop-points/barcodes/{id}/replacements:
     get:
       tags:
-        - Admin Drop Point Management
+        - Admin Drop Points
       summary: Get barcode replacement history
       description: |
         Retrieve the complete replacement history for a warranty barcode.
