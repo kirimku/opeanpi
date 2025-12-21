@@ -270,6 +270,60 @@ paths:
   /api/v1/storefront/{slug}/warranty/customer/warranties:
     $ref: './warranty-customer-endpoints.yaml#/paths/~1api~1v1~1storefront~1{slug}~1warranty~1customer~1warranties'
 
+  # Warranty Drop Point Flow - Customer Endpoints
+  /api/v1/storefront/{slug}/claims/submit:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1claims~1submit'
+
+  /api/v1/storefront/{slug}/claims:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1claims'
+
+  /api/v1/storefront/{slug}/claims/{id}:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1claims~1{id}'
+
+  /api/v1/storefront/{slug}/claims/{id}/timeline:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1claims~1{id}~1timeline'
+
+  # Warranty Drop Point Flow - Drop Point Admin Endpoints
+  /api/v1/storefront/{slug}/drop-points/claims:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1drop-points~1claims'
+
+  /api/v1/storefront/{slug}/drop-points/claims/{id}/validate:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1drop-points~1claims~1{id}~1validate'
+
+  /api/v1/storefront/{slug}/drop-points/claims/{id}/reject:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1drop-points~1claims~1{id}~1reject'
+
+  /api/v1/storefront/{slug}/drop-points/claims/{id}/generate-replacement:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1drop-points~1claims~1{id}~1generate-replacement'
+
+  /api/v1/storefront/{slug}/drop-points/claims/{id}/execute-replacement:
+    $ref: './warranty-drop-point-flow.yaml#/paths/~1storefront~1{slug}~1drop-points~1claims~1{id}~1execute-replacement'
+
+  # Admin Drop Point Management Endpoints
+  /api/v1/admin/drop-points/claims:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims'
+
+  /api/v1/admin/drop-points/claims/{id}:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}'
+
+  /api/v1/admin/drop-points/claims/{id}/validate:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1validate'
+
+  /api/v1/admin/drop-points/claims/{id}/reject:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1reject'
+
+  /api/v1/admin/drop-points/claims/{id}/generate-replacement:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1generate-replacement'
+
+  /api/v1/admin/drop-points/claims/{id}/execute-replacement:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1claims~1{id}~1execute-replacement'
+
+  /api/v1/admin/drop-points/profile:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1profile'
+
+  /api/v1/admin/drop-points/barcodes/{id}/replacements:
+    $ref: './admin-drop-point-management.yaml#/paths/~1admin~1drop-points~1barcodes~1{id}~1replacements'
+
 # Tag definitions
 tags:
   - name: Authentication
@@ -296,6 +350,12 @@ tags:
     description: Storefront-specific warranty management endpoints
   - name: Storefront Customer Warranty
     description: Customer warranty operations within storefront context
+  - name: Customer Warranty Claims
+    description: Customer warranty claim submission and management
+  - name: Drop Point Admin
+    description: Drop point admin warranty claim processing (DEPRECATED - use Admin Drop Point Management)
+  - name: Admin Drop Point Management
+    description: Admin drop point management endpoints for warranty claim processing
 
 # Security schemes
 components:

@@ -729,7 +729,7 @@ components:
           description: "User's full name"
         user_role:
           type: string
-          enum: [owner, admin, manager, support, technician, warehouse_admin, user]
+          enum: [owner, admin, manager, support, technician, warehouse_admin, user, drop_point_admin]
           description: "Global user role (also reflected in JWT claims)"
         is_admin:
           type: boolean

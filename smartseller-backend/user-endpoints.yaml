@@ -99,7 +99,7 @@ components:
           example: "basic"
         user_role:
           type: string
-          enum: [owner, admin, manager, support, user, warehouse_admin, technician]
+          enum: [owner, admin, manager, support, user, warehouse_admin, technician, drop_point_admin]
           description: User's role in the system
           example: "warehouse_admin"
         transaction_count:

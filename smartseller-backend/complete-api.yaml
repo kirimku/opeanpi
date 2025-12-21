@@ -324,7 +324,7 @@ components:
         role_name:
           type: string
           description: The role to assign to the sub-account
-          enum: [owner, admin, manager, support, technician, warehouse_admin, user]
+          enum: [owner, admin, manager, support, technician, warehouse_admin, drop_point_admin, user]
           example: "manager"
 
     RoleAssignmentRequest:
@@ -336,7 +336,7 @@ components:
         role_name:
           type: string
           description: The role to assign to the sub-account
-          enum: [owner, admin, manager, support, technician, warehouse_admin, user]
+          enum: [owner, admin, manager, support, technician, warehouse_admin, drop_point_admin, user]
           example: "technician"
 
     SubAccountResponse:
