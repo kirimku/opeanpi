@@ -441,6 +441,12 @@ components:
           type: boolean
           description: "Whether the product is low in stock"
           example: false
+        primary_image:
+          type: string
+          format: uri
+          nullable: true
+          description: "URL of the primary product image"
+          example: "https://cdn.shopify.com/s/files/1/0943/4729/7135/files/product.jpg?v=123456"
         created_at:
           type: string
           format: date-time
@@ -451,12 +457,6 @@ components:
           format: date-time
           description: "Product last update timestamp"
           example: "2025-09-24T10:00:00Z"
-        primary_image:
-          type: string
-          format: uri
-          nullable: true
-          description: "Primary image URL if available (requires include=images)"
-          example: "https://cdn.example.com/products/550e8400/main.jpg"
     
     ProductListResponse:
       type: object

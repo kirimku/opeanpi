@@ -5,7 +5,9 @@ paths:
       summary: List storefront products
       description: |
         List products within a storefront context.
-        
+
+        Note: Images are included by default for storefront endpoints. The primary image URL is returned in the primary_image field.
+
         Tenant scoping: Products are restricted to the storefront's seller via tenant context.
         Optional customer auth; if authenticated as seller, results are scoped by `created_by` = seller.
       security: []
@@ -83,7 +85,9 @@ paths:
       summary: Get storefront product
       description: |
         Get a single product within a storefront context.
-        
+
+        Note: Images are included by default for storefront endpoints. All product images are returned in the images array.
+
         Tenant scoping: Only returns the product if it belongs to the storefront's seller (matches `created_by`).
       security: []
       parameters:

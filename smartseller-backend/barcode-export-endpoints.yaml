@@ -1,0 +1,678 @@
+paths:
+  # Barcode Export Management
+  /api/v1/admin/warranty/barcodes/exports:
+    post:
+      tags:
+        - Admin Warranty Management
+        - Barcode Export
+      summary: Create barcode export job
+      description: Create an async export job for barcode PDF generation with support for large datasets
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BarcodeExportRequest'
+      responses:
+        '201':
+          description: Export job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BarcodeExportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Admin Warranty Management
+        - Barcode Export
+      summary: List barcode export jobs
+      description: Get paginated list of barcode exports for current user with filtering options
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by export status
+          schema:
+            type: string
+            enum: [pending, processing, generating_pdfs, creating_zip, uploading, completed, failed, cancelled]
+        - name: export_type
+          in: query
+          description: Filter by export type
+          schema:
+            type: string
+            enum: [pdf, zip]
+        - name: start_date
+          in: query
+          description: Filter exports created on or after this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          description: Filter exports created on or before this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: search
+          in: query
+          description: Search in export ID or file name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Export list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BarcodeExportListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/admin/warranty/barcodes/exports/{id}:
+    get:
+      tags:
+        - Admin Warranty Management
+        - Barcode Export
+      summary: Get export status
+      description: Get detailed status and progress of a barcode export job
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Export ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BarcodeExportStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Admin Warranty Management
+        - Barcode Export
+      summary: Delete export job
+      description: Cancel or delete a barcode export job (only allowed for non-completed jobs)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Export ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export job deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cannot delete completed export
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/Conflict'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/admin/warranty/barcodes/exports/{id}/download:
+    get:
+      tags:
+        - Admin Warranty Management
+        - Barcode Export
+      summary: Download export file
+      description: Download the generated barcode PDF or ZIP file (redirect to storage URL)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Export ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '302':
+          description: Redirect to storage URL
+          headers:
+            Location:
+              description: Storage URL for file download
+              schema:
+                type: string
+                format: uri
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          description: Export has expired or download limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/Forbidden'
+        '429':
+          description: Download limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/TooManyRequests'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/admin/warranty/barcodes/exports/{id}/retry:
+    post:
+      tags:
+        - Admin Warranty Management
+        - Barcode Export
+      summary: Retry failed export
+      description: Retry a failed barcode export job
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Export ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export retry initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BarcodeExportResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Export cannot be retried
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/Conflict'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    BarcodeExportRequest:
+      type: object
+      required:
+        - export_type
+        - layout_type
+        - max_records
+      properties:
+        export_type:
+          type: string
+          enum: [pdf, zip]
+          description: Type of export to generate
+          example: pdf
+        product_id:
+          type: string
+          format: uuid
+          description: Filter by specific product ID (optional)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [active, inactive, claimed]
+          description: Filter barcodes by status (optional)
+          example: active
+        search:
+          type: string
+          description: Search term for barcodes (optional)
+          example: "REX123"
+        layout_type:
+          type: string
+          enum: [dense, standard, custom]
+          description: Layout type for PDF generation
+          example: dense
+        barcodes_per_page:
+          type: integer
+          minimum: 1
+          maximum: 200
+          description: Number of barcodes per page (for custom layouts)
+          example: 144
+        max_records:
+          type: integer
+          minimum: 1
+          maximum: 50000
+          description: Maximum number of barcodes to export
+          example: 1000
+
+    BarcodeExportResponse:
+      type: object
+      properties:
+        export_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the export job
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        job_id:
+          type: integer
+          description: River queue job ID
+          example: 12345
+        status:
+          type: string
+          enum: [pending, processing, generating_pdfs, creating_zip, uploading, completed, failed, cancelled]
+          description: Current status of the export job
+          example: pending
+        total_barcodes:
+          type: integer
+          description: Total number of barcodes being exported
+          example: 1000
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+          example: "2024-01-15T10:30:00Z"
+        estimated_duration:
+          type: string
+          description: Human-readable estimated duration
+          example: "~10 minutes"
+
+    BarcodeExportStatusResponse:
+      type: object
+      properties:
+        export_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [pending, processing, generating_pdfs, creating_zip, uploading, completed, failed, cancelled]
+          example: processing
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Progress percentage (0-100)
+          example: 65
+        total_barcodes:
+          type: integer
+          description: Total number of barcodes in the export
+          example: 1000
+        processed_barcodes:
+          type: integer
+          description: Number of barcodes processed so far
+          example: 650
+        generated_pages:
+          type: integer
+          description: Number of PDF pages generated
+          example: 7
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T09:30:00Z"
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T09:31:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        estimated_completion:
+          type: string
+          format: date-time
+          example: "2024-01-15T09:40:00Z"
+        file_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to download the generated file (when completed)
+          example: "https://storage.example.com/exports/barcodes_123.pdf"
+        file_name:
+          type: string
+          nullable: true
+          example: "barcodes_2024-01-15.pdf"
+        file_size:
+          type: integer
+          nullable: true
+          description: File size in bytes
+          example: 2048576
+        download_count:
+          type: integer
+          description: Number of times the file has been downloaded
+          example: 0
+        max_downloads:
+          type: integer
+          description: Maximum allowed downloads
+          example: 5
+        expires_at:
+          type: string
+          format: date-time
+          description: When the export expires and files are deleted
+          example: "2024-01-22T09:30:00Z"
+        error_message:
+          type: string
+          nullable: true
+          description: Error message if export failed
+          example: null
+        can_download:
+          type: boolean
+          description: Whether the file can be downloaded
+          example: false
+        can_retry:
+          type: boolean
+          description: Whether the export can be retried
+          example: false
+        batch_statistics:
+          $ref: '#/components/schemas/ExportBatchStatistics'
+
+    ExportBatchStatistics:
+      type: object
+      properties:
+        total_batches:
+          type: integer
+          description: Total number of batches
+          example: 3
+        completed_batches:
+          type: integer
+          description: Number of completed batches
+          example: 2
+        failed_batches:
+          type: integer
+          description: Number of failed batches
+          example: 0
+        processing_batches:
+          type: integer
+          description: Number of batches currently processing
+          example: 1
+        pending_batches:
+          type: integer
+          description: Number of batches waiting to be processed
+          example: 0
+        total_barcodes:
+          type: integer
+          description: Total barcodes across all batches
+          example: 1000
+        processed_barcodes:
+          type: integer
+          description: Number of barcodes processed so far
+          example: 650
+        success_rate:
+          type: number
+          format: float
+          description: Success rate as a percentage
+          example: 66.67
+
+    BarcodeExportListResponse:
+      type: object
+      properties:
+        exports:
+          type: array
+          items:
+            $ref: '#/components/schemas/BarcodeExportListItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    BarcodeExportListItem:
+      type: object
+      properties:
+        export_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [pending, processing, generating_pdfs, creating_zip, uploading, completed, failed, cancelled]
+          example: completed
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 100
+        total_barcodes:
+          type: integer
+          example: 1000
+        processed_barcodes:
+          type: integer
+          example: 1000
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T09:30:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T09:38:00Z"
+        file_url:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://storage.example.com/exports/barcodes_123.pdf"
+        file_name:
+          type: string
+          nullable: true
+          example: "barcodes_2024-01-15.pdf"
+        file_size:
+          type: integer
+          nullable: true
+          example: 2048576
+        download_count:
+          type: integer
+          example: 2
+        max_downloads:
+          type: integer
+          example: 5
+        expires_at:
+          type: string
+          format: date-time
+          example: "2024-01-22T09:30:00Z"
+        can_download:
+          type: boolean
+          example: true
+        can_retry:
+          type: boolean
+          example: false
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 45
+        total_pages:
+          type: integer
+          example: 3
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Export job deleted successfully"
+        data:
+          type: object
+          nullable: true
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Invalid request format"
+              errors:
+                type: array
+                items:
+                  type: string
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Authentication required"
+
+    Forbidden:
+      description: Access forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Access forbidden"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Export not found"
+
+    Conflict:
+      description: Conflict with current state
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Cannot delete completed export"
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Download limit exceeded"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Internal server error"
