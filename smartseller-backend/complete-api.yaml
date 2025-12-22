@@ -275,6 +275,34 @@ components:
           description: Last update timestamp
           example: "2024-10-05T12:00:00Z"
 
+    DropPointAssignment:
+      type: object
+      description: Drop point assignment details for a sub-account
+      properties:
+        drop_point_id:
+          type: string
+          format: uuid
+          description: Assigned drop point ID
+          example: "d0fd9c63-0851-4d75-8058-ad5037ba508a"
+        drop_point_name:
+          type: string
+          description: Name of the assigned drop point
+          example: "Central Drop Point"
+        is_assigned:
+          type: boolean
+          description: Whether the admin is assigned to a drop point
+          example: true
+        assigned_at:
+          type: string
+          format: date-time
+          description: Assignment timestamp
+          nullable: true
+          example: "2024-10-01T12:00:00Z"
+        is_active:
+          type: boolean
+          description: Whether the assignment is currently active
+          example: true
+
     MembershipListResponse:
       type: object
       description: Paginated list of sub-account memberships for a storefront
@@ -347,6 +375,8 @@ components:
           $ref: '#/components/schemas/AdminUserSummary'
         membership:
           $ref: '#/components/schemas/SubAccountMemberDTO'
+        drop_point_assignment:
+          $ref: '#/components/schemas/DropPointAssignment'
 
     AdminUserSummary:
       type: object
@@ -4374,6 +4404,58 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v1/admin/sub-accounts/{user_id}:
+    get:
+      tags:
+        - admin-sub-accounts
+      summary: Get sub-account details
+      description: |
+        Retrieve detailed information about a specific sub-account including
+        user details, membership information, and drop point assignment (if applicable).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target sub-account user ID
+        - in: query
+          name: storefront_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional storefront ID; inferred from admin membership when omitted.
+        - in: query
+          name: storefront_slug
+          required: false
+          schema:
+            type: string
+          description: Optional storefront slug to resolve tenant context.
+      responses:
+        '200':
+          description: Sub-account details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubAccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
         - admin-sub-accounts
@@ -4425,6 +4507,127 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/admin/sub-accounts/{user_id}:
+    get:
+      tags:
+        - admin-sub-accounts
+      summary: Get sub-account details
+      description: |
+        Retrieve detailed information about a specific sub-account including
+        user details, membership information, and drop point assignment (if applicable).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target sub-account user ID
+        - in: query
+          name: storefront_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional storefront ID; inferred from admin membership when omitted.
+        - in: query
+          name: storefront_slug
+          required: false
+          schema:
+            type: string
+          description: Optional storefront slug to resolve tenant context.
+      responses:
+        '200':
+          description: Sub-account details retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubAccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/admin/sub-accounts/{user_id}/assign-drop-point:
+    post:
+      tags:
+        - admin-sub-accounts
+      summary: Assign admin to drop point
+      description: |
+        Assigns a drop point admin to manage a specific drop point.
+        The admin will be able to process warranty claims and manage operations for the assigned drop point.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target admin user ID to assign
+        - in: query
+          name: storefront_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Optional storefront ID; inferred from admin membership when omitted
+        - in: query
+          name: storefront_slug
+          required: false
+          schema:
+            type: string
+          description: Optional storefront slug to resolve tenant context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - drop_point_id
+              properties:
+                drop_point_id:
+                  type: string
+                  format: uuid
+                  description: ID of the drop point to assign the admin to
+                  example: "d0fd9c63-0851-4d75-8058-ad5037ba508a"
+      responses:
+        '200':
+          description: Admin assigned to drop point successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Admin already assigned to this drop point
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
   # Marketplace Management Endpoints
