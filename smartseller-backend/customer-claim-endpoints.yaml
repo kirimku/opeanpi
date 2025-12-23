@@ -24,96 +24,63 @@ paths:
             schema:
               $ref: '#/components/schemas/CustomerClaimSubmissionRequest'
             examples:
-              basic_claim:
-                summary: Basic warranty claim without Kirimku
+              drop_point_claim:
+                summary: Drop point warranty claim
                 value:
-                  warranty_barcode: "REX240101ABC123"
+                  barcode_number: "REX25WYP9LP8PYLYQ"
+                  claim_type: "drop_point"
+                  issue_description: "Mouse not working properly, double click issue"
+                  issue_category: "hardware_malfunction"
+                  severity: "medium"
+                  drop_point_details:
+                    drop_point_id: "f0242977-c406-4a53-a955-02607d657a4f"
+                    notes: "Please call me when ready for pickup"
+              kirimku_shipping_claim:
+                summary: Kirimku shipping warranty claim
+                value:
+                  barcode_number: "REX25WYP9LP8PYLYQ"
+                  claim_type: "kirimku"
                   issue_description: "Product not working properly after 2 months of use"
-                  issue_category: "malfunction"
+                  issue_category: "hardware_malfunction"
+                  severity: "medium"
                   contact_info:
                     name: "John Doe"
                     email: "john.doe@example.com"
+                    phone: "081234567890"
                     address: "Jl. Sudirman No. 123, Jakarta Pusat"
-                    postal_code: "10220"
                     city: "Jakarta"
                     province: "DKI Jakarta"
-                  enable_kirimku_shipping: false
-              kirimku_pickup_claim:
-                summary: Warranty claim with Kirimku pickup shipping
-                value:
-                  warranty_barcode: "REX240101ABC123"
-                  issue_description: "Product not working properly after 2 months of use"
-                  issue_category: "malfunction"
-                  contact_info:
-                    name: "John Doe"
-                    email: "john.doe@example.com"
-                    address: "Jl. Sudirman No. 123, Jakarta Pusat"
                     postal_code: "10220"
-                    city: "Jakarta"
-                    province: "DKI Jakarta"
-                  enable_kirimku_shipping: true
-                  kirimku_shipping:
+                    preferred_contact: "email"
+                  product_info:
+                    serial_number: "SN123456789"
+                    purchase_date: "2024-01-15"
+                    purchase_location: "Rexus Official Store"
+                  shipping_details:
+                    courier: "jne"
+                    service_type: "REG"
+                    weight: 2.5
+                    length: 30
+                    width: 20
+                    height: 15
                     pickup_method: "pickup"
+                    with_insurance: true
                     pickup_address:
                       name: "John Doe"
                       phone: "081234567890"
                       address: "Jl. Sudirman No. 123, Jakarta Pusat"
-                      area: "Sudirman"
                       city: "Jakarta"
                       province: "DKI Jakarta"
                       postal_code: "10220"
                     destination_address:
                       name: "SmartSeller Service Center"
                       phone: "021-5551234"
-                      email: "service@smartseller.com"
                       address: "Jl. Gatot Subroto No. 456, Jakarta Selatan"
-                      area: "Gatot Subroto"
                       city: "Jakarta"
                       province: "DKI Jakarta"
                       postal_code: "12930"
-                    package_details:
-                      weight: 2.5
-                      length: 30
-                      width: 20
-                      height: 15
-                      description: "Defective electronic product for warranty claim"
-                    service_type: "REG"
-                    insurance_value: 500000
-              kirimku_dropoff_claim:
-                summary: Warranty claim with Kirimku drop-off shipping
-                value:
-                  warranty_barcode: "REX240101ABC123"
-                  issue_description: "Product not working properly after 2 months of use"
-                  issue_category: "malfunction"
-                  contact_info:
-                    name: "John Doe"
-                    email: "john.doe@example.com"
-                    address: "Jl. Sudirman No. 123, Jakarta Pusat"
-                    postal_code: "10220"
-                    city: "Jakarta"
-                    province: "DKI Jakarta"
-                  enable_kirimku_shipping: true
-                  kirimku_shipping:
-                    pickup_method: "drop_off"
-                    destination_address:
-                      name: "SmartSeller Service Center"
-                      phone: "021-5551234"
-                      email: "service@smartseller.com"
-                      address: "Jl. Gatot Subroto No. 456, Jakarta Selatan"
-                      area: "Gatot Subroto"
-                      city: "Jakarta"
-                      province: "DKI Jakarta"
-                      postal_code: "12930"
-                    package_details:
-                      weight: 2.5
-                      length: 30
-                      width: 20
-                      height: 15
-                      description: "Defective electronic product for warranty claim"
-                    service_type: "REG"
-                    insurance_value: 500000
       responses:
-        '201':
+        '200':
           description: Claim submitted successfully
           content:
             application/json:
@@ -125,33 +92,94 @@ paths:
                       data:
                         $ref: '#/components/schemas/CustomerClaimSubmissionResponse'
               examples:
-                basic_claim_success:
-                  summary: Basic claim submission success
+                drop_point_claim_success:
+                  summary: Drop point claim submission success
                   value:
                     success: true
                     message: "Warranty claim submitted successfully"
                     data:
-                      claim_id: "claim_67890"
-                      status: "submitted"
-                      estimated_processing_time: "3-5 business days"
-                      tracking_number: null
-                      kirimku_booking: null
+                      claim_id: "2763ec6b-5eb8-4634-a5c7-3d467b27c78d"
+                      claim_number: "WAR-2025-000069"
+                      status: "pending"
+                      submitted_at: "2025-12-23T13:52:24.628665387+07:00"
+                      estimated_resolution: "0001-01-01T00:00:00Z"
+                      priority: "normal"
+                      page_type: "drop_point_thank_you"
+                      redirect_url: "/claims/2763ec6b-5eb8-4634-a5c7-3d467b27c78d/thank-you?type=drop-point"
+                      next_steps:
+                        - "Your warranty claim has been submitted successfully"
+                        - "Please bring your item to the selected drop point"
+                        - "Drop point staff will verify your item and process your claim"
+                        - "Don't forget to bring your warranty card or proof of purchase"
+                        - "You will receive email updates on your claim progress"
+                        - "Our team will validate your claim within 24-48 hours"
+                      contact_info:
+                        name: "Test Customer"
+                        email: "aswin.test3@gmail.com"
+                        phone: "+6281234562310"
+                        address: ""
+                        city: ""
+                        postal_code: ""
+                        preferred_contact: "email"
+                      tracking_info:
+                        tracking_number: ""
+                        status_url: ""
+                        support_email: "support@smartseller.com"
+                        support_phone: "+62-800-1234-5678"
+                      drop_point_info:
+                        drop_point_id: "f0242977-c406-4a53-a955-02607d657a4f"
+                        drop_point_name: "Test Drop Point"
+                        drop_point_code: "TEST_DROP_001"
+                        drop_point_type: "retail"
+                        address: "Test Address 123"
+                        city: "Jakarta"
+                        province: "DKI Jakarta"
+                        postal_code: "12345"
+                        contact_phone: "+62-21-9999-8888"
+                        contact_email: "test@dropoint.com"
+                        operating_hours: "Monday: 08:00-18:00, Tuesday: 08:00-18:00"
+                        status: "active"
+                        assigned_at: "2025-12-23T13:52:24.628665387+07:00"
+                        available_slots: 10
                 kirimku_claim_success:
-                  summary: Kirimku claim submission success
+                  summary: Kirimku shipping claim submission success
                   value:
                     success: true
-                    message: "Warranty claim submitted successfully with Kirimku booking"
+                    message: "Warranty claim submitted successfully"
                     data:
-                      claim_id: "claim_67890"
-                      status: "submitted"
-                      estimated_processing_time: "3-5 business days"
-                      tracking_number: "KMK123456789"
-                      kirimku_booking:
+                      claim_id: "2763ec6b-5eb8-4634-a5c7-3d467b27c78d"
+                      claim_number: "WAR-2025-000070"
+                      status: "pending"
+                      submitted_at: "2025-12-23T14:00:00.628665387+07:00"
+                      estimated_resolution: "0001-01-01T00:00:00Z"
+                      priority: "normal"
+                      page_type: "shipping_thank_you"
+                      redirect_url: "/claims/2763ec6b-5eb8-4634-a5c7-3d467b27c78d/thank-you?type=shipping"
+                      next_steps:
+                        - "Your warranty claim has been submitted successfully"
+                        - "Courier will pick up your item from the provided address"
+                        - "Please ensure your item is properly packed"
+                        - "You will receive email updates on your claim progress"
+                        - "Our team will validate your claim within 24-48 hours"
+                      contact_info:
+                        name: "John Doe"
+                        email: "john.doe@example.com"
+                        phone: "081234567890"
+                        address: "Jl. Sudirman No. 123"
+                        city: "Jakarta"
+                        province: "DKI Jakarta"
+                        postal_code: "10220"
+                        preferred_contact: "email"
+                      tracking_info:
+                        tracking_number: "KMK123456789"
+                        status_url: "https://kirimku.com/track/KMK123456789"
+                        support_email: "support@smartseller.com"
+                        support_phone: "+62-800-1234-5678"
+                      shipping_info:
                         booking_id: "booking_12345"
                         tracking_number: "KMK123456789"
-                        estimated_pickup: "2024-01-15T10:00:00Z"
-                        estimated_delivery: "2024-01-16T15:00:00Z"
-                        total_cost: 25000
+                        courier: "JNE"
+                        service_type: "REG"
                         status: "confirmed"
         '400':
           description: Bad request - validation errors
@@ -253,46 +281,87 @@ components:
     CustomerClaimSubmissionRequest:
       type: object
       required:
-        - warranty_barcode
+        - barcode_number
+        - claim_type
         - issue_description
-        - issue_category
-        - contact_info
-        - enable_kirimku_shipping
+        - severity
       properties:
-        warranty_barcode:
+        # Primary fields (standard API contract)
+        warranty_id:
           type: string
-          description: The warranty barcode for the product
+          description: The warranty barcode (alias for barcode_number)
           example: "REX240101ABC123"
-        issue_description:
+        issue_type:
+          type: string
+          description: Category of the issue
+          enum: ["hardware", "software", "performance", "defect", "damage", "other"]
+          example: "hardware"
+        description:
           type: string
           description: Detailed description of the issue
           minLength: 10
           maxLength: 1000
           example: "Product not working properly after 2 months of use"
-        issue_category:
+        severity:
           type: string
-          description: Category of the issue
-          enum: ["malfunction", "damage", "defect", "other"]
-          example: "malfunction"
+          description: Severity level of the issue
+          enum: ["low", "medium", "high", "critical"]
+          example: "medium"
+        # Contact and product info (optional for drop_point, required for kirimku)
         contact_info:
           $ref: '#/components/schemas/CustomerClaimContactInfo'
-        enable_kirimku_shipping:
-          type: boolean
-          description: Whether to enable Kirimku shipping for product pickup
-          example: false
-        kirimku_shipping:
+          description: Contact information (required for kirimku shipping, optional for drop_point)
+        product_info:
+          $ref: '#/components/schemas/CustomerClaimProductInfo'
+          description: Product information (required for kirimku shipping, optional for drop_point)
+        # Shipping method selection
+        shipping_method:
+          type: string
+          description: Method for shipping the warranty item
+          enum: ["kirimku", "drop_point"]
+          example: "drop_point"
+        shipping_details:
           $ref: '#/components/schemas/CustomerClaimKirimkuShipping'
-          description: Kirimku shipping details (required if enable_kirimku_shipping is true)
+          description: Kirimku shipping details (required for kirimku shipping method)
+        drop_point_details:
+          $ref: '#/components/schemas/CustomerClaimDropPointDetails'
+          description: Drop point details (required for drop_point shipping method)
+        # Additional fields
+        preferred_resolution:
+          type: string
+          description: Preferred resolution for the claim
+          enum: ["repair", "replace", "refund"]
+          example: "repair"
+        attachments:
+          type: array
+          description: List of attachment URLs
+          items:
+            type: string
+          example: ["https://example.com/photo1.jpg"]
+        # Alternative field names for client compatibility
+        barcode_number:
+          type: string
+          description: The warranty barcode number (alternative to warranty_id)
+          example: "REX25WYP9LP8PYLYQ"
+        claim_type:
+          type: string
+          description: Shipping method type (maps to shipping_method)
+          enum: ["drop_point", "kirimku"]
+          example: "drop_point"
+        issue_description:
+          type: string
+          description: Detailed description of the issue (alternative to description)
+          minLength: 10
+          maxLength: 1000
+          example: "Mouse not working properly, double click issue"
+        issue_category:
+          type: string
+          description: Category of the issue (maps to issue_type)
+          enum: ["hardware", "software", "hardware_malfunction", "software_malfunction", "hardware_defect", "physical_damage", "performance_issue", "defect", "damage", "performance", "other"]
+          example: "hardware_malfunction"
 
     CustomerClaimContactInfo:
       type: object
-      required:
-        - name
-        - email
-        - address
-        - postal_code
-        - city
-        - province
       properties:
         name:
           type: string
@@ -305,17 +374,17 @@ components:
           format: email
           description: Customer contact email
           example: "john.doe@example.com"
+        phone:
+          type: string
+          description: Customer contact phone
+          pattern: '^[0-9+\-\s()]+$'
+          example: "081234567890"
         address:
           type: string
           description: Customer contact address
           minLength: 10
           maxLength: 500
           example: "Jl. Sudirman No. 123, Jakarta Pusat"
-        postal_code:
-          type: string
-          description: Postal code
-          pattern: '^[0-9]{5}$'
-          example: "10220"
         city:
           type: string
           description: City name
@@ -328,6 +397,59 @@ components:
           minLength: 2
           maxLength: 100
           example: "DKI Jakarta"
+        postal_code:
+          type: string
+          description: Postal code
+          pattern: '^[0-9]{5}$'
+          example: "10220"
+        preferred_contact:
+          type: string
+          description: Preferred contact method
+          enum: ["email", "phone", "whatsapp"]
+          example: "email"
+
+    CustomerClaimProductInfo:
+      type: object
+      properties:
+        serial_number:
+          type: string
+          description: Product serial number
+          example: "SN123456789"
+        purchase_date:
+          type: string
+          format: date
+          description: Purchase date
+          example: "2024-01-15"
+        purchase_location:
+          type: string
+          description: Purchase location
+          example: "Rexus Official Store"
+        usage_frequency:
+          type: string
+          description: How often the product is used
+          enum: ["daily", "weekly", "monthly", "rarely"]
+          example: "daily"
+        environment:
+          type: string
+          description: Environment where product is used
+          enum: ["home", "office", "outdoor", "industrial"]
+          example: "office"
+
+    CustomerClaimDropPointDetails:
+      type: object
+      required:
+        - drop_point_id
+      properties:
+        drop_point_id:
+          type: string
+          format: uuid
+          description: Drop point ID where the item will be delivered
+          example: "f0242977-c406-4a53-a955-02607d657a4f"
+        notes:
+          type: string
+          description: Additional notes for drop point staff
+          maxLength: 500
+          example: "Please call me when ready for pickup"
 
     CustomerClaimKirimkuShipping:
       type: object
@@ -516,26 +638,217 @@ components:
       properties:
         claim_id:
           type: string
+          format: uuid
           description: Unique claim identifier
-          example: "claim_67890"
+          example: "2763ec6b-5eb8-4634-a5c7-3d467b27c78d"
+        claim_number:
+          type: string
+          description: Human-readable claim number
+          example: "WAR-2025-000069"
         status:
           type: string
           description: Current claim status
-          enum: ["submitted", "processing", "approved", "rejected", "completed"]
-          example: "submitted"
-        estimated_processing_time:
+          enum: ["pending", "processing", "validated", "approved", "rejected", "completed", "cancelled"]
+          example: "pending"
+        submitted_at:
           type: string
-          description: Estimated processing time
-          example: "3-5 business days"
+          format: date-time
+          description: When the claim was submitted
+          example: "2025-12-23T13:52:24.628665387+07:00"
+        estimated_resolution:
+          type: string
+          format: date-time
+          description: Estimated completion date
+          nullable: true
+          example: "2025-12-30T00:00:00Z"
+        priority:
+          type: string
+          description: Claim priority
+          enum: ["low", "normal", "high", "urgent"]
+          example: "normal"
+        # Frontend navigation fields
+        page_type:
+          type: string
+          description: Type of page to render for thank you screen
+          enum: ["drop_point_thank_you", "shipping_thank_you"]
+          nullable: true
+          example: "drop_point_thank_you"
+        redirect_url:
+          type: string
+          description: Suggested URL to redirect to after successful submission
+          nullable: true
+          example: "/claims/2763ec6b-5eb8-4634-a5c7-3d467b27c78d/thank-you?type=drop-point"
+        next_steps:
+          type: array
+          description: List of next steps for the customer
+          items:
+            type: string
+          example:
+            - "Your warranty claim has been submitted successfully"
+            - "Please bring your item to the selected drop point"
+            - "Drop point staff will verify your item and process your claim"
+        # Contact information
+        contact_info:
+          $ref: '#/components/schemas/CustomerClaimContactInfo'
+        tracking_info:
+          $ref: '#/components/schemas/CustomerClaimTrackingInfo'
+        shipping_info:
+          $ref: '#/components/schemas/CustomerClaimShippingInfo'
+          description: Shipping information (for kirimku shipping method)
+        drop_point_info:
+          $ref: '#/components/schemas/CustomerClaimDropPointInfo'
+          description: Drop point information (for drop_point shipping method)
+
+    CustomerClaimTrackingInfo:
+      type: object
+      properties:
         tracking_number:
           type: string
-          nullable: true
-          description: Kirimku tracking number (if Kirimku shipping is enabled)
+          description: Tracking number for the shipment
           example: "KMK123456789"
-        kirimku_booking:
-          $ref: '#/components/schemas/CustomerClaimKirimkuInfo'
-          nullable: true
-          description: Kirimku booking information (if Kirimku shipping is enabled)
+        status_url:
+          type: string
+          format: uri
+          description: URL to track the shipment
+          example: "https://kirimku.com/track/KMK123456789"
+        support_email:
+          type: string
+          format: email
+          description: Support email address
+          example: "support@smartseller.com"
+        support_phone:
+          type: string
+          description: Support phone number
+          example: "+62-800-1234-5678"
+
+    CustomerClaimShippingInfo:
+      type: object
+      properties:
+        booking_id:
+          type: string
+          description: Kirimku booking ID
+          example: "booking_12345"
+        tracking_number:
+          type: string
+          description: Kirimku tracking number
+          example: "KMK123456789"
+        courier:
+          type: string
+          description: Courier name
+          example: "JNE"
+        service_type:
+          type: string
+          description: Service type
+          example: "REG"
+        status:
+          type: string
+          description: Shipping status
+          enum: ["pending", "confirmed", "picked_up", "in_transit", "delivered", "cancelled"]
+          example: "confirmed"
+
+    CustomerClaimDropPointInfo:
+      type: object
+      properties:
+        drop_point_id:
+          type: string
+          format: uuid
+          description: Drop point ID
+          example: "f0242977-c406-4a53-a955-02607d657a4f"
+        drop_point_name:
+          type: string
+          description: Drop point name
+          example: "Test Drop Point"
+        drop_point_code:
+          type: string
+          description: Drop point code
+          example: "TEST_DROP_001"
+        drop_point_type:
+          type: string
+          description: Drop point type
+          enum: ["retail", "service", "locker", "partner"]
+          example: "retail"
+        address:
+          type: string
+          description: Drop point address
+          example: "Test Address 123"
+        city:
+          type: string
+          description: Drop point city
+          example: "Jakarta"
+        province:
+          type: string
+          description: Drop point province
+          example: "DKI Jakarta"
+        postal_code:
+          type: string
+          description: Drop point postal code
+          example: "12345"
+        country:
+          type: string
+          description: Drop point country
+          example: "Indonesia"
+        latitude:
+          type: number
+          format: float
+          description: Drop point latitude
+          example: -6.2088
+        longitude:
+          type: number
+          format: float
+          description: Drop point longitude
+          example: 106.8456
+        contact_phone:
+          type: string
+          description: Drop point contact phone
+          example: "+62-21-9999-8888"
+        contact_email:
+          type: string
+          format: email
+          description: Drop point contact email
+          example: "test@dropoint.com"
+        operating_hours:
+          type: string
+          description: Formatted operating hours
+          example: "Monday: 08:00-18:00, Tuesday: 08:00-18:00"
+        status:
+          type: string
+          description: Drop point status
+          enum: ["active", "inactive"]
+          example: "active"
+        assigned_at:
+          type: string
+          format: date-time
+          description: When the drop point was assigned
+          example: "2025-12-23T13:52:24.628665387+07:00"
+        notes:
+          type: string
+          description: Additional notes
+          example: "Please call customer on arrival"
+        is_open:
+          type: boolean
+          description: Whether the drop point is currently open
+          example: true
+        available_slots:
+          type: integer
+          description: Number of available slots
+          example: 10
+        max_capacity:
+          type: integer
+          description: Maximum capacity
+          example: 100
+        utilization_rate:
+          type: number
+          format: float
+          description: Current utilization rate (0-1)
+          example: 0.1
+        total_reviews:
+          type: integer
+          description: Total number of reviews
+          example: 42
+        priority:
+          type: integer
+          description: Drop point priority for sorting
+          example: 1
 
     CustomerClaimKirimkuInfo:
       type: object
