@@ -5,7 +5,21 @@ paths:
       tags:
         - Customer Claims
       summary: Submit a warranty claim
-      description: Submit a new warranty claim for a registered product with optional Kirimku shipping integration
+      description: |
+        Submit a new warranty claim for a registered product.
+
+        **Shipping Methods:**
+        - `drop_point`: Customer brings the item to a selected drop point. No courier pickup, no Kirimku service call.
+        - `kirimku`: Courier picks up the item from customer's address. Requires contact_info, product_info, and shipping_details.
+
+        **Key Differences:**
+        | Field | Drop Point | Kirimku |
+        |-------|-----------|---------|
+        | contact_info | Optional (uses authenticated customer data) | Required |
+        | product_info | Optional | Required |
+        | shipping_details | Not used | Required |
+        | drop_point_details | Required | Not used |
+        | Kirimku service | Not called | Booking created, tracking fetched |
       security:
         - CustomerAuth: []
       parameters:
@@ -228,6 +242,146 @@ paths:
                     success: false
                     message: "A claim has already been submitted for this warranty"
                     error: "duplicate_claim"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storefront/{slug}/claims/{id}/timeline:
+    get:
+      tags:
+        - Customer Claims
+      summary: Get claim timeline
+      description: |
+        Retrieves the timeline of events for a specific warranty claim.
+        Customers can only view the timeline for their own claims.
+
+        **Event Types:**
+        - `status_change`: Claim status transition (pending → validated → completed, etc.)
+        - `note_added`: Notes added to the claim
+        - `attachment_uploaded`: Files uploaded to the claim
+        - `assignment_changed`: Technician assignment changes
+        - `repair_started`: Repair process began
+        - `repair_completed`: Repair work finished
+        - `shipment_created`: Shipping label created
+        - `delivery_update`: Package status updates
+        - `customer_contact`: Customer communication events
+        - `system_update`: Automated system events
+
+        Only events with `is_customer_visible = true` are returned.
+      security:
+        - CustomerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Storefront slug identifier
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+            example: "rexus"
+        - name: id
+          in: path
+          required: true
+          description: Claim ID (UUID)
+          schema:
+            type: string
+            format: uuid
+          example: "2763ec6b-5eb8-4634-a5c7-3d467b27c78d"
+      responses:
+        '200':
+          description: Timeline retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CustomerClaimTimelineItem'
+              examples:
+                status_change_timeline:
+                  summary: Status change timeline
+                  value:
+                    success: true
+                    message: "Timeline retrieved successfully"
+                    data:
+                      - id: "2aed0e80-34c6-4592-a883-59f80acdcb58"
+                        event: "status_change"
+                        description: "Claim status changed from pending to completed"
+                        timestamp: "2024-12-23T15:37:04.125822+07:00"
+                        relative_time: "2 hours ago"
+                        actor: "System"
+                        actor_type: "system"
+                        icon: "status"
+                        color: "green"
+                        is_important: true
+                      - id: "90980ea5-a1f9-4963-b902-5c7bc06becc5"
+                        event: "status_change"
+                        description: "Claim status changed from pending to validated"
+                        timestamp: "2024-12-23T14:17:11.908169+07:00"
+                        relative_time: "3 hours ago"
+                        actor: "System"
+                        actor_type: "system"
+                        icon: "status"
+                        color: "blue"
+                        is_important: true
+                empty_timeline:
+                  summary: Empty timeline (new claim)
+                  value:
+                    success: true
+                    message: "Timeline retrieved successfully"
+                    data: []
+        '400':
+          description: Bad request - invalid claim ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_uuid:
+                  summary: Invalid UUID format
+                  value:
+                    success: false
+                    message: "Invalid claim ID format"
+                    error: "validation_error"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_authenticated:
+                  summary: Not authenticated
+                  value:
+                    success: false
+                    message: "Customer authentication required"
+                    error: "unauthorized"
+        '404':
+          description: Not found - claim doesn't exist or doesn't belong to customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                claim_not_found:
+                  summary: Claim not found
+                  value:
+                    success: false
+                    message: "Claim not found"
+                    error: "not_found"
+                access_denied:
+                  summary: Access denied
+                  value:
+                    success: false
+                    message: "Claim does not belong to customer"
+                    error: "access_denied"
         '500':
           description: Internal server error
           content:
@@ -680,24 +834,25 @@ components:
           example: "/claims/2763ec6b-5eb8-4634-a5c7-3d467b27c78d/thank-you?type=drop-point"
         next_steps:
           type: array
-          description: List of next steps for the customer
+          description: List of next steps for the customer (varies by shipping method)
           items:
             type: string
           example:
             - "Your warranty claim has been submitted successfully"
             - "Please bring your item to the selected drop point"
             - "Drop point staff will verify your item and process your claim"
-        # Contact information
+        # Contact information (always present, uses authenticated customer data for drop_point)
         contact_info:
           $ref: '#/components/schemas/CustomerClaimContactInfo'
         tracking_info:
           $ref: '#/components/schemas/CustomerClaimTrackingInfo'
+          description: Support contact information (always present)
         shipping_info:
           $ref: '#/components/schemas/CustomerClaimShippingInfo'
-          description: Shipping information (for kirimku shipping method)
+          description: Kirimku shipping information (only present for kirimku shipping method)
         drop_point_info:
           $ref: '#/components/schemas/CustomerClaimDropPointInfo'
-          description: Drop point information (for drop_point shipping method)
+          description: Drop point information (only present for drop_point shipping method)
 
     CustomerClaimTrackingInfo:
       type: object
@@ -880,3 +1035,72 @@ components:
           description: Booking status
           enum: ["pending", "confirmed", "picked_up", "in_transit", "delivered", "cancelled"]
           example: "confirmed"
+
+    CustomerClaimTimelineItem:
+      type: object
+      description: Represents a single timeline event for a warranty claim
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the timeline event
+          example: "2aed0e80-34c6-4592-a883-59f80acdcb58"
+        event:
+          type: string
+          description: Type of event that occurred
+          enum:
+            - status_change
+            - note_added
+            - attachment_uploaded
+            - assignment_changed
+            - repair_started
+            - repair_completed
+            - shipment_created
+            - delivery_update
+            - customer_contact
+            - system_update
+          example: "status_change"
+        description:
+          type: string
+          description: Human-readable description of the event
+          example: "Claim status changed from pending to validated"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+          example: "2024-12-23T15:37:04.125822+07:00"
+        relative_time:
+          type: string
+          description: Human-readable relative time (e.g., "2 hours ago")
+          example: "2 hours ago"
+        actor:
+          type: string
+          description: Name of the person/system who performed the action
+          example: "Admin User"
+        actor_type:
+          type: string
+          description: Type of actor who performed the action
+          enum: ["customer", "admin", "technician", "system"]
+          example: "admin"
+        icon:
+          type: string
+          description: Icon identifier for UI rendering
+          enum: ["status", "note", "attachment", "user", "tool", "check", "truck", "package", "phone", "system"]
+          example: "status"
+        color:
+          type: string
+          description: Color indicator for UI rendering
+          enum: ["blue", "green", "orange", "red", "gray", "purple", "indigo"]
+          example: "green"
+        is_important:
+          type: boolean
+          description: Whether this event should be highlighted in the UI
+          example: true
+        details:
+          type: object
+          description: Additional event-specific metadata
+          additionalProperties: true
+          example:
+            from_status: "pending"
+            to_status: "validated"
+            performed_by: "admin@example.com"
