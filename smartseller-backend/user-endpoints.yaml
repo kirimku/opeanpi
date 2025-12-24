@@ -128,6 +128,22 @@ components:
           type: boolean
           description: Whether user has accepted promotional communications
           example: true
+        storefront_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the user's default/first storefront
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        storefront_slug:
+          type: string
+          nullable: true
+          description: Slug of the user's default/first storefront
+          example: "rexus"
+        storefronts:
+          type: array
+          description: List of all storefronts owned by the user
+          items:
+            $ref: '#/components/schemas/StorefrontSummary'
         created_at:
           type: string
           format: date-time
@@ -151,3 +167,21 @@ components:
         error:
           type: string
           example: "error_code"
+
+    StorefrontSummary:
+      type: object
+      description: Simplified storefront information
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique storefront identifier
+          example: "660e8400-e29b-41d4-a716-446655440000"
+        slug:
+          type: string
+          description: URL-friendly storefront identifier
+          example: "rexus"
+        name:
+          type: string
+          description: Storefront display name
+          example: "Rexus Store"

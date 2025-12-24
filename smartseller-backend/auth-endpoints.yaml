@@ -727,6 +727,13 @@ components:
         name:
           type: string
           description: "User's full name"
+        phone:
+          type: string
+          description: "User's phone number"
+        user_type:
+          type: string
+          enum: [individual, business, enterprise]
+          description: "Type of user account"
         user_role:
           type: string
           enum: [owner, admin, manager, support, technician, warehouse_admin, user, drop_point_admin]
@@ -734,35 +741,68 @@ components:
         is_admin:
           type: boolean
           description: "Administrative flag (also reflected in JWT claims)"
-        isActive:
+        picture:
+          type: string
+          format: uri
+          description: "URL to user's profile picture"
+        accept_terms:
           type: boolean
-          description: "Whether the user account is active"
-        createdAt:
+          description: "Whether user has accepted terms and conditions"
+        accept_promos:
+          type: boolean
+          description: "Whether user has accepted promotional communications"
+        storefront_id:
           type: string
-          format: date-time
-          description: "When the user account was created"
-        updatedAt:
+          format: uuid
+          nullable: true
+          description: "ID of the user's default/first storefront"
+        storefront_slug:
           type: string
-          format: date-time
-          description: "When the user account was last updated"
+          nullable: true
+          description: "Slug of the user's default/first storefront"
+        storefronts:
+          type: array
+          description: "List of all storefronts owned by the user"
+          items:
+            $ref: '#/components/schemas/StorefrontSummary'
       required:
         - id
         - email
         - name
         - user_role
         - is_admin
-        - isActive
-        - createdAt
-        - updatedAt
       example:
         id: "123e4567-e89b-12d3-a456-426614174000"
         email: "john.doe@example.com"
         name: "John Doe"
+        phone: "+628123456789"
+        user_type: "individual"
         user_role: "manager"
         is_admin: true
-        isActive: true
-        createdAt: "2023-01-01T00:00:00Z"
-        updatedAt: "2023-01-01T00:00:00Z"
+        picture: "https://example.com/profile.jpg"
+        accept_terms: true
+        accept_promos: false
+        storefront_id: "660e8400-e29b-41d4-a716-446655440000"
+        storefront_slug: "rexus"
+        storefronts:
+          - id: "660e8400-e29b-41d4-a716-446655440000"
+            slug: "rexus"
+            name: "Rexus Store"
+
+    StorefrontSummary:
+      type: object
+      description: "Simplified storefront information"
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Unique storefront identifier"
+        slug:
+          type: string
+          description: "URL-friendly storefront identifier"
+        name:
+          type: string
+          description: "Storefront display name"
 
     AuthResponse:
       type: object
