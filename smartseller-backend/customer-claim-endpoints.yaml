@@ -316,7 +316,6 @@ paths:
                         description: "Claim status changed from pending to completed"
                         timestamp: "2024-12-23T15:37:04.125822+07:00"
                         relative_time: "2 hours ago"
-                        actor: "System"
                         actor_type: "system"
                         icon: "status"
                         color: "green"
@@ -326,7 +325,6 @@ paths:
                         description: "Claim status changed from pending to validated"
                         timestamp: "2024-12-23T14:17:11.908169+07:00"
                         relative_time: "3 hours ago"
-                        actor: "System"
                         actor_type: "system"
                         icon: "status"
                         color: "blue"
@@ -1073,10 +1071,6 @@ components:
           type: string
           description: Human-readable relative time (e.g., "2 hours ago")
           example: "2 hours ago"
-        actor:
-          type: string
-          description: Name of the person/system who performed the action
-          example: "Admin User"
         actor_type:
           type: string
           description: Type of actor who performed the action
