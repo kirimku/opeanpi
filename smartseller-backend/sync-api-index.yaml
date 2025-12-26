@@ -30,6 +30,8 @@ info:
     - `GET /api/v1/admin/shopify/sync/metrics` - Performance metrics
     - `GET /api/v1/admin/shopify/sync/jobs` - Job listing
     - `GET /api/v1/admin/shopify/sync/status` - Job status
+    - `GET /api/v1/admin/shopify/sync/products/items` - Per-product sync details
+    - `GET /api/v1/admin/shopify/sync/products/summary` - Sync summary counts
 
   
     ### 2. **Quick Start Examples**
@@ -87,9 +89,50 @@ info:
     # Check job status
     curl -H "Authorization: Bearer YOUR_TOKEN" \
       "http://localhost:8090/api/v1/admin/shopify/sync/status?job_id=YOUR_JOB_ID"
+
+    # Get per-product sync details (with change tracking)
+    curl -H "Authorization: Bearer YOUR_TOKEN" \
+      "http://localhost:8090/api/v1/admin/shopify/sync/products/items?job_id=YOUR_JOB_ID"
+
+    # Get sync summary (counts by operation type)
+    curl -H "Authorization: Bearer YOUR_TOKEN" \
+      "http://localhost:8090/api/v1/admin/shopify/sync/products/summary?job_id=YOUR_JOB_ID"
     ```
 
-    ### 4. **Performance Features**
+    ### 4. **Per-Product Sync Tracking**
+
+    **Change Detection & Field-Level Tracking:**
+    - **Detailed Changes**: See exactly which fields changed (old vs new values)
+    - **Operation Types**: Track created, updated, restored, skipped, failed
+    - **Processing Duration**: Per-product timing in milliseconds
+    - **Error Details**: Full error messages for failed syncs
+
+    **Example Response:**
+    ```json
+    {
+      "data": [
+        {
+          "shopify_product_id": 8127112345678,
+          "shopify_handle": "test-product-1",
+          "status": "synced",
+          "operation": "updated",
+          "changes": {
+            "name": {"old": "Old Name", "new": "New Name"},
+            "price": {"old": 100, "new": 150}
+          },
+          "duration_ms": 150
+        },
+        {
+          "shopify_product_id": 8127112345679,
+          "status": "skipped",
+          "operation": "updated",
+          "duration_ms": 50
+        }
+      ]
+    }
+    ```
+
+    ### 5. **Performance Features**
 
     **High-Performance Processing:**
     - **Parallel Jobs**: Up to 10 parallel processing threads

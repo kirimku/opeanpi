@@ -449,6 +449,190 @@ paths:
         '404':
           description: Job not found
 
+  # Per-Product Sync Tracking Endpoints
+  /api/v1/admin/shopify/sync/products/items:
+    get:
+      summary: Get detailed per-product sync items for a job
+      description: |
+        Retrieves detailed per-product sync status for a specific sync job.
+        Each item includes what fields changed, processing duration, and error details.
+
+        Features:
+        - **Change Detection**: See exactly which fields changed (old vs new values)
+        - **Operation Types**: Track created, updated, restored, skipped, failed operations
+        - **Processing Time**: View duration in milliseconds for each product
+        - **Error Details**: Full error messages for failed syncs
+
+        Use Cases:
+        - Debugging why specific products failed to sync
+        - Auditing what changed during a sync job
+        - Identifying slow-processing products
+        - Verifying change detection is working correctly
+
+        Response includes:
+        - `shopify_product_id`: The Shopify product ID
+        - `shopify_handle`: Product handle/slug
+        - `product_id`: Local product ID (if created/updated)
+        - `status`: pending, processing, synced, skipped, failed
+        - `operation`: created, updated, restored, failed
+        - `changes`: Object with field names showing old/new values
+        - `error`: Error message (if failed)
+        - `duration_ms`: Processing time in milliseconds
+      tags:
+        - Sync API
+      parameters:
+        - in: query
+          name: job_id
+          required: true
+          description: Sync Job ID to get product items for
+          schema:
+            type: string
+            format: uuid
+          example: "2ce10388-7e71-4b7e-909e-3e7a21775b98"
+        - in: query
+          name: status
+          required: false
+          description: Filter by sync item status
+          schema:
+            type: string
+            enum: [pending, processing, synced, skipped, failed]
+        - in: query
+          name: operation
+          required: false
+          description: Filter by operation type
+          schema:
+            type: string
+            enum: [created, updated, restored, failed]
+        - in: query
+          name: limit
+          required: false
+          description: Maximum number of items to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+        - in: query
+          name: offset
+          required: false
+          description: Number of items to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Sync items retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: ''./schemas.yaml#/schemas/ProductSyncItemsResponse'
+              example:
+                success: true
+                message: "Sync items retrieved"
+                data:
+                  - shopify_product_id: 8127112345678
+                    shopify_handle: "test-product-1"
+                    product_id: "00000000-0000-0000-0000-000000000001"
+                    status: "synced"
+                    operation: "updated"
+                    changes:
+                      name:
+                        old: "Old Name"
+                        new: "New Name"
+                      price:
+                        old: 100
+                        new: 150
+                    duration_ms: 150
+                    created_at: "2024-01-15T10:30:00Z"
+                  - shopify_product_id: 8127112345679
+                    shopify_handle: "test-product-2"
+                    status: "skipped"
+                    operation: "updated"
+                    duration_ms: 50
+                    created_at: "2024-01-15T10:30:00Z"
+                  - shopify_product_id: 8127112345681
+                    shopify_handle: "test-product-4"
+                    status: "failed"
+                    operation: "failed"
+                    error: "failed to update product: database connection timeout"
+                    duration_ms: 100
+                    created_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad Request - Missing job_id
+          content:
+            application/json:
+              schema:
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+        '404':
+          description: Job not found
+
+  /api/v1/admin/shopify/sync/products/summary:
+    get:
+      summary: Get product sync summary for a job
+      description: |
+        Retrieves aggregate summary statistics for product sync operations.
+        Groups sync items by operation type for quick overview.
+
+        Features:
+        - **Quick Overview**: See counts for each operation type at a glance
+        - **Operation Breakdown**: created, updated, restored, skipped, failed
+        - **Total Count**: Complete item count for the sync job
+
+        Use Cases:
+        - Dashboard summary widgets
+        - Quick sync job health check
+        - High-level progress monitoring
+        - Reporting and analytics
+
+        Response includes:
+        - `total`: Total number of products processed
+        - `created`: New products created
+        - `updated`: Existing products updated
+        - `restored`: Soft-deleted products restored
+        - `skipped`: Products skipped (no changes detected)
+        - `failed`: Products that failed to sync
+      tags:
+        - Sync API
+      parameters:
+        - in: query
+          name: job_id
+          required: true
+          description: Sync Job ID to get summary for
+          schema:
+            type: string
+            format: uuid
+          example: "2ce10388-7e71-4b7e-909e-3e7a21775b98"
+      responses:
+        '200':
+          description: Sync summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: ''./schemas.yaml#/schemas/ProductSyncSummaryResponse'
+              example:
+                success: true
+                message: "Sync summary retrieved"
+                data:
+                  total: 250
+                  created: 45
+                  updated: 180
+                  restored: 5
+                  skipped: 15
+                  failed: 5
+        '400':
+          description: Bad Request - Missing job_id
+          content:
+            application/json:
+              schema:
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Authentication required
+        '404':
+          description: Job not found
+
 components:
   schemas:
     # Request Schemas
@@ -897,6 +1081,132 @@ components:
           format: date-time
           description: When the log was created
           example: "2024-01-15T10:32:15Z"
+
+    # Per-Product Sync Tracking Schemas
+    ProductSyncItemsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Sync items retrieved"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSyncItem'
+          description: List of product sync items
+
+    ProductSyncItem:
+      type: object
+      properties:
+        shopify_product_id:
+          type: integer
+          description: Shopify product ID
+          example: 8127112345678
+        shopify_handle:
+          type: string
+          description: Product handle/slug from Shopify
+          example: "test-product-1"
+        product_id:
+          type: string
+          format: uuid
+          description: Local product ID (if created/updated)
+          example: "00000000-0000-0000-0000-000000000001"
+        status:
+          type: string
+          enum: [pending, processing, synced, skipped, failed]
+          description: Sync status of this product
+          example: "synced"
+        operation:
+          type: string
+          enum: [created, updated, restored, failed]
+          description: Operation performed on this product
+          example: "updated"
+        changes:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FieldChange'
+          description: Fields that changed with old/new values
+          example:
+            name:
+              old: "Old Name"
+              new: "New Name"
+            price:
+              old: 100
+              new: 150
+        error:
+          type: string
+          nullable: true
+          description: Error message if sync failed
+          example: "failed to update product: database connection timeout"
+        duration_ms:
+          type: integer
+          description: Processing time in milliseconds
+          example: 150
+        created_at:
+          type: string
+          format: date-time
+          description: When this sync item was created
+          example: "2024-01-15T10:30:00Z"
+
+    FieldChange:
+      type: object
+      properties:
+        old:
+          description: Previous value (null for new products)
+          oneOf:
+            - type: string
+            - type: number
+            - type: 'null'
+          example: "Old Name"
+        new:
+          description: New value
+          oneOf:
+            - type: string
+            - type: number
+          example: "New Name"
+
+    ProductSyncSummaryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Sync summary retrieved"
+        data:
+          $ref: '#/components/schemas/ProductSyncSummary'
+
+    ProductSyncSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of products processed
+          example: 250
+        created:
+          type: integer
+          description: New products created
+          example: 45
+        updated:
+          type: integer
+          description: Existing products updated (and synced)
+          example: 180
+        restored:
+          type: integer
+          description: Soft-deleted products that were restored
+          example: 5
+        skipped:
+          type: integer
+          description: Products skipped (no changes detected)
+          example: 15
+        failed:
+          type: integer
+          description: Products that failed to sync
+          example: 5
 
     ErrorResponse:
       type: object
