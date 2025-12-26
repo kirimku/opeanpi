@@ -64,25 +64,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryListResponse'
+                $ref: ''./schemas.yaml#/schemas/CategoryListResponse'
         '400':
           description: Bad request - Invalid parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
     post:
       summary: Create a new product category
@@ -96,7 +96,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCategoryRequest'
+              $ref: ''./schemas.yaml#/schemas/CreateCategoryRequest'
             examples:
               root_category:
                 summary: Root category example
@@ -124,31 +124,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryResponse'
+                $ref: ''./schemas.yaml#/schemas/CategoryResponse'
         '400':
           description: Bad request - Invalid input data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ValidationErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '409':
           description: Conflict - Category slug already exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/categories/{category_id}:
     get:
@@ -190,25 +190,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryResponse'
+                $ref: ''./schemas.yaml#/schemas/CategoryResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Category not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
     put:
       summary: Update category
@@ -230,44 +230,44 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCategoryRequest'
+              $ref: ''./schemas.yaml#/schemas/UpdateCategoryRequest'
       responses:
         '200':
           description: Category updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryResponse'
+                $ref: ''./schemas.yaml#/schemas/CategoryResponse'
         '400':
           description: Bad request - Invalid input data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ValidationErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Category not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '409':
           description: Conflict - Category slug already exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
     delete:
       summary: Delete category
@@ -296,31 +296,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: ''./schemas.yaml#/schemas/SuccessResponse'
         '400':
           description: Bad request - Category has child categories or products
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Category not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/categories/tree:
     get:
@@ -363,19 +363,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryTreeResponse'
+                $ref: ''./schemas.yaml#/schemas/CategoryTreeResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/categories/{category_id}/move:
     put:
@@ -398,38 +398,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MoveCategoryRequest'
+              $ref: ''./schemas.yaml#/schemas/MoveCategoryRequest'
       responses:
         '200':
           description: Category moved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryResponse'
+                $ref: ''./schemas.yaml#/schemas/CategoryResponse'
         '400':
           description: Bad request - Invalid move operation (circular reference, etc.)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Category not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/categories/{category_id}/activate:
     put:
@@ -463,25 +463,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: ''./schemas.yaml#/schemas/SuccessResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Category not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/categories/{category_id}/deactivate:
     put:
@@ -515,25 +515,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: ''./schemas.yaml#/schemas/SuccessResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Category not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/categories/bulk:
     post:
@@ -548,32 +548,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BulkCategoryRequest'
+              $ref: ''./schemas.yaml#/schemas/BulkCategoryRequest'
       responses:
         '200':
           description: Bulk operation completed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BulkOperationResponse'
+                $ref: ''./schemas.yaml#/schemas/BulkOperationResponse'
         '400':
           description: Bad request - Invalid operation or parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   # Storefront public category endpoints
   /api/v1/storefront/{slug}/categories:
@@ -613,19 +613,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StorefrontCategoryListResponse'
+                $ref: ''./schemas.yaml#/schemas/StorefrontCategoryListResponse'
         '404':
           description: Storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{slug}/categories/{category_id}:
     get:
@@ -665,19 +665,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StorefrontCategoryResponse'
+                $ref: ''./schemas.yaml#/schemas/StorefrontCategoryResponse'
         '404':
           description: Storefront or category not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
 components:
   schemas:
@@ -901,12 +901,12 @@ components:
         children:
           type: array
           items:
-            $ref: '#/components/schemas/Category'
+            $ref: ''./schemas.yaml#/schemas/Category'
           description: Child categories (if included)
         breadcrumb:
           type: array
           items:
-            $ref: '#/components/schemas/CategoryBreadcrumb'
+            $ref: ''./schemas.yaml#/schemas/CategoryBreadcrumb'
           description: Category breadcrumb path (if included)
 
     CategoryBreadcrumb:
@@ -936,7 +936,7 @@ components:
           type: string
           example: "Category retrieved successfully"
         data:
-          $ref: '#/components/schemas/Category'
+          $ref: ''./schemas.yaml#/schemas/Category'
 
     CategoryListResponse:
       type: object
@@ -950,9 +950,9 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Category'
+            $ref: ''./schemas.yaml#/schemas/Category'
         pagination:
-          $ref: '#/components/schemas/PaginationInfo'
+          $ref: ''./schemas.yaml#/schemas/PaginationInfo'
 
     CategoryTreeResponse:
       type: object
@@ -966,7 +966,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Category'
+            $ref: ''./schemas.yaml#/schemas/Category'
 
     StorefrontCategoryListResponse:
       type: object
@@ -980,7 +980,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Category'
+            $ref: ''./schemas.yaml#/schemas/Category'
 
     StorefrontCategoryResponse:
       type: object
@@ -992,7 +992,7 @@ components:
           type: string
           example: "Storefront category retrieved successfully"
         data:
-          $ref: '#/components/schemas/Category'
+          $ref: ''./schemas.yaml#/schemas/Category'
 
     BulkOperationResponse:
       type: object

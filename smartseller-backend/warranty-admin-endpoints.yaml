@@ -104,9 +104,9 @@ paths:
                       barcodes:
                         type: array
                         items:
-                          $ref: '#/components/schemas/WarrantyBarcodeDTO'
+                          $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDTO'
                       pagination:
-                        $ref: '#/components/schemas/PaginationMeta'
+                        $ref: ''./schemas.yaml#/schemas/PaginationMeta'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -128,7 +128,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenerateBarcodeRequest'
+              $ref: ''./schemas.yaml#/schemas/GenerateBarcodeRequest'
       responses:
         '201':
           description: Warranty barcodes generated successfully
@@ -156,7 +156,7 @@ paths:
                       barcodes:
                         type: array
                         items:
-                          $ref: '#/components/schemas/WarrantyBarcodeDTO'
+                          $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -197,7 +197,7 @@ paths:
                     type: string
                     example: "Warranty barcode details retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyBarcodeDetailDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDetailDTO'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -227,7 +227,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateBarcodeRequest'
+              $ref: ''./schemas.yaml#/schemas/UpdateBarcodeRequest'
       responses:
         '200':
           description: Warranty barcode updated successfully
@@ -243,7 +243,7 @@ paths:
                     type: string
                     example: "Warranty barcode updated successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyBarcodeDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -422,7 +422,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WarrantyApprovalRequest'
+              $ref: ''./schemas.yaml#/schemas/WarrantyApprovalRequest'
       responses:
         '200':
           description: Warranty approved for claims successfully
@@ -656,9 +656,9 @@ paths:
                       barcodes:
                         type: array
                         items:
-                          $ref: '#/components/schemas/WarrantyBarcodeDTO'
+                          $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDTO'
                       pagination:
-                        $ref: '#/components/schemas/PaginationMeta'
+                        $ref: ''./schemas.yaml#/schemas/PaginationMeta'
                       summary:
                         type: object
                         properties:
@@ -714,7 +714,7 @@ paths:
                       addresses:
                         type: array
                         items:
-                          $ref: '#/components/schemas/WarrantyAddressResponse'
+                          $ref: ''./schemas.yaml#/schemas/WarrantyAddressResponse'
               example:
                 success: true
                 message: "Warranty addresses retrieved successfully"
@@ -772,7 +772,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WarrantyAddressRequest'
+              $ref: ''./schemas.yaml#/schemas/WarrantyAddressRequest'
             example:
               name: "Main Warranty Center"
               code: "WC001"
@@ -819,7 +819,7 @@ paths:
                     type: string
                     example: "Warranty address created successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyAddressResponse'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyAddressResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -865,7 +865,7 @@ paths:
                     type: string
                     example: "Default warranty address retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyAddressResponse'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyAddressResponse'
         '404':
           description: No default warranty address found
           content:
@@ -917,7 +917,7 @@ paths:
                     type: string
                     example: "Warranty address retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyAddressResponse'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyAddressResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -947,7 +947,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WarrantyAddressRequest'
+              $ref: ''./schemas.yaml#/schemas/WarrantyAddressRequest'
       responses:
         '200':
           description: Warranty address updated successfully
@@ -963,7 +963,7 @@ paths:
                     type: string
                     example: "Warranty address updated successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyAddressResponse'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyAddressResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1188,7 +1188,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WarrantyClaimListResponse'
+                $ref: ''./schemas.yaml#/schemas/WarrantyClaimListResponse'
               examples:
                 basic_listing:
                   summary: Basic listing without filters
@@ -1358,7 +1358,7 @@ paths:
                     type: string
                     example: "Warranty claim details retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDetailDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDetailDTO'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -1388,7 +1388,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateClaimRequest'
+              $ref: ''./schemas.yaml#/schemas/UpdateClaimRequest'
       responses:
         '200':
           description: Warranty claim updated successfully
@@ -1404,7 +1404,7 @@ paths:
                     type: string
                     example: "Warranty claim updated successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1440,7 +1440,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClaimValidationRequest'
+              $ref: ''./schemas.yaml#/schemas/ClaimValidationRequest'
             examples:
               validateOnly:
                 summary: Validate claim only
@@ -1469,7 +1469,7 @@ paths:
                     type: string
                     example: "Warranty claim validated successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1502,7 +1502,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ClaimRejectionRequest'
+              $ref: ''./schemas.yaml#/schemas/ClaimRejectionRequest'
       responses:
         '200':
           description: Claim rejected successfully
@@ -1518,7 +1518,7 @@ paths:
                     type: string
                     example: "Warranty claim rejected successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1551,7 +1551,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AssignClaimRequest'
+              $ref: ''./schemas.yaml#/schemas/AssignClaimRequest'
       responses:
         '200':
           description: Claim assigned successfully
@@ -1567,7 +1567,7 @@ paths:
                     type: string
                     example: "Claim assigned successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -1630,9 +1630,9 @@ paths:
                       batches:
                         type: array
                         items:
-                          $ref: '#/components/schemas/BarcodeGenerationBatchDTO'
+                          $ref: ''./schemas.yaml#/schemas/BarcodeGenerationBatchDTO'
                       pagination:
-                        $ref: '#/components/schemas/PaginationMeta'
+                        $ref: ''./schemas.yaml#/schemas/PaginationMeta'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1673,7 +1673,7 @@ paths:
                     type: string
                     example: "Batch details retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/BarcodeGenerationBatchDetailDTO'
+                    $ref: ''./schemas.yaml#/schemas/BarcodeGenerationBatchDetailDTO'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -1721,7 +1721,7 @@ paths:
                     type: string
                     example: "Analytics data retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyAnalyticsDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyAnalyticsDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1744,7 +1744,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExportReportRequest'
+              $ref: ''./schemas.yaml#/schemas/ExportReportRequest'
       responses:
         '200':
           description: Report export initiated successfully
@@ -1832,7 +1832,7 @@ paths:
                     type: string
                     example: "Warranty barcode activated successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyBarcodeDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1902,7 +1902,7 @@ paths:
                       activated_barcodes:
                         type: array
                         items:
-                          $ref: '#/components/schemas/WarrantyBarcodeDTO'
+                          $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDTO'
                       failed_barcodes:
                         type: array
                         items:
@@ -2156,7 +2156,7 @@ components:
 
     WarrantyBarcodeDetailDTO:
       allOf:
-        - $ref: '#/components/schemas/WarrantyBarcodeDTO'
+        - $ref: ''./schemas.yaml#/schemas/WarrantyBarcodeDTO'
         - type: object
           properties:
             batch_id:
@@ -2185,7 +2185,7 @@ components:
             claims:
               type: array
               items:
-                $ref: '#/components/schemas/WarrantyClaimSummaryDTO'
+                $ref: ''./schemas.yaml#/schemas/WarrantyClaimSummaryDTO'
 
     GenerateBarcodeRequest:
       type: object
@@ -2281,7 +2281,7 @@ components:
           type: string
           example: "+6281234567890"
         pickup_address:
-          $ref: '#/components/schemas/WarrantyClaimAddressDTO'
+          $ref: ''./schemas.yaml#/schemas/WarrantyClaimAddressDTO'
         status:
           type: string
           enum: [pending, validated, in_progress, completed, rejected, cancelled]
@@ -2321,7 +2321,7 @@ components:
 
     WarrantyClaimDetailDTO:
       allOf:
-        - $ref: '#/components/schemas/WarrantyClaimDTO'
+        - $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
         - type: object
           properties:
             purchase_date:
@@ -2340,17 +2340,17 @@ components:
               format: date
               example: "2024-11-01"
             shipping_address:
-              $ref: '#/components/schemas/AddressDTO'
+              $ref: ''./schemas.yaml#/schemas/AddressDTO'
             attachments:
               type: array
               items:
-                $ref: '#/components/schemas/ClaimAttachmentDTO'
+                $ref: ''./schemas.yaml#/schemas/ClaimAttachmentDTO'
             timeline:
               type: array
               items:
-                $ref: '#/components/schemas/ClaimTimelineDTO'
+                $ref: ''./schemas.yaml#/schemas/ClaimTimelineDTO'
             repair_details:
-              $ref: '#/components/schemas/RepairTicketDTO'
+              $ref: ''./schemas.yaml#/schemas/RepairTicketDTO'
             resolution_details:
               type: object
               nullable: true
@@ -2819,7 +2819,7 @@ components:
 
     BarcodeGenerationBatchDetailDTO:
       allOf:
-        - $ref: '#/components/schemas/BarcodeGenerationBatchDTO'
+        - $ref: ''./schemas.yaml#/schemas/BarcodeGenerationBatchDTO'
         - type: object
           properties:
             performance_metrics:
@@ -2912,7 +2912,7 @@ components:
                     type: integer
                     example: 5
         claim_statistics:
-          $ref: '#/components/schemas/ClaimStatistics'
+          $ref: ''./schemas.yaml#/schemas/ClaimStatistics'
         top_issues:
           type: array
           items:

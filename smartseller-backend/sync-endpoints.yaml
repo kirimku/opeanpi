@@ -99,20 +99,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NoSlugSyncRequest'
+              $ref: ''./schemas.yaml#/schemas/NoSlugSyncRequest'
       responses:
         '200':
           description: Product sync job started successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShopifySyncJobResponse'
+                $ref: ''./schemas.yaml#/schemas/ShopifySyncJobResponse'
         '400':
           description: Bad Request - Invalid parameters or storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Authentication required
         '429':
@@ -197,20 +197,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NoSlugSyncRequest'
+              $ref: ''./schemas.yaml#/schemas/NoSlugSyncRequest'
       responses:
         '200':
           description: Order sync job started successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShopifySyncJobResponse'
+                $ref: ''./schemas.yaml#/schemas/ShopifySyncJobResponse'
         '400':
           description: Bad Request - Invalid parameters or storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Authentication required
         '429':
@@ -243,20 +243,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UnifiedSyncRequest'
+              $ref: ''./schemas.yaml#/schemas/UnifiedSyncRequest'
       responses:
         '200':
           description: Unified sync job started successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UnifiedSyncResponse'
+                $ref: ''./schemas.yaml#/schemas/UnifiedSyncResponse'
         '400':
           description: Bad Request - Invalid parameters or storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Authentication required
         '429':
@@ -284,13 +284,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SyncMetricsResponse'
+                $ref: ''./schemas.yaml#/schemas/SyncMetricsResponse'
         '400':
           description: Bad Request - Storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Authentication required
 
@@ -361,13 +361,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SyncJobListResponse'
+                $ref: ''./schemas.yaml#/schemas/SyncJobListResponse'
         '400':
           description: Bad Request - Invalid parameters or storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Authentication required
 
@@ -398,13 +398,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SyncJobStatusResponse'
+                $ref: ''./schemas.yaml#/schemas/SyncJobStatusResponse'
         '400':
           description: Bad Request - Missing job_id or storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Authentication required
         '404':
@@ -437,13 +437,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SyncJobPerformanceResponse'
+                $ref: ''./schemas.yaml#/schemas/SyncJobPerformanceResponse'
         '400':
           description: Bad Request - Missing job_id or storefront not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Authentication required
         '404':
@@ -665,7 +665,7 @@ components:
         active_jobs:
           type: array
           items:
-            $ref: '#/components/schemas/SyncJobStatusResponse'
+            $ref: ''./schemas.yaml#/schemas/SyncJobStatusResponse'
           description: Currently running sync jobs
         average_duration:
           type: number
@@ -704,7 +704,7 @@ components:
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/SyncJobStatusResponse'
+            $ref: ''./schemas.yaml#/schemas/SyncJobStatusResponse'
           description: List of sync jobs
         total:
           type: integer
@@ -843,7 +843,7 @@ components:
         recent_logs:
           type: array
           items:
-            $ref: '#/components/schemas/SyncLog'
+            $ref: ''./schemas.yaml#/schemas/SyncLog'
           description: Recent log entries
         performance_metrics:
           type: object

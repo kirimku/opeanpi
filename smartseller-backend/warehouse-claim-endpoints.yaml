@@ -89,7 +89,7 @@ paths:
                       claims:
                         type: array
                         items:
-                          $ref: './warranty-schemas.yaml#/components/schemas/WarrantyClaimDTO'
+                          $ref: './warranty-schemas.yaml'./schemas.yaml#/schemas/WarrantyClaimDTO'
                       pagination:
                         type: object
                         properties:
@@ -211,7 +211,7 @@ paths:
                     type: string
                     example: "Warranty claim retrieved successfully"
                   data:
-                    $ref: './warranty-schemas.yaml#/components/schemas/WarrantyClaimDTO'
+                    $ref: './warranty-schemas.yaml'./schemas.yaml#/schemas/WarrantyClaimDTO'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -246,7 +246,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './warranty-schemas.yaml#/components/schemas/UpdateClaimRequest'
+              $ref: './warranty-schemas.yaml'./schemas.yaml#/schemas/UpdateClaimRequest'
             examples:
               markShipped:
                 summary: Mark as shipped
@@ -278,7 +278,7 @@ paths:
                     type: string
                     example: "Warranty claim status updated successfully"
                   data:
-                    $ref: './warranty-schemas.yaml#/components/schemas/WarrantyClaimDTO'
+                    $ref: './warranty-schemas.yaml'./schemas.yaml#/schemas/WarrantyClaimDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':

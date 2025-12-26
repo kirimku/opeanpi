@@ -66,7 +66,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LocationResponse'
+                $ref: ''./schemas.yaml#/schemas/LocationResponse'
               example:
                 success: true
                 data:
@@ -108,7 +108,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CitiesResponse'
+                $ref: ''./schemas.yaml#/schemas/CitiesResponse'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -132,7 +132,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreasResponse'
+                $ref: ''./schemas.yaml#/schemas/AreasResponse'
 
   /b2b/search-location:
     post:
@@ -206,7 +206,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/B2BLocationSearchResponse'
+                $ref: ''./schemas.yaml#/schemas/B2BLocationSearchResponse'
               example:
                 success: true
                 message: "Locations retrieved successfully"
@@ -256,7 +256,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TariffCalculationRequest'
+              $ref: ''./schemas.yaml#/schemas/TariffCalculationRequest'
             example:
               origin:
                 province_id: "11"
@@ -285,7 +285,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TariffCalculationResponse'
+                $ref: ''./schemas.yaml#/schemas/TariffCalculationResponse'
               example:
                 success: true
                 data:
@@ -486,7 +486,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/B2BCourierResponse'
+                $ref: ''./schemas.yaml#/schemas/B2BCourierResponse'
               example:
                 success: true
                 message: "Couriers retrieved successfully"
@@ -535,7 +535,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 missing_required:
                   summary: Missing required parameters
@@ -560,7 +560,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Failed to retrieve couriers"
@@ -629,7 +629,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransactionCreateRequest'
+              $ref: ''./schemas.yaml#/schemas/TransactionCreateRequest'
             example:
               unique_id: "trans-b2b-123456"
               order_name: "Electronics - Laptop"
@@ -670,7 +670,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingResponse'
+                $ref: ''./schemas.yaml#/schemas/BookingResponse'
               examples:
                 qris_payment:
                   summary: QRIS Payment
@@ -804,7 +804,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingDetailsResponse'
+                $ref: ''./schemas.yaml#/schemas/BookingDetailsResponse'
 
     put:
       summary: Update booking
@@ -823,7 +823,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingUpdateRequest'
+              $ref: ''./schemas.yaml#/schemas/BookingUpdateRequest'
       responses:
         '200':
           description: Booking updated successfully
@@ -964,7 +964,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/TransactionData'
+                      $ref: ''./schemas.yaml#/schemas/TransactionData'
                   pagination:
                     type: object
                     properties:
@@ -985,7 +985,7 @@ paths:
                         description: Total number of transactions
                         example: 167
                   meta:
-                    $ref: '#/components/schemas/ResponseMeta'
+                    $ref: ''./schemas.yaml#/schemas/ResponseMeta'
               example:
                 success: true
                 message: "Transactions retrieved successfully"
@@ -1019,7 +1019,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Invalid page parameter"
@@ -1034,7 +1034,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /transactions/{transaction_id}:
     get:
@@ -1061,7 +1061,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponse'
+                $ref: ''./schemas.yaml#/schemas/TransactionResponse'
               example:
                 success: true
                 data:
@@ -1123,7 +1123,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Transaction not found"
@@ -1136,7 +1136,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Access denied"
@@ -1151,7 +1151,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /invoices/{invoice_id}:
     get:
@@ -1179,7 +1179,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InvoiceResponse'
+                $ref: ''./schemas.yaml#/schemas/InvoiceResponse'
               example:
                 success: true
                 data:
@@ -1210,7 +1210,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Invoice not found"
@@ -1223,7 +1223,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Access denied"
@@ -1238,7 +1238,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   # Payment Services
   /payments/invoices:
@@ -1252,14 +1252,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentInvoiceRequest'
+              $ref: ''./schemas.yaml#/schemas/PaymentInvoiceRequest'
       responses:
         '201':
           description: Payment invoice created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentInvoiceResponse'
+                $ref: ''./schemas.yaml#/schemas/PaymentInvoiceResponse'
 
   /payments/{payment_id}/status:
     get:
@@ -1299,7 +1299,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrackingResponse'
+                $ref: ''./schemas.yaml#/schemas/TrackingResponse'
               example:
                 success: true
                 data:
@@ -1348,7 +1348,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BatchTrackingResponse'
+                $ref: ''./schemas.yaml#/schemas/BatchTrackingResponse'
 
   # Webhook Management
   /webhooks:
@@ -1362,7 +1362,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WebhookRegistrationRequest'
+              $ref: ''./schemas.yaml#/schemas/WebhookRegistrationRequest'
       responses:
         '201':
           description: Webhook registered successfully
@@ -1392,11 +1392,11 @@ components:
         success:
           type: boolean
         meta:
-          $ref: '#/components/schemas/ResponseMeta'
+          $ref: ''./schemas.yaml#/schemas/ResponseMeta'
         errors:
           type: array
           items:
-            $ref: '#/components/schemas/ErrorDetail'
+            $ref: ''./schemas.yaml#/schemas/ErrorDetail'
 
     ResponseMeta:
       type: object
@@ -1409,7 +1409,7 @@ components:
           format: date-time
           description: Response timestamp
         rate_limit:
-          $ref: '#/components/schemas/RateLimitInfo'
+          $ref: ''./schemas.yaml#/schemas/RateLimitInfo'
 
     RateLimitInfo:
       type: object
@@ -1438,7 +1438,7 @@ components:
     # Location Schemas
     LocationResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
@@ -1447,7 +1447,7 @@ components:
                 provinces:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Province'
+                    $ref: ''./schemas.yaml#/schemas/Province'
 
     Province:
       type: object
@@ -1461,7 +1461,7 @@ components:
 
     CitiesResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
@@ -1470,7 +1470,7 @@ components:
                 cities:
                   type: array
                   items:
-                    $ref: '#/components/schemas/City'
+                    $ref: ''./schemas.yaml#/schemas/City'
 
     City:
       type: object
@@ -1484,7 +1484,7 @@ components:
 
     AreasResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
@@ -1493,7 +1493,7 @@ components:
                 areas:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Area'
+                    $ref: ''./schemas.yaml#/schemas/Area'
 
     Area:
       type: object
@@ -1509,7 +1509,7 @@ components:
 
     B2BLocationSearchResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             message:
@@ -1519,7 +1519,7 @@ components:
             data:
               type: array
               items:
-                $ref: '#/components/schemas/B2BLocationResult'
+                $ref: ''./schemas.yaml#/schemas/B2BLocationResult'
 
     B2BLocationResult:
       type: object
@@ -1550,7 +1550,7 @@ components:
     # Courier Schemas
     B2BCourierResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             message:
@@ -1560,7 +1560,7 @@ components:
             data:
               type: array
               items:
-                $ref: '#/components/schemas/CourierOption'
+                $ref: ''./schemas.yaml#/schemas/CourierOption'
 
     CourierOption:
       type: object
@@ -1632,13 +1632,13 @@ components:
         - package
       properties:
         origin:
-          $ref: '#/components/schemas/LocationPoint'
+          $ref: ''./schemas.yaml#/schemas/LocationPoint'
         destination:
-          $ref: '#/components/schemas/LocationPoint'
+          $ref: ''./schemas.yaml#/schemas/LocationPoint'
         package:
-          $ref: '#/components/schemas/PackageDetails'
+          $ref: ''./schemas.yaml#/schemas/PackageDetails'
         options:
-          $ref: '#/components/schemas/TariffOptions'
+          $ref: ''./schemas.yaml#/schemas/TariffOptions'
 
     LocationPoint:
       type: object
@@ -1697,11 +1697,11 @@ components:
 
     TariffCalculationResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/TariffCalculationData'
+              $ref: ''./schemas.yaml#/schemas/TariffCalculationData'
 
     TariffCalculationData:
       type: object
@@ -1709,15 +1709,15 @@ components:
         calculation_id:
           type: string
         origin:
-          $ref: '#/components/schemas/LocationInfo'
+          $ref: ''./schemas.yaml#/schemas/LocationInfo'
         destination:
-          $ref: '#/components/schemas/LocationInfo'
+          $ref: ''./schemas.yaml#/schemas/LocationInfo'
         package:
-          $ref: '#/components/schemas/PackageInfo'
+          $ref: ''./schemas.yaml#/schemas/PackageInfo'
         couriers:
           type: array
           items:
-            $ref: '#/components/schemas/CourierOption'
+            $ref: ''./schemas.yaml#/schemas/CourierOption'
 
     LocationInfo:
       type: object
@@ -1749,7 +1749,7 @@ components:
         services:
           type: array
           items:
-            $ref: '#/components/schemas/CourierService'
+            $ref: ''./schemas.yaml#/schemas/CourierService'
 
     CourierService:
       type: object
@@ -1767,7 +1767,7 @@ components:
           items:
             type: string
         insurance:
-          $ref: '#/components/schemas/InsuranceOption'
+          $ref: ''./schemas.yaml#/schemas/InsuranceOption'
 
     InsuranceOption:
       type: object
@@ -1782,7 +1782,7 @@ components:
     # Courier Schemas
     CouriersResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
@@ -1791,7 +1791,7 @@ components:
                 couriers:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Courier'
+                    $ref: ''./schemas.yaml#/schemas/Courier'
 
     Courier:
       type: object
@@ -1901,15 +1901,15 @@ components:
           enum: [Fashion, Dokumen, Buku, "Obat & Herbal", Kecantikan, Mainan, Makanan, "Makanan Beku", "Makanan Segar", Sparepart, "Alat Kesehatan"]
           example: "Fashion"
         from:
-          $ref: '#/components/schemas/TransactionAddress'
+          $ref: ''./schemas.yaml#/schemas/TransactionAddress'
         to:
-          $ref: '#/components/schemas/TransactionAddress'
+          $ref: ''./schemas.yaml#/schemas/TransactionAddress'
         ewallet_override_phone:
           type: string
           description: Override phone number for e-wallet payments (optional). If provided, this phone number will be used instead of the user's profile phone when creating e-wallet charges with DurianPay.
           example: "+6281234567890"
         original_sender:
-          $ref: '#/components/schemas/TransactionSender'
+          $ref: ''./schemas.yaml#/schemas/TransactionSender'
           description: Optional original sender details for dropshipping
 
     TransactionAddress:
@@ -1997,7 +1997,7 @@ components:
         weight:
           type: number
         dimensions:
-          $ref: '#/components/schemas/Dimensions'
+          $ref: ''./schemas.yaml#/schemas/Dimensions'
         value:
           type: integer
         category:
@@ -2037,11 +2037,11 @@ components:
 
     BookingResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/BookingData'
+              $ref: ''./schemas.yaml#/schemas/BookingData'
 
     BookingData:
       type: object
@@ -2059,9 +2059,9 @@ components:
         total_cost:
           type: integer
         breakdown:
-          $ref: '#/components/schemas/CostBreakdown'
+          $ref: ''./schemas.yaml#/schemas/CostBreakdown'
         payment:
-          $ref: '#/components/schemas/PaymentStatus'
+          $ref: ''./schemas.yaml#/schemas/PaymentStatus'
         estimated_pickup:
           type: string
           format: date-time
@@ -2091,11 +2091,11 @@ components:
 
     BookingDetailsResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/BookingDetails'
+              $ref: ''./schemas.yaml#/schemas/BookingDetails'
 
     BookingDetails:
       type: object
@@ -2107,17 +2107,17 @@ components:
         status:
           type: string
         courier:
-          $ref: '#/components/schemas/CourierInfo'
+          $ref: ''./schemas.yaml#/schemas/CourierInfo'
         sender:
-          $ref: '#/components/schemas/ContactDetails'
+          $ref: ''./schemas.yaml#/schemas/ContactDetails'
         recipient:
-          $ref: '#/components/schemas/ContactDetails'
+          $ref: ''./schemas.yaml#/schemas/ContactDetails'
         package:
-          $ref: '#/components/schemas/PackageDetails'
+          $ref: ''./schemas.yaml#/schemas/PackageDetails'
         cost:
-          $ref: '#/components/schemas/CostBreakdown'
+          $ref: ''./schemas.yaml#/schemas/CostBreakdown'
         timeline:
-          $ref: '#/components/schemas/BookingTimeline'
+          $ref: ''./schemas.yaml#/schemas/BookingTimeline'
 
     CourierInfo:
       type: object
@@ -2161,7 +2161,7 @@ components:
       type: object
       properties:
         recipient:
-          $ref: '#/components/schemas/ContactInfo'
+          $ref: ''./schemas.yaml#/schemas/ContactInfo'
         pickup_time:
           type: string
 
@@ -2182,7 +2182,7 @@ components:
         payment_channel:
           type: string
         customer_info:
-          $ref: '#/components/schemas/CustomerInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerInfo'
 
     CustomerInfo:
       type: object
@@ -2196,11 +2196,11 @@ components:
 
     PaymentInvoiceResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/PaymentInvoiceData'
+              $ref: ''./schemas.yaml#/schemas/PaymentInvoiceData'
 
     PaymentInvoiceData:
       type: object
@@ -2220,11 +2220,11 @@ components:
     # Tracking Schemas
     TrackingResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/TrackingData'
+              $ref: ''./schemas.yaml#/schemas/TrackingData'
 
     TrackingData:
       type: object
@@ -2246,7 +2246,7 @@ components:
         history:
           type: array
           items:
-            $ref: '#/components/schemas/TrackingEvent'
+            $ref: ''./schemas.yaml#/schemas/TrackingEvent'
 
     TrackingEvent:
       type: object
@@ -2263,7 +2263,7 @@ components:
 
     BatchTrackingResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
@@ -2272,7 +2272,7 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: '#/components/schemas/TrackingData'
+                    $ref: ''./schemas.yaml#/schemas/TrackingData'
 
     # Webhook Schemas
     WebhookRegistrationRequest:
@@ -2296,11 +2296,11 @@ components:
     # Transaction Response Schema
     TransactionResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/TransactionData'
+              $ref: ''./schemas.yaml#/schemas/TransactionData'
 
     TransactionData:
       type: object
@@ -2416,9 +2416,9 @@ components:
               description: Invoice ID if applicable
               example: "INV-2024-001"
         sender:
-          $ref: '#/components/schemas/TransactionAddress'
+          $ref: ''./schemas.yaml#/schemas/TransactionAddress'
         recipient:
-          $ref: '#/components/schemas/TransactionAddress'
+          $ref: ''./schemas.yaml#/schemas/TransactionAddress'
         estimated_pickup:
           type: string
           format: date-time
@@ -2443,11 +2443,11 @@ components:
     # Invoice Response Schema
     InvoiceResponse:
       allOf:
-        - $ref: '#/components/schemas/BaseResponse'
+        - $ref: ''./schemas.yaml#/schemas/BaseResponse'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/InvoiceData'
+              $ref: ''./schemas.yaml#/schemas/InvoiceData'
 
     InvoiceData:
       type: object
@@ -2542,7 +2542,7 @@ components:
         application/json:
           schema:
             allOf:
-              - $ref: '#/components/schemas/BaseResponse'
+              - $ref: ''./schemas.yaml#/schemas/BaseResponse'
               - type: object
                 properties:
                   success:
@@ -2566,7 +2566,7 @@ components:
         application/json:
           schema:
             allOf:
-              - $ref: '#/components/schemas/BaseResponse'
+              - $ref: ''./schemas.yaml#/schemas/BaseResponse'
               - type: object
                 properties:
                   success:
@@ -2575,7 +2575,7 @@ components:
                   errors:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ErrorDetail'
+                      $ref: ''./schemas.yaml#/schemas/ErrorDetail'
 
     NotFound:
       description: Resource not found
@@ -2583,7 +2583,7 @@ components:
         application/json:
           schema:
             allOf:
-              - $ref: '#/components/schemas/BaseResponse'
+              - $ref: ''./schemas.yaml#/schemas/BaseResponse'
               - type: object
                 properties:
                   success:
@@ -2616,7 +2616,7 @@ components:
         application/json:
           schema:
             allOf:
-              - $ref: '#/components/schemas/BaseResponse'
+              - $ref: ''./schemas.yaml#/schemas/BaseResponse'
               - type: object
                 properties:
                   success:

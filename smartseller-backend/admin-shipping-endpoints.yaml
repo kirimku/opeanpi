@@ -53,7 +53,7 @@ paths:
                       locations:
                         type: array
                         items:
-                          $ref: './schemas.yaml#/components/schemas/KirimkuLocation'
+                          $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuLocation'
                       total:
                         type: integer
                         example: 5
@@ -62,25 +62,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/kirimku/couriers:
     post:
@@ -149,31 +149,31 @@ paths:
                       couriers:
                         type: array
                         items:
-                          $ref: './schemas.yaml#/components/schemas/KirimkuCourier'
+                          $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuCourier'
         '400':
           description: Bad request - Invalid parameters
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/kirimku/tariff:
     post:
@@ -245,31 +245,31 @@ paths:
                     type: object
                     properties:
                       tariff:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuTariff'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuTariff'
         '400':
           description: Bad request - Invalid parameters
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/kirimku/booking:
     post:
@@ -284,7 +284,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './schemas.yaml#/components/schemas/KirimkuBookingRequest'
+              $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBookingRequest'
       responses:
         '201':
           description: Booking created successfully
@@ -303,31 +303,31 @@ paths:
                     type: object
                     properties:
                       booking:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBooking'
         '400':
           description: Bad request - Invalid booking data
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/kirimku/booking/{id}:
     get:
@@ -363,31 +363,31 @@ paths:
                     type: object
                     properties:
                       booking:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBooking'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Booking not found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
     put:
       summary: Update shipping booking (Admin)
@@ -409,7 +409,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './schemas.yaml#/components/schemas/KirimkuBookingUpdateRequest'
+              $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBookingUpdateRequest'
       responses:
         '200':
           description: Booking updated successfully
@@ -428,37 +428,37 @@ paths:
                     type: object
                     properties:
                       booking:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBooking'
         '400':
           description: Bad request - Invalid update data
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Booking not found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
     delete:
       summary: Cancel shipping booking (Admin)
@@ -503,31 +503,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Booking not found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '409':
           description: Booking cannot be cancelled
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/kirimku/transaction/{id}:
     get:
@@ -582,7 +582,7 @@ paths:
                     type: string
                     example: "Transaction retrieved successfully"
                   data:
-                    $ref: './schemas.yaml#/components/schemas/KirimkuTransaction'
+                    $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuTransaction'
               examples:
                 qris_payment_transaction:
                   summary: Transaction with QRIS payment and complete invoice
@@ -652,7 +652,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 not_authenticated:
                   summary: User not authenticated
@@ -665,7 +665,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 not_admin:
                   summary: User is not an admin
@@ -678,7 +678,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 transaction_not_found:
                   summary: Transaction ID does not exist
@@ -691,7 +691,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 kirimku_api_error:
                   summary: Kirimku API unavailable
@@ -735,31 +735,31 @@ paths:
                     type: object
                     properties:
                       invoice:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuInvoice'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuInvoice'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Admin privileges required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
 components:
   securitySchemes:

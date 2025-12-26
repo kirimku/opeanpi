@@ -49,7 +49,7 @@ paths:
                     type: string
                     example: Active sections retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListSectionsResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/ListSectionsResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '500':
@@ -98,7 +98,7 @@ paths:
                     type: string
                     example: Section retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/SectionResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '404':
@@ -142,7 +142,7 @@ paths:
                     type: string
                     example: Section retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/SectionResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '404':
@@ -181,7 +181,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './storefront-section-schemas.yaml#/components/schemas/CreateSectionRequest'
+              $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/CreateSectionRequest'
             examples:
               imageSlider:
                 summary: Image Slider Section
@@ -246,7 +246,7 @@ paths:
                     type: string
                     example: Section created successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/SectionResponse'
         '400':
           description: Bad request (validation error, limit reached, slug conflict)
           content:
@@ -331,7 +331,7 @@ paths:
                     type: string
                     example: Sections retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListSectionsResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/ListSectionsResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -364,7 +364,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './storefront-section-schemas.yaml#/components/schemas/CreateSectionFromTemplateRequest'
+              $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/CreateSectionFromTemplateRequest'
             example:
               template_code: featured_products_grid
               title: Featured Products
@@ -385,7 +385,7 @@ paths:
                     type: string
                     example: Section created from template successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/SectionResponse'
         '400':
           description: Bad request (template not active, limit reached)
           content:
@@ -459,7 +459,7 @@ paths:
                     type: string
                     example: Active sections retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListSectionsResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/ListSectionsResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -509,7 +509,7 @@ paths:
                     type: string
                     example: Section retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/SectionResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -554,7 +554,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './storefront-section-schemas.yaml#/components/schemas/UpdateSectionRequest'
+              $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/UpdateSectionRequest'
             example:
               title: Updated Section Title
               is_active: false
@@ -577,7 +577,7 @@ paths:
                     type: string
                     example: Section updated successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/SectionResponse'
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -745,7 +745,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './storefront-section-schemas.yaml#/components/schemas/ReorderSectionsRequest'
+              $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/ReorderSectionsRequest'
             example:
               section_ids:
                 - 550e8400-e29b-41d4-a716-446655440001
@@ -812,7 +812,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './storefront-section-schemas.yaml#/components/schemas/DuplicateSectionRequest'
+              $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/DuplicateSectionRequest'
             example:
               new_title: Hero Banner - Copy
               new_slug: hero-banner-copy
@@ -831,7 +831,7 @@ paths:
                     type: string
                     example: Section duplicated successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/SectionResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/SectionResponse'
         '400':
           description: Bad request (limit reached)
           content:
@@ -890,7 +890,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './storefront-section-schemas.yaml#/components/schemas/BulkUpdateStatusRequest'
+              $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/BulkUpdateStatusRequest'
             example:
               section_ids:
                 - 550e8400-e29b-41d4-a716-446655440001
@@ -960,7 +960,7 @@ paths:
                     type: string
                     example: Templates retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/ListTemplatesResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/ListTemplatesResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '500':
@@ -1000,7 +1000,7 @@ paths:
                     type: string
                     example: Template retrieved successfully
                   data:
-                    $ref: './storefront-section-schemas.yaml#/components/schemas/TemplateResponse'
+                    $ref: './storefront-section-schemas.yaml'./schemas.yaml#/schemas/TemplateResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':

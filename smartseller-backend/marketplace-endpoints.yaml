@@ -26,7 +26,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/MarketplaceListResponse'
+                    $ref: ''./schemas.yaml#/schemas/MarketplaceListResponse'
                   message:
                     type: string
                     example: "Marketplaces retrieved successfully"
@@ -53,7 +53,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectMarketplaceRequest'
+              $ref: ''./schemas.yaml#/schemas/ConnectMarketplaceRequest'
       responses:
         '200':
           description: Marketplace connection initiated
@@ -63,7 +63,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/ConnectMarketplaceResponse'
+                    $ref: ''./schemas.yaml#/schemas/ConnectMarketplaceResponse'
                   message:
                     type: string
                     example: "Marketplace connection initiated"
@@ -102,7 +102,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/ConnectedMarketplace'
+                    $ref: ''./schemas.yaml#/schemas/ConnectedMarketplace'
                   message:
                     type: string
                     example: "Marketplace details retrieved"
@@ -183,7 +183,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/MarketplaceSyncStatus'
+                    $ref: ''./schemas.yaml#/schemas/MarketplaceSyncStatus'
                   message:
                     type: string
                     example: "Sync status retrieved"
@@ -237,7 +237,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/MarketplaceSyncResponse'
+                    $ref: ''./schemas.yaml#/schemas/MarketplaceSyncResponse'
                   message:
                     type: string
                     example: "Marketplace sync initiated"
@@ -275,7 +275,7 @@ components:
       type: object
       properties:
         type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
         name:
           type: string
           example: "Shopify"
@@ -302,7 +302,7 @@ components:
           format: uuid
           example: "123e4567-e89b-12d3-a456-426614174000"
         type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
         name:
           type: string
           example: "Shopify"
@@ -313,7 +313,7 @@ components:
           type: string
           example: "wisnu-development.myshopify.com"
         status:
-          $ref: '#/components/schemas/ConnectionStatus'
+          $ref: ''./schemas.yaml#/schemas/ConnectionStatus'
         last_sync_at:
           type: string
           format: date-time
@@ -364,13 +364,13 @@ components:
         connected:
           type: array
           items:
-            $ref: '#/components/schemas/ConnectedMarketplace'
+            $ref: ''./schemas.yaml#/schemas/ConnectedMarketplace'
         available:
           type: array
           items:
-            $ref: '#/components/schemas/MarketplaceInfo'
+            $ref: ''./schemas.yaml#/schemas/MarketplaceInfo'
         summary:
-          $ref: '#/components/schemas/MarketplaceSummary'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceSummary'
 
     ConnectMarketplaceRequest:
       type: object
@@ -379,7 +379,7 @@ components:
         - store_domain
       properties:
         type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
         store_domain:
           type: string
           example: "wisnu-development.myshopify.com"
@@ -398,9 +398,9 @@ components:
           format: uuid
           example: "123e4567-e89b-12d3-a456-426614174000"
         type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
         status:
-          $ref: '#/components/schemas/ConnectionStatus'
+          $ref: ''./schemas.yaml#/schemas/ConnectionStatus'
         message:
           type: string
           example: "OAuth flow initiated for Shopify connection"
@@ -426,7 +426,7 @@ components:
           type: string
           format: uuid
         marketplace_type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
         store_domain:
           type: string
           example: "wisnu-development.myshopify.com"
@@ -463,7 +463,7 @@ components:
           format: uuid
           example: "123e4567-e89b-12d3-a456-426614174000"
         marketplace_type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
         sync_type:
           type: string
           example: products

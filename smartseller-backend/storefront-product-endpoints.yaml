@@ -73,7 +73,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './product-schemas.yaml#/components/schemas/ProductListResponse'
+                $ref: './product-schemas.yaml'./schemas.yaml#/schemas/ProductListResponse'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '500':
@@ -117,7 +117,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './product-schemas.yaml#/components/schemas/ProductResponse'
+                $ref: './product-schemas.yaml'./schemas.yaml#/schemas/ProductResponse'
         '404':
           $ref: '#/components/responses/NotFoundError'
         '500':

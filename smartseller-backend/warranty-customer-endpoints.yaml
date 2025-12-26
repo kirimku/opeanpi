@@ -214,7 +214,7 @@ paths:
                       warranties:
                         type: array
                         items:
-                          $ref: '#/components/schemas/StorefrontCustomerWarrantyDTO'
+                          $ref: ''./schemas.yaml#/schemas/StorefrontCustomerWarrantyDTO'
                       pagination:
                         type: object
                         properties:
@@ -352,7 +352,7 @@ paths:
                     type: string
                     example: "Proof of purchase uploaded successfully"
                   data:
-                    $ref: '#/components/schemas/ProofOfPurchaseInfo'
+                    $ref: ''./schemas.yaml#/schemas/ProofOfPurchaseInfo'
         '400':
           description: Bad request - Invalid file or parameters
           content:
@@ -437,7 +437,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CustomerWarrantyRegistrationRequest'
+              $ref: ''./schemas.yaml#/schemas/CustomerWarrantyRegistrationRequest'
           multipart/form-data:
             schema:
               type: object
@@ -468,7 +468,7 @@ paths:
                     type: string
                     example: "Warranty registered successfully"
                   data:
-                    $ref: '#/components/schemas/CustomerWarrantyRegistrationResponse'
+                    $ref: ''./schemas.yaml#/schemas/CustomerWarrantyRegistrationResponse'
         '400':
           description: Bad request - Invalid request data or warranty cannot be registered
           content:
@@ -574,7 +574,7 @@ paths:
                     type: string
                     example: "Warranty details retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/StorefrontCustomerWarrantyDetailDTO'
+                    $ref: ''./schemas.yaml#/schemas/StorefrontCustomerWarrantyDetailDTO'
         '400':
           description: Bad request - Invalid warranty ID
           content:
@@ -687,7 +687,7 @@ paths:
                     type: string
                     example: "Warranty updated successfully"
                   data:
-                    $ref: '#/components/schemas/StorefrontCustomerWarrantyDetailDTO'
+                    $ref: ''./schemas.yaml#/schemas/StorefrontCustomerWarrantyDetailDTO'
         '400':
           description: Bad request - Invalid data
           content:
@@ -755,7 +755,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SubmitClaimWithKirimkuRequest'
+              $ref: ''./schemas.yaml#/schemas/SubmitClaimWithKirimkuRequest'
       responses:
         '200':
           description: Warranty claim submitted successfully
@@ -771,7 +771,7 @@ paths:
                     type: string
                     example: "Warranty claim submitted successfully"
                   data:
-                    $ref: '#/components/schemas/CustomerClaimSubmissionResponse'
+                    $ref: ''./schemas.yaml#/schemas/CustomerClaimSubmissionResponse'
         '400':
           description: Bad request - Invalid claim data
           content:
@@ -1007,7 +1007,7 @@ components:
           description: "Invoice number (optional)"
           example: "INV-2024-001"
         proof_of_purchase:
-          $ref: '#/components/schemas/ProofOfPurchaseInfo'
+          $ref: ''./schemas.yaml#/schemas/ProofOfPurchaseInfo'
 
     CustomerWarrantyRegistrationResponse:
       type: object
@@ -1049,11 +1049,11 @@ components:
           description: "Warranty period description"
           example: "24 months"
         product:
-          $ref: '#/components/schemas/CustomerProductInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerProductInfo'
         customer:
-          $ref: '#/components/schemas/CustomerInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerInfo'
         coverage:
-          $ref: '#/components/schemas/CustomerWarrantyCoverage'
+          $ref: ''./schemas.yaml#/schemas/CustomerWarrantyCoverage'
         next_steps:
           type: array
           description: "Next steps for the customer"
@@ -1092,14 +1092,14 @@ components:
           description: "Customer's phone number"
           example: "+1234567890"
         address:
-          $ref: '#/components/schemas/CustomerAddressInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerAddressInfo'
         date_of_birth:
           type: string
           format: date-time
           description: "Customer's date of birth (optional)"
           example: "1990-01-01T00:00:00Z"
         preferences:
-          $ref: '#/components/schemas/CustomerPreferences'
+          $ref: ''./schemas.yaml#/schemas/CustomerPreferences'
 
     CustomerAddressInfo:
       type: object
@@ -1353,7 +1353,7 @@ components:
 
     CustomerWarrantyDetailDTO:
       allOf:
-        - $ref: '#/components/schemas/CustomerWarrantyDTO'
+        - $ref: ''./schemas.yaml#/schemas/CustomerWarrantyDTO'
         - type: object
           properties:
             product_details:
@@ -1420,7 +1420,7 @@ components:
             claims_history:
               type: array
               items:
-                $ref: '#/components/schemas/CustomerClaimSummaryDTO'
+                $ref: ''./schemas.yaml#/schemas/CustomerClaimSummaryDTO'
 
     CustomerWarrantySummaryDTO:
       type: object
@@ -1444,7 +1444,7 @@ components:
 
     StorefrontCustomerWarrantyDTO:
       allOf:
-        - $ref: '#/components/schemas/CustomerWarrantyDTO'
+        - $ref: ''./schemas.yaml#/schemas/CustomerWarrantyDTO'
         - type: object
           properties:
             storefront_slug:
@@ -1462,11 +1462,11 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/StorefrontCustomerWarrantyDTO'
+            $ref: ''./schemas.yaml#/schemas/StorefrontCustomerWarrantyDTO'
         pagination:
-          $ref: '#/components/schemas/PaginationMeta'
+          $ref: ''./schemas.yaml#/schemas/PaginationMeta'
         summary:
-          $ref: '#/components/schemas/CustomerWarrantySummaryDTO'
+          $ref: ''./schemas.yaml#/schemas/CustomerWarrantySummaryDTO'
 
     # Customer Claim Schemas
     SubmitClaimRequest:
@@ -1637,7 +1637,7 @@ components:
           format: date-time
           example: "2023-12-31T23:59:59Z"
         shipping_info:
-          $ref: '#/components/schemas/CustomerClaimShippingInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimShippingInfo'
 
     CustomerClaimShippingInfo:
       type: object
@@ -1745,7 +1745,7 @@ components:
 
     CustomerClaimDetailDTO:
       allOf:
-        - $ref: '#/components/schemas/CustomerClaimDTO'
+        - $ref: ''./schemas.yaml#/schemas/CustomerClaimDTO'
         - type: object
           properties:
             contact_information:
@@ -1759,15 +1759,15 @@ components:
                   enum: [email, phone, whatsapp]
                   example: "email"
             shipping_address:
-              $ref: '#/components/schemas/AddressDTO'
+              $ref: ''./schemas.yaml#/schemas/AddressDTO'
             attachments:
               type: array
               items:
-                $ref: '#/components/schemas/ClaimAttachmentDTO'
+                $ref: ''./schemas.yaml#/schemas/ClaimAttachmentDTO'
             timeline:
               type: array
               items:
-                $ref: '#/components/schemas/CustomerClaimTimelineDTO'
+                $ref: ''./schemas.yaml#/schemas/CustomerClaimTimelineDTO'
             resolution_details:
               type: object
               nullable: true
@@ -1795,7 +1795,7 @@ components:
                       format: date-time
                       example: "2025-03-01T10:00:00Z"
             repair_tracking:
-              $ref: '#/components/schemas/CustomerRepairTrackingDTO'
+              $ref: ''./schemas.yaml#/schemas/CustomerRepairTrackingDTO'
 
     CustomerClaimSummaryDTO:
       type: object

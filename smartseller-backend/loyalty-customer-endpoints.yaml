@@ -60,7 +60,7 @@ paths:
                     type: string
                     example: "Product referral link generated successfully"
                   data:
-                    $ref: '#/components/schemas/GenerateProductReferralResponse'
+                    $ref: ''./schemas.yaml#/schemas/GenerateProductReferralResponse'
               examples:
                 successful:
                   summary: Successful referral link generation
@@ -80,7 +80,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 invalid_product_id:
                   summary: Invalid product ID format
@@ -99,7 +99,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Authentication required"
@@ -109,7 +109,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 program_disabled:
                   summary: Referral program not enabled
@@ -128,7 +128,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Failed to generate referral link"
@@ -138,7 +138,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Referral service not available"
@@ -197,7 +197,7 @@ paths:
                     type: string
                     example: "Referral analytics retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/ReferralAnalyticsResponse'
+                    $ref: ''./schemas.yaml#/schemas/ReferralAnalyticsResponse'
               examples:
                 with_data:
                   summary: Customer with active referrals
@@ -305,7 +305,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Authentication required"
@@ -315,7 +315,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Loyalty account not found"
@@ -325,7 +325,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Failed to retrieve referral analytics"
@@ -335,7 +335,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               example:
                 success: false
                 message: "Referral service not available"
@@ -425,24 +425,24 @@ components:
         - active_links
       properties:
         summary:
-          $ref: '#/components/schemas/ReferralSummary'
+          $ref: ''./schemas.yaml#/schemas/ReferralSummary'
         performance:
-          $ref: '#/components/schemas/ReferralPerformance'
+          $ref: ''./schemas.yaml#/schemas/ReferralPerformance'
         top_products:
           type: array
           description: Products ranked by conversion rate (descending)
           items:
-            $ref: '#/components/schemas/ProductShareStats'
+            $ref: ''./schemas.yaml#/schemas/ProductShareStats'
         recent_conversions:
           type: array
           description: Last 10 successful orders from referrals (newest first)
           items:
-            $ref: '#/components/schemas/RecentConversion'
+            $ref: ''./schemas.yaml#/schemas/RecentConversion'
         active_links:
           type: array
           description: Unexpired referral links sorted by creation date (newest first)
           items:
-            $ref: '#/components/schemas/ActiveReferralLink'
+            $ref: ''./schemas.yaml#/schemas/ActiveReferralLink'
 
     ReferralSummary:
       type: object
@@ -497,11 +497,11 @@ components:
         - all_time
       properties:
         last_30_days:
-          $ref: '#/components/schemas/PerformanceMetrics'
+          $ref: ''./schemas.yaml#/schemas/PerformanceMetrics'
         last_90_days:
-          $ref: '#/components/schemas/PerformanceMetrics'
+          $ref: ''./schemas.yaml#/schemas/PerformanceMetrics'
         all_time:
-          $ref: '#/components/schemas/PerformanceMetrics'
+          $ref: ''./schemas.yaml#/schemas/PerformanceMetrics'
 
     PerformanceMetrics:
       type: object

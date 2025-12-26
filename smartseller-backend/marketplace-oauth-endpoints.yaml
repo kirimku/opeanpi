@@ -55,7 +55,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MarketplaceOAuthInitiateRequest'
+              $ref: ''./schemas.yaml#/schemas/MarketplaceOAuthInitiateRequest'
             examples:
               shopify:
                 summary: Shopify OAuth initiation
@@ -84,7 +84,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/MarketplaceOAuthInitiateResponse'
+                    $ref: ''./schemas.yaml#/schemas/MarketplaceOAuthInitiateResponse'
                   message:
                     type: string
                     example: "OAuth flow initiated successfully"
@@ -105,7 +105,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: ''./schemas.yaml#/schemas/Error'
               examples:
                 invalidMarketplace:
                   summary: Unsupported marketplace type
@@ -124,7 +124,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: ''./schemas.yaml#/schemas/Error'
               example:
                 error: "unauthorized"
                 message: "Authentication required"
@@ -134,7 +134,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: ''./schemas.yaml#/schemas/Error'
 
   /api/v1/admin/marketplaces/oauth/callback:
     post:
@@ -186,7 +186,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MarketplaceOAuthCallbackRequest'
+              $ref: ''./schemas.yaml#/schemas/MarketplaceOAuthCallbackRequest'
             examples:
               shopify:
                 summary: Shopify OAuth callback
@@ -204,7 +204,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/MarketplaceOAuthCallbackResponse'
+                    $ref: ''./schemas.yaml#/schemas/MarketplaceOAuthCallbackResponse'
                   message:
                     type: string
                     example: "Marketplace connected successfully"
@@ -227,7 +227,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: ''./schemas.yaml#/schemas/Error'
               examples:
                 invalidState:
                   summary: Invalid or expired state
@@ -252,7 +252,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: ''./schemas.yaml#/schemas/Error'
               example:
                 error: "unauthorized"
                 message: "Authentication required"
@@ -262,7 +262,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: ''./schemas.yaml#/schemas/Error'
 
 components:
   schemas:
@@ -288,7 +288,7 @@ components:
         - store_domain
       properties:
         marketplace_type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
           description: Type of marketplace to connect
         store_domain:
           type: string
@@ -357,7 +357,7 @@ components:
         - store_domain
       properties:
         marketplace_type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
           description: Type of marketplace for callback processing
         state:
           type: string
@@ -401,7 +401,7 @@ components:
             Can be used to manage the connection (disconnect, sync, etc.).
           example: "d8df5ab0-da62-489c-98ed-5aa372e15cd7"
         marketplace_type:
-          $ref: '#/components/schemas/MarketplaceType'
+          $ref: ''./schemas.yaml#/schemas/MarketplaceType'
           description: Type of connected marketplace
         store_domain:
           type: string

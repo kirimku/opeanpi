@@ -36,7 +36,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CustomerClaimSubmissionRequest'
+              $ref: ''./schemas.yaml#/schemas/CustomerClaimSubmissionRequest'
             examples:
               drop_point_claim:
                 summary: Drop point warranty claim
@@ -100,11 +100,11 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
+                  - $ref: ''./schemas.yaml#/schemas/SuccessResponse'
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/CustomerClaimSubmissionResponse'
+                        $ref: ''./schemas.yaml#/schemas/CustomerClaimSubmissionResponse'
               examples:
                 drop_point_claim_success:
                   summary: Drop point claim submission success
@@ -200,7 +200,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 validation_error:
                   summary: Validation error
@@ -216,19 +216,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Not found - warranty barcode not found or not owned by customer
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '422':
           description: Unprocessable entity - business logic error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 warranty_expired:
                   summary: Warranty expired
@@ -247,7 +247,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{slug}/claims/{id}/timeline:
     get:
@@ -297,13 +297,13 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
+                  - $ref: ''./schemas.yaml#/schemas/SuccessResponse'
                   - type: object
                     properties:
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/CustomerClaimTimelineItem'
+                          $ref: ''./schemas.yaml#/schemas/CustomerClaimTimelineItem'
               examples:
                 status_change_timeline:
                   summary: Status change timeline
@@ -342,7 +342,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 invalid_uuid:
                   summary: Invalid UUID format
@@ -355,7 +355,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 not_authenticated:
                   summary: Not authenticated
@@ -368,7 +368,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 claim_not_found:
                   summary: Claim not found
@@ -387,7 +387,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
 components:
   securitySchemes:
@@ -463,10 +463,10 @@ components:
           example: "medium"
         # Contact and product info (optional for drop_point, required for kirimku)
         contact_info:
-          $ref: '#/components/schemas/CustomerClaimContactInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimContactInfo'
           description: Contact information (required for kirimku shipping, optional for drop_point)
         product_info:
-          $ref: '#/components/schemas/CustomerClaimProductInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimProductInfo'
           description: Product information (required for kirimku shipping, optional for drop_point)
         # Shipping method selection
         shipping_method:
@@ -475,10 +475,10 @@ components:
           enum: ["kirimku", "drop_point"]
           example: "drop_point"
         shipping_details:
-          $ref: '#/components/schemas/CustomerClaimKirimkuShipping'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimKirimkuShipping'
           description: Kirimku shipping details (required for kirimku shipping method)
         drop_point_details:
-          $ref: '#/components/schemas/CustomerClaimDropPointDetails'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimDropPointDetails'
           description: Drop point details (required for drop_point shipping method)
         # Additional fields
         preferred_resolution:
@@ -619,13 +619,13 @@ components:
           enum: ["pickup", "drop_off"]
           example: "pickup"
         pickup_address:
-          $ref: '#/components/schemas/CustomerClaimPickupAddress'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimPickupAddress'
           description: Pickup address (required only when pickup_method is 'pickup')
         destination_address:
-          $ref: '#/components/schemas/CustomerClaimDestinationAddress'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimDestinationAddress'
           description: Destination address for the warranty claim
         package_details:
-          $ref: '#/components/schemas/CustomerClaimPackageDetails'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimPackageDetails'
         service_type:
           type: string
           description: Kirimku service type
@@ -843,15 +843,15 @@ components:
             - "Drop point staff will verify your item and process your claim"
         # Contact information (always present, uses authenticated customer data for drop_point)
         contact_info:
-          $ref: '#/components/schemas/CustomerClaimContactInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimContactInfo'
         tracking_info:
-          $ref: '#/components/schemas/CustomerClaimTrackingInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimTrackingInfo'
           description: Support contact information (always present)
         shipping_info:
-          $ref: '#/components/schemas/CustomerClaimShippingInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimShippingInfo'
           description: Kirimku shipping information (only present for kirimku shipping method)
         drop_point_info:
-          $ref: '#/components/schemas/CustomerClaimDropPointInfo'
+          $ref: ''./schemas.yaml#/schemas/CustomerClaimDropPointInfo'
           description: Drop point information (only present for drop_point shipping method)
 
     CustomerClaimTrackingInfo:

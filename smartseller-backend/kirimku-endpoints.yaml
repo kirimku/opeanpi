@@ -78,19 +78,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/kirimku/couriers:
     get:
@@ -219,19 +219,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/kirimku/tariff/calculate:
     post:
@@ -323,19 +323,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/kirimku/bookings:
     post:
@@ -474,19 +474,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/kirimku/bookings/{id}:
     get:
@@ -545,19 +545,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
     put:
       summary: Update booking
@@ -642,25 +642,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '400':
           description: Bad request - Invalid input data
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
     delete:
       summary: Cancel booking
@@ -708,19 +708,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/kirimku/transactions/{id}:
     get:
@@ -782,19 +782,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/kirimku/invoices/{id}:
     get:
@@ -866,16 +866,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'

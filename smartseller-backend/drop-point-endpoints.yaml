@@ -126,19 +126,19 @@ components:
       type: object
       properties:
         monday:
-          $ref: '#/components/schemas/DayOperatingHours'
+          $ref: ''./schemas.yaml#/schemas/DayOperatingHours'
         tuesday:
-          $ref: '#/components/schemas/DayOperatingHours'
+          $ref: ''./schemas.yaml#/schemas/DayOperatingHours'
         wednesday:
-          $ref: '#/components/schemas/DayOperatingHours'
+          $ref: ''./schemas.yaml#/schemas/DayOperatingHours'
         thursday:
-          $ref: '#/components/schemas/DayOperatingHours'
+          $ref: ''./schemas.yaml#/schemas/DayOperatingHours'
         friday:
-          $ref: '#/components/schemas/DayOperatingHours'
+          $ref: ''./schemas.yaml#/schemas/DayOperatingHours'
         saturday:
-          $ref: '#/components/schemas/DayOperatingHours'
+          $ref: ''./schemas.yaml#/schemas/DayOperatingHours'
         sunday:
-          $ref: '#/components/schemas/DayOperatingHours'
+          $ref: ''./schemas.yaml#/schemas/DayOperatingHours'
         holidays:
           type: string
           nullable: true
@@ -398,11 +398,11 @@ components:
           description: "Longitude coordinate"
           example: 106.8456
         drop_point_type:
-          $ref: '#/components/schemas/DropPointType'
+          $ref: ''./schemas.yaml#/schemas/DropPointType'
         status:
-          $ref: '#/components/schemas/DropPointStatus'
+          $ref: ''./schemas.yaml#/schemas/DropPointStatus'
         operating_hours:
-          $ref: '#/components/schemas/OperatingHoursDTO'
+          $ref: ''./schemas.yaml#/schemas/OperatingHoursDTO'
         timezone:
           type: string
           maxLength: 50
@@ -410,9 +410,9 @@ components:
           description: "Timezone for the drop point"
           example: "Asia/Jakarta"
         contact_info:
-          $ref: '#/components/schemas/ContactInfoDTO'
+          $ref: ''./schemas.yaml#/schemas/ContactInfoDTO'
         capacity_info:
-          $ref: '#/components/schemas/CapacityInfoDTO'
+          $ref: ''./schemas.yaml#/schemas/CapacityInfoDTO'
         services:
           type: object
           description: "Services offered at the drop point"
@@ -493,23 +493,23 @@ components:
           format: float
           example: 106.8456
         drop_point_type:
-          $ref: '#/components/schemas/DropPointType'
+          $ref: ''./schemas.yaml#/schemas/DropPointType'
         status:
-          $ref: '#/components/schemas/DropPointStatus'
+          $ref: ''./schemas.yaml#/schemas/DropPointStatus'
         operating_hours:
           type: array
           items:
-            $ref: '#/components/schemas/OperatingHours'
+            $ref: ''./schemas.yaml#/schemas/OperatingHours'
         timezone:
           type: string
           nullable: true
           example: "Asia/Jakarta"
         contact:
-          $ref: '#/components/schemas/ContactInfo'
+          $ref: ''./schemas.yaml#/schemas/ContactInfo'
         capacity:
-          $ref: '#/components/schemas/CapacityInfo'
+          $ref: ''./schemas.yaml#/schemas/CapacityInfo'
         services:
-          $ref: '#/components/schemas/Services'
+          $ref: ''./schemas.yaml#/schemas/Services'
         instructions:
           type: string
           nullable: true
@@ -547,7 +547,7 @@ components:
 
     DropPointWithDistanceResponse:
       allOf:
-        - $ref: '#/components/schemas/DropPointResponse'
+        - $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         - type: object
           properties:
             distance_km:
@@ -593,15 +593,15 @@ components:
           format: float
           example: 106.8456
         drop_point_type:
-          $ref: '#/components/schemas/DropPointType'
+          $ref: ''./schemas.yaml#/schemas/DropPointType'
         status:
-          $ref: '#/components/schemas/DropPointStatus'
+          $ref: ''./schemas.yaml#/schemas/DropPointStatus'
         operating_hours:
-          $ref: '#/components/schemas/OperatingHoursDTO'
+          $ref: ''./schemas.yaml#/schemas/OperatingHoursDTO'
         contact_info:
-          $ref: '#/components/schemas/ContactInfoDTO'
+          $ref: ''./schemas.yaml#/schemas/ContactInfoDTO'
         capacity_info:
-          $ref: '#/components/schemas/CapacityInfoDTO'
+          $ref: ''./schemas.yaml#/schemas/CapacityInfoDTO'
         services:
           type: object
           description: "Services offered at the drop point"
@@ -696,7 +696,7 @@ components:
           example: "warranty_submission"
         # Filters
         drop_point_type:
-          $ref: '#/components/schemas/DropPointType'
+          $ref: ''./schemas.yaml#/schemas/DropPointType'
         min_rating:
           type: number
           format: float
@@ -844,9 +844,9 @@ components:
           description: "Filter by name"
           example: "Jakarta Central"
         type:
-          $ref: '#/components/schemas/DropPointType'
+          $ref: ''./schemas.yaml#/schemas/DropPointType'
         status:
-          $ref: '#/components/schemas/DropPointStatus'
+          $ref: ''./schemas.yaml#/schemas/DropPointStatus'
         city:
           type: string
           nullable: true
@@ -1018,9 +1018,9 @@ components:
           description: "Filter by name"
           example: "Jakarta Central"
         type:
-          $ref: '#/components/schemas/DropPointType'
+          $ref: ''./schemas.yaml#/schemas/DropPointType'
         status:
-          $ref: '#/components/schemas/DropPointStatus'
+          $ref: ''./schemas.yaml#/schemas/DropPointStatus'
         city:
           type: string
           nullable: true
@@ -1169,7 +1169,7 @@ components:
 
     AdminDropPointResponse:
       allOf:
-        - $ref: '#/components/schemas/DropPointResponse'
+        - $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         - type: object
           properties:
             storefront_name:
@@ -1185,7 +1185,7 @@ components:
         - status
       properties:
         status:
-          $ref: '#/components/schemas/DropPointStatus'
+          $ref: ''./schemas.yaml#/schemas/DropPointStatus'
 
     DropPointCapacityUpdateRequest:
       type: object
@@ -1363,7 +1363,7 @@ components:
         top_rated_drop_points:
           type: array
           items:
-            $ref: '#/components/schemas/DropPointResponse'
+            $ref: ''./schemas.yaml#/schemas/DropPointResponse'
           description: "Top rated drop points"
           example: []
 
@@ -1374,7 +1374,7 @@ components:
         drop_points:
           type: array
           items:
-            $ref: '#/components/schemas/DropPointResponse'
+            $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         total:
           type: integer
           format: int64
@@ -1399,7 +1399,7 @@ components:
         drop_points:
           type: array
           items:
-            $ref: '#/components/schemas/DropPointWithDistanceResponse'
+            $ref: ''./schemas.yaml#/schemas/DropPointWithDistanceResponse'
         total:
           type: integer
           format: int64
@@ -1424,7 +1424,7 @@ components:
         drop_points:
           type: array
           items:
-            $ref: '#/components/schemas/CustomerDropPointResponse'
+            $ref: ''./schemas.yaml#/schemas/CustomerDropPointResponse'
         total:
           type: integer
           format: int64
@@ -1449,7 +1449,7 @@ components:
         drop_points:
           type: array
           items:
-            $ref: '#/components/schemas/AdminDropPointResponse'
+            $ref: ''./schemas.yaml#/schemas/AdminDropPointResponse'
         total:
           type: integer
           format: int64
@@ -1570,7 +1570,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CustomerDropPointDiscoveryRequest'
+              $ref: ''./schemas.yaml#/schemas/CustomerDropPointDiscoveryRequest'
       responses:
         '200':
           description: Drop points discovered successfully
@@ -1586,25 +1586,25 @@ paths:
                     type: string
                     example: "Drop points discovered successfully"
                   data:
-                    $ref: '#/components/schemas/CustomerDropPointDiscoveryResponse'
+                    $ref: ''./schemas.yaml#/schemas/CustomerDropPointDiscoveryResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
     get:
       tags:
@@ -1640,7 +1640,7 @@ paths:
           in: query
           required: false
           schema:
-            $ref: '#/components/schemas/DropPointType'
+            $ref: ''./schemas.yaml#/schemas/DropPointType'
           description: Filter by drop point type
           example: "retail"
         - name: city
@@ -1729,25 +1729,25 @@ paths:
                     type: string
                     example: "Drop points listed successfully"
                   data:
-                    $ref: '#/components/schemas/CustomerDropPointDiscoveryResponse'
+                    $ref: ''./schemas.yaml#/schemas/CustomerDropPointDiscoveryResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{slug}/drop-points/nearby:
     post:
@@ -1766,7 +1766,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointNearbyForStorefrontRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointNearbyForStorefrontRequest'
       responses:
         '200':
           description: Nearby drop points retrieved successfully
@@ -1782,25 +1782,25 @@ paths:
                     type: string
                     example: "Nearby drop points retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointListWithDistanceResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointListWithDistanceResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{slug}/drop-points/search:
     post:
@@ -1857,7 +1857,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointSearchRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointSearchRequest'
       responses:
         '200':
           description: Drop points searched successfully
@@ -1873,25 +1873,25 @@ paths:
                     type: string
                     example: "Drop points searched successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointListResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointListResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{slug}/drop-points/{id}:
     get:
@@ -1921,25 +1921,25 @@ paths:
                     type: string
                     example: "Drop point details retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/CustomerDropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/CustomerDropPointResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{slug}/drop-points/types:
     get:
@@ -1970,7 +1970,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/DropDownOption'
+                      $ref: ''./schemas.yaml#/schemas/DropDownOption'
                     example:
                       - value: "retail"
                         label: "Retail Store"
@@ -1985,13 +1985,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{slug}/drop-points/services:
     get:
@@ -2022,7 +2022,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/DropDownOption'
+                      $ref: ''./schemas.yaml#/schemas/DropDownOption'
                     example:
                       - value: "warranty_submission"
                         label: "Warranty Submission"
@@ -2041,13 +2041,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   # Admin Drop Point Endpoints
   /api/v1/admin/warranty/drop-points:
@@ -2065,7 +2065,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointRequest'
       responses:
         '201':
           description: Drop point created successfully
@@ -2081,31 +2081,31 @@ paths:
                     type: string
                     example: "Drop point created successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
     get:
       tags:
@@ -2158,14 +2158,14 @@ paths:
           in: query
           required: false
           schema:
-            $ref: '#/components/schemas/DropPointType'
+            $ref: ''./schemas.yaml#/schemas/DropPointType'
           description: Filter by type
           example: "retail"
         - name: status
           in: query
           required: false
           schema:
-            $ref: '#/components/schemas/DropPointStatus'
+            $ref: ''./schemas.yaml#/schemas/DropPointStatus'
           description: Filter by status
           example: "active"
         - name: city
@@ -2320,31 +2320,31 @@ paths:
                     type: string
                     example: "Drop points retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/AdminDropPointManagementResponse'
+                    $ref: ''./schemas.yaml#/schemas/AdminDropPointManagementResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/{id}:
     get:
@@ -2373,31 +2373,31 @@ paths:
                     type: string
                     example: "Drop point retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
     put:
       tags:
@@ -2415,7 +2415,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointRequest'
       responses:
         '200':
           description: Drop point updated successfully
@@ -2431,37 +2431,37 @@ paths:
                     type: string
                     example: "Drop point updated successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
     delete:
       tags:
@@ -2480,31 +2480,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: ''./schemas.yaml#/schemas/SuccessResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/bulk:
     post:
@@ -2521,7 +2521,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointBulkOperationRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointBulkOperationRequest'
       responses:
         '200':
           description: Bulk operation completed successfully
@@ -2537,31 +2537,31 @@ paths:
                     type: string
                     example: "Bulk operation completed successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointBulkOperationResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointBulkOperationResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/statistics:
     get:
@@ -2597,31 +2597,31 @@ paths:
                     type: string
                     example: "Drop point statistics retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointStatisticsResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointStatisticsResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/{id}/activate:
     post:
@@ -2650,31 +2650,31 @@ paths:
                     type: string
                     example: "Drop point activated successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/{id}/deactivate:
     post:
@@ -2703,31 +2703,31 @@ paths:
                     type: string
                     example: "Drop point deactivated successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/{id}/status:
     put:
@@ -2746,7 +2746,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointStatusUpdateRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointStatusUpdateRequest'
       responses:
         '200':
           description: Drop point status updated successfully
@@ -2762,37 +2762,37 @@ paths:
                     type: string
                     example: "Drop point status updated successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/{id}/capacity:
     put:
@@ -2811,7 +2811,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointCapacityUpdateRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointCapacityUpdateRequest'
       responses:
         '200':
           description: Drop point capacity updated successfully
@@ -2827,37 +2827,37 @@ paths:
                     type: string
                     example: "Drop point capacity updated successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/{id}/rating:
     put:
@@ -2876,7 +2876,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointRatingUpdateRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointRatingUpdateRequest'
       responses:
         '200':
           description: Drop point rating updated successfully
@@ -2892,37 +2892,37 @@ paths:
                     type: string
                     example: "Drop point rating updated successfully"
                   data:
-                    $ref: '#/components/schemas/DropPointResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Drop point not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/admin/warranty/drop-points/validate:
     post:
@@ -2939,7 +2939,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DropPointValidationRequest'
+              $ref: ''./schemas.yaml#/schemas/DropPointValidationRequest'
       responses:
         '200':
           description: Drop point code validation completed
@@ -2955,28 +2955,28 @@ paths:
                     type: string
                     example: "Drop point code validation completed"
                   data:
-                    $ref: '#/components/schemas/DropPointValidationResponse'
+                    $ref: ''./schemas.yaml#/schemas/DropPointValidationResponse'
         '400':
           description: Bad request - validation errors
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Authentication required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '403':
           description: Authorization failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'

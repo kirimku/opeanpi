@@ -14,14 +14,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BarcodeExportRequest'
+              $ref: ''./schemas.yaml#/schemas/BarcodeExportRequest'
       responses:
         '201':
           description: Export job created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BarcodeExportResponse'
+                $ref: ''./schemas.yaml#/schemas/BarcodeExportResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -90,7 +90,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BarcodeExportListResponse'
+                $ref: ''./schemas.yaml#/schemas/BarcodeExportListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -123,7 +123,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BarcodeExportStatusResponse'
+                $ref: ''./schemas.yaml#/schemas/BarcodeExportStatusResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '400':
@@ -157,7 +157,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
+                $ref: ''./schemas.yaml#/schemas/SuccessResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -245,7 +245,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BarcodeExportResponse'
+                $ref: ''./schemas.yaml#/schemas/BarcodeExportResponse'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -429,7 +429,7 @@ components:
           description: Whether the export can be retried
           example: false
         batch_statistics:
-          $ref: '#/components/schemas/ExportBatchStatistics'
+          $ref: ''./schemas.yaml#/schemas/ExportBatchStatistics'
 
     ExportBatchStatistics:
       type: object
@@ -474,9 +474,9 @@ components:
         exports:
           type: array
           items:
-            $ref: '#/components/schemas/BarcodeExportListItem'
+            $ref: ''./schemas.yaml#/schemas/BarcodeExportListItem'
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: ''./schemas.yaml#/schemas/Pagination'
 
     BarcodeExportListItem:
       type: object

@@ -53,7 +53,7 @@ paths:
                       locations:
                         type: array
                         items:
-                          $ref: './schemas.yaml#/components/schemas/KirimkuLocation'
+                          $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuLocation'
                       total:
                         type: integer
                         example: 5
@@ -62,19 +62,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Customer authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/customer/shipping/destinations:
     get:
@@ -112,25 +112,25 @@ paths:
                     type: string
                     example: "Destination retrieved successfully"
                   data:
-                    $ref: './schemas.yaml#/components/schemas/WarrantyAddress'
+                    $ref: './schemas.yaml'./schemas.yaml#/schemas/WarrantyAddress'
         '401':
           description: Customer authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: No default warranty address found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/customer/shipping/couriers:
     post:
@@ -282,25 +282,25 @@ paths:
                       couriers:
                         type: array
                         items:
-                          $ref: './schemas.yaml#/components/schemas/KirimkuCourier'
+                          $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuCourier'
         '400':
           description: Bad request - Invalid parameters
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Customer authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/storefront/{storefront_slug}/shipping/couriers:
     post:
@@ -487,7 +487,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 missing_parameters:
                   summary: Missing required parameters
@@ -509,7 +509,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 unauthorized:
                   summary: Authentication required
@@ -523,7 +523,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 storefront_not_found:
                   summary: Storefront not found
@@ -542,7 +542,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 kirimku_api_error:
                   summary: Kirimku API unavailable
@@ -628,25 +628,25 @@ paths:
                     type: object
                     properties:
                       tariff:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuTariff'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuTariff'
         '400':
           description: Bad request - Invalid parameters
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Customer authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/customer/shipping/booking:
     post:
@@ -675,7 +675,7 @@ paths:
           application/json:
             schema:
               allOf:
-                - $ref: './schemas.yaml#/components/schemas/KirimkuBookingRequest'
+                - $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBookingRequest'
                 - type: object
                   description: "Note: destination field is optional and will be auto-populated from storefront's warranty address if not provided"
       responses:
@@ -696,25 +696,25 @@ paths:
                     type: object
                     properties:
                       booking:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBooking'
         '400':
           description: Bad request - Invalid booking data
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Customer authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/customer/shipping/booking/{id}:
     get:
@@ -750,25 +750,25 @@ paths:
                     type: object
                     properties:
                       booking:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBooking'
         '401':
           description: Customer authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Booking not found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
     put:
       summary: Update shipping booking (Customer)
@@ -790,7 +790,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: './schemas.yaml#/components/schemas/KirimkuBookingUpdateRequest'
+              $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBookingUpdateRequest'
       responses:
         '200':
           description: Booking updated successfully
@@ -809,31 +809,31 @@ paths:
                     type: object
                     properties:
                       booking:
-                        $ref: './schemas.yaml#/components/schemas/KirimkuBooking'
+                        $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuBooking'
         '400':
           description: Bad request - Invalid update data
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '401':
           description: Customer authentication required
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Booking not found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
     delete:
       summary: Cancel shipping booking (Customer)
@@ -878,25 +878,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '404':
           description: Booking not found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '409':
           description: Booking cannot be cancelled
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
 
   /api/v1/customer/shipping/transaction/{id}:
     get:
@@ -952,7 +952,7 @@ paths:
                     type: string
                     example: "Transaction retrieved successfully"
                   data:
-                    $ref: './schemas.yaml#/components/schemas/KirimkuTransaction'
+                    $ref: './schemas.yaml'./schemas.yaml#/schemas/KirimkuTransaction'
               examples:
                 qris_payment:
                   summary: Transaction with QRIS payment
@@ -1020,7 +1020,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 unauthorized:
                   summary: Not authenticated
@@ -1033,7 +1033,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 not_found:
                   summary: Transaction not found
@@ -1046,7 +1046,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/ErrorResponse'
+                $ref: './schemas.yaml'./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 kirimku_error:
                   summary: Kirimku API error

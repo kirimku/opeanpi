@@ -26,7 +26,7 @@ paths:
                     type: string
                     example: "Settings retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/LoyaltySettings'
+                    $ref: ''./schemas.yaml#/schemas/LoyaltySettings'
               examples:
                 success:
                   summary: Successful response
@@ -90,7 +90,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateSettingsRequest'
+              $ref: ''./schemas.yaml#/schemas/UpdateSettingsRequest'
             examples:
               updateConversionRates:
                 summary: Update conversion rates
@@ -122,7 +122,7 @@ paths:
                     type: string
                     example: "Settings updated successfully"
                   data:
-                    $ref: '#/components/schemas/UpdateSettingsResponse'
+                    $ref: ''./schemas.yaml#/schemas/UpdateSettingsResponse'
               examples:
                 success:
                   summary: Successful update
@@ -167,7 +167,7 @@ paths:
                       tiers:
                         type: array
                         items:
-                          $ref: '#/components/schemas/LoyaltyTier'
+                          $ref: ''./schemas.yaml#/schemas/LoyaltyTier'
                       total_count:
                         type: integer
                       active_count:
@@ -204,7 +204,7 @@ paths:
                       rules:
                         type: array
                         items:
-                          $ref: '#/components/schemas/LoyaltyRule'
+                          $ref: ''./schemas.yaml#/schemas/LoyaltyRule'
                       total_count:
                         type: integer
                       active_count:
@@ -260,7 +260,7 @@ components:
           type: boolean
           description: Send warnings before points expire
         settings:
-          $ref: '#/components/schemas/ProgramSettings'
+          $ref: ''./schemas.yaml#/schemas/ProgramSettings'
         created_at:
           type: string
           format: date-time
@@ -381,7 +381,7 @@ components:
         enable_expiry_warnings:
           type: boolean
         settings:
-          $ref: '#/components/schemas/ProgramSettings'
+          $ref: ''./schemas.yaml#/schemas/ProgramSettings'
 
     UpdateSettingsResponse:
       type: object

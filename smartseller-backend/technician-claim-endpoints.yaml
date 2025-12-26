@@ -94,7 +94,7 @@ paths:
                     type: string
                     example: "Warranty claims retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimListResponse'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimListResponse'
               examples:
                 success:
                   summary: Success response with claims
@@ -196,7 +196,7 @@ paths:
                     type: string
                     example: "Warranty claim details retrieved successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDetailDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDetailDTO'
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -229,7 +229,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StartRepairRequest'
+              $ref: ''./schemas.yaml#/schemas/StartRepairRequest'
             examples:
               startRepair:
                 summary: Start repair with notes, date, and video
@@ -256,7 +256,7 @@ paths:
                     type: string
                     example: "Repair started successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
               examples:
                 success:
                   summary: Success response
@@ -333,7 +333,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CompleteRepairRequest'
+              $ref: ''./schemas.yaml#/schemas/CompleteRepairRequest'
             examples:
               basicCompletion:
                 summary: Basic repair completion
@@ -374,7 +374,7 @@ paths:
                     type: string
                     example: "Repair completed successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
               examples:
                 success:
                   summary: Success response
@@ -460,7 +460,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateClaimRequest'
+              $ref: ''./schemas.yaml#/schemas/UpdateClaimRequest'
             examples:
               startRepair:
                 summary: Start repair
@@ -488,7 +488,7 @@ paths:
                     type: string
                     example: "Warranty claim status updated successfully"
                   data:
-                    $ref: '#/components/schemas/WarrantyClaimDTO'
+                    $ref: ''./schemas.yaml#/schemas/WarrantyClaimDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':

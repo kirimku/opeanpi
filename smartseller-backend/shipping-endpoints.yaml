@@ -38,7 +38,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ShippingLocationSearchRequest'
+              $ref: ''./schemas.yaml#/schemas/ShippingLocationSearchRequest'
             examples:
               searchCity:
                 summary: Search for a city
@@ -61,7 +61,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShippingLocationSearchResponse'
+                $ref: ''./schemas.yaml#/schemas/ShippingLocationSearchResponse'
               examples:
                 success:
                   summary: Successful search
@@ -88,7 +88,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 invalidQuery:
                   summary: Query too short
@@ -107,7 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 serverError:
                   summary: Server error
@@ -223,7 +223,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CourierRatesResponse'
+                $ref: ''./schemas.yaml#/schemas/CourierRatesResponse'
               examples:
                 success:
                   summary: Successful courier rates
@@ -267,13 +267,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /shipping/bookings:
     post:
@@ -289,7 +289,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ShippingBookingRequest'
+              $ref: ''./schemas.yaml#/schemas/ShippingBookingRequest'
             examples:
               basicBooking:
                 summary: Basic booking without COD
@@ -330,7 +330,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShippingBookingResponse'
+                $ref: ''./schemas.yaml#/schemas/ShippingBookingResponse'
               examples:
                 success:
                   summary: Successful booking
@@ -357,13 +357,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
     
     get:
       tags:
@@ -438,7 +438,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingsListResponse'
+                $ref: ''./schemas.yaml#/schemas/BookingsListResponse'
               examples:
                 success:
                   summary: Successful list with pagination
@@ -474,7 +474,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /shipping/couriers/transactions/{id}:
     get:
@@ -517,7 +517,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShippingTransactionResponse'
+                $ref: ''./schemas.yaml#/schemas/ShippingTransactionResponse'
               examples:
                 qrisPayment:
                   summary: QRIS payment transaction
@@ -581,7 +581,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 notFound:
                   summary: Transaction not found
@@ -594,7 +594,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
   /shipping/tracking/{tracking_number}/history:
     get:
@@ -642,7 +642,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TrackingHistoryResponse'
+                $ref: ''./schemas.yaml#/schemas/TrackingHistoryResponse'
               examples:
                 jntTracking:
                   summary: J&T tracking with 12 events
@@ -688,7 +688,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 emptyTrackingNumber:
                   summary: Empty tracking number
@@ -701,7 +701,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
               examples:
                 notFound:
                   summary: Tracking not found
@@ -714,7 +714,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: ''./schemas.yaml#/schemas/ErrorResponse'
 
 components:
   schemas:
@@ -760,9 +760,9 @@ components:
           type: array
           description: Array of matching locations
           items:
-            $ref: '#/components/schemas/ShippingLocationItem'
+            $ref: ''./schemas.yaml#/schemas/ShippingLocationItem'
         meta:
-          $ref: '#/components/schemas/ShippingResponseMeta'
+          $ref: ''./schemas.yaml#/schemas/ShippingResponseMeta'
 
     ShippingLocationItem:
       type: object
@@ -832,21 +832,21 @@ components:
           type: string
           example: "Courier rates retrieved successfully"
         data:
-          $ref: '#/components/schemas/CourierRatesData'
+          $ref: ''./schemas.yaml#/schemas/CourierRatesData'
     
     CourierRatesData:
       type: object
       properties:
         origin:
-          $ref: '#/components/schemas/ShippingLocation'
+          $ref: ''./schemas.yaml#/schemas/ShippingLocation'
         destination:
-          $ref: '#/components/schemas/ShippingLocation'
+          $ref: ''./schemas.yaml#/schemas/ShippingLocation'
         package:
-          $ref: '#/components/schemas/PackageInfo'
+          $ref: ''./schemas.yaml#/schemas/PackageInfo'
         couriers:
           type: array
           items:
-            $ref: '#/components/schemas/CourierRate'
+            $ref: ''./schemas.yaml#/schemas/CourierRate'
     
     ShippingLocation:
       type: object
@@ -896,9 +896,9 @@ components:
         services:
           type: array
           items:
-            $ref: '#/components/schemas/ServiceRate'
+            $ref: ''./schemas.yaml#/schemas/ServiceRate'
         insurance:
-          $ref: '#/components/schemas/InsuranceInfo'
+          $ref: ''./schemas.yaml#/schemas/InsuranceInfo'
     
     ServiceRate:
       type: object
@@ -953,11 +953,11 @@ components:
           description: Service type identifier
           example: "jnt_reg"
         origin:
-          $ref: '#/components/schemas/AddressRequest'
+          $ref: ''./schemas.yaml#/schemas/AddressRequest'
         destination:
-          $ref: '#/components/schemas/AddressRequest'
+          $ref: ''./schemas.yaml#/schemas/AddressRequest'
         package:
-          $ref: '#/components/schemas/PackageRequest'
+          $ref: ''./schemas.yaml#/schemas/PackageRequest'
         cod:
           type: boolean
           description: Cash on Delivery
@@ -1103,7 +1103,7 @@ components:
           type: string
           example: "Booking created successfully"
         data:
-          $ref: '#/components/schemas/BookingData'
+          $ref: ''./schemas.yaml#/schemas/BookingData'
     
     BookingData:
       type: object
@@ -1133,7 +1133,7 @@ components:
           description: Total amount in IDR
           example: 15000
         invoice:
-          $ref: '#/components/schemas/InvoiceData'
+          $ref: ''./schemas.yaml#/schemas/InvoiceData'
         created_at:
           type: string
           format: date-time
@@ -1185,7 +1185,7 @@ components:
           type: string
           example: "Bookings retrieved successfully"
         data:
-          $ref: '#/components/schemas/BookingsListData'
+          $ref: ''./schemas.yaml#/schemas/BookingsListData'
     
     BookingsListData:
       type: object
@@ -1193,9 +1193,9 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/BookingListItem'
+            $ref: ''./schemas.yaml#/schemas/BookingListItem'
         pagination:
-          $ref: '#/components/schemas/PaginationInfo'
+          $ref: ''./schemas.yaml#/schemas/PaginationInfo'
     
     BookingListItem:
       type: object
@@ -1227,7 +1227,7 @@ components:
           description: Courier tracking/booking code
           example: "JT1234567890"
         invoice:
-          $ref: '#/components/schemas/InvoiceListItem'
+          $ref: ''./schemas.yaml#/schemas/InvoiceListItem'
         created_at:
           type: string
           format: date-time
@@ -1302,7 +1302,7 @@ components:
           type: string
           example: "Transaction retrieved successfully"
         data:
-          $ref: '../schemas.yaml#/components/schemas/KirimkuTransaction'
+          $ref: '../schemas.yaml'./schemas.yaml#/schemas/KirimkuTransaction'
 
     TrackingHistoryResponse:
       type: object
@@ -1316,7 +1316,7 @@ components:
           description: Human-readable message
           example: "Tracking history retrieved successfully"
         data:
-          $ref: '#/components/schemas/TrackingHistoryData'
+          $ref: ''./schemas.yaml#/schemas/TrackingHistoryData'
     
     TrackingHistoryData:
       type: object
@@ -1330,7 +1330,7 @@ components:
           type: array
           description: Array of tracking events in chronological order
           items:
-            $ref: '#/components/schemas/TrackingEvent'
+            $ref: ''./schemas.yaml#/schemas/TrackingEvent'
         message:
           type: string
           description: Message from courier API
@@ -1375,7 +1375,7 @@ components:
           description: Courier service code
           example: "jnt"
         metadata:
-          $ref: '#/components/schemas/TrackingEventMetadata'
+          $ref: ''./schemas.yaml#/schemas/TrackingEventMetadata'
     
     TrackingEventMetadata:
       type: object
