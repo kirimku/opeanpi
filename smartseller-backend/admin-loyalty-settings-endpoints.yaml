@@ -214,6 +214,153 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /api/v1/admin/loyalty/affiliates:
+    get:
+      summary: List all affiliates (referrers)
+      description: |
+        Retrieve a paginated list of customers who have made referrals.
+        Affiliates are customers with referral codes who have successfully referred other customers.
+
+        **Affiliate Status Calculation:**
+        - `active`: Has made at least one referral within the last 30 days
+        - `inactive`: No referrals in the last 30+ days
+        - `new`: Joined the referral program within the last 7 days
+
+        **Features:**
+        - Filter by status (active, inactive, new)
+        - Search by customer name, email, or phone
+        - Sort by joined date, total referrals, or last referral date
+        - Paginated results with metadata
+      operationId: listAdminAffiliates
+      tags:
+        - Admin Loyalty
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (defaults to 1)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          description: Number of items per page (defaults to 20, max 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+        - name: status
+          in: query
+          description: Filter by affiliate activity status
+          required: false
+          schema:
+            type: string
+            enum: [active, inactive, new]
+          example: active
+        - name: search
+          in: query
+          description: Search by customer name, email, or phone number
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+          example: "john@example.com"
+        - name: sort_by
+          in: query
+          description: Sort field (defaults to joined_at)
+          required: false
+          schema:
+            type: string
+            enum: [joined_at, total_referrals, last_referral_date]
+            default: joined_at
+          example: joined_at
+        - name: sort_desc
+          in: query
+          description: Sort in descending order (defaults to true)
+          required: false
+          schema:
+            type: boolean
+            default: true
+          example: true
+      responses:
+        '200':
+          description: Affiliates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Affiliates retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/AffiliateListResponse'
+              examples:
+                success:
+                  summary: Successful response with affiliates
+                  value:
+                    success: true
+                    message: "Affiliates retrieved successfully"
+                    data:
+                      affiliates:
+                        - customer_id: "8149a7e1-0b1b-4245-9562-4e277582537c"
+                          customer_name: "John Doe"
+                          customer_email: "john.doe@example.com"
+                          customer_phone: "+1234567890"
+                          referral_code: "REF-ABC123"
+                          status: "active"
+                          total_referrals: 15
+                          joined_at: "2024-01-15T10:30:00+07:00"
+                          last_referral_date: "2024-12-28T14:20:00+07:00"
+                        - customer_id: "9aec4999-c858-422f-b27e-88246ea547d5"
+                          customer_name: "Jane Smith"
+                          customer_email: "jane.smith@example.com"
+                          customer_phone: null
+                          referral_code: "REF-DEF456"
+                          status: "inactive"
+                          total_referrals: 5
+                          joined_at: "2024-06-20T09:15:00+07:00"
+                          last_referral_date: "2024-11-15T11:45:00+07:00"
+                      pagination:
+                        page: 1
+                        per_page: 20
+                        total: 45
+                        total_pages: 3
+                        has_next: true
+                        has_previous: false
+                empty:
+                  summary: No affiliates found
+                  value:
+                    success: true
+                    message: "Affiliates retrieved successfully"
+                    data:
+                      affiliates: []
+                      pagination:
+                        page: 1
+                        per_page: 20
+                        total: 0
+                        total_pages: 0
+                        has_next: false
+                        has_previous: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
 components:
   securitySchemes:
     BearerAuth:
@@ -480,6 +627,124 @@ components:
         created_at:
           type: string
           format: date-time
+
+    AffiliateListResponse:
+      type: object
+      description: Response object for affiliate listing
+      properties:
+        affiliates:
+          type: array
+          description: List of affiliates (customers who have made referrals)
+          items:
+            $ref: '#/components/schemas/Affiliate'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+      required:
+        - affiliates
+        - pagination
+
+    Affiliate:
+      type: object
+      description: A customer who has referred others
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+          description: Unique customer identifier
+          example: "8149a7e1-0b1b-4245-9562-4e277582537c"
+        customer_name:
+          type: string
+          description: Customer's full name
+          example: "John Doe"
+        customer_email:
+          type: string
+          format: email
+          description: Customer's email address
+          example: "john.doe@example.com"
+        customer_phone:
+          type: string
+          format: phone
+          nullable: true
+          description: Customer's phone number (may be null)
+          example: "+1234567890"
+        referral_code:
+          type: string
+          description: The customer's unique referral code
+          example: "REF-ABC123"
+        status:
+          type: string
+          enum: [active, inactive, new]
+          description: |
+            Affiliate activity status:
+            - `active`: Has made a referral within the last 30 days
+            - `inactive`: No referrals in the last 30+ days
+            - `new`: Joined the referral program within the last 7 days
+          example: "active"
+        total_referrals:
+          type: integer
+          description: Total number of successful referrals made by this affiliate
+          minimum: 0
+          example: 15
+        joined_at:
+          type: string
+          format: date-time
+          description: When the affiliate made their first referral (ISO 8601)
+          example: "2024-01-15T10:30:00+07:00"
+        last_referral_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the affiliate made their most recent referral (ISO 8601)
+          example: "2024-12-28T14:20:00+07:00"
+      required:
+        - customer_id
+        - customer_name
+        - customer_email
+        - referral_code
+        - status
+        - total_referrals
+        - joined_at
+
+    PaginationInfo:
+      type: object
+      description: Pagination metadata
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items per page
+          example: 20
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of affiliates (across all pages)
+          example: 45
+        total_pages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+          example: 3
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        has_previous:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+      required:
+        - page
+        - per_page
+        - total
+        - total_pages
+        - has_next
+        - has_previous
 
   responses:
     Unauthorized:

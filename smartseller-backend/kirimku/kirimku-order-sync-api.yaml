@@ -1,0 +1,503 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller - Kirimku B2B Order Sync API
+  description: |
+    **Kirimku B2B Order Synchronization API** enables automatic order synchronization between Kirimku B2B platform and SmartSeller.
+
+    ## Overview
+    This API provides endpoints to synchronize orders from Kirimku B2B platform, allowing merchants to:
+    - Automatically fetch orders from Kirimku B2B
+    - Sync order details, customer information, and line items
+    - Track synchronization status
+    - Manage merchant-to-storefront mappings
+
+    ## Key Features
+    - **Automated Order Sync**: Fetch orders from Kirimku B2B platform
+    - **Customer Management**: Automatic customer creation and reuse
+    - **Order Transformation**: Maps Kirimku orders to SmartSeller format
+    - **Multi-Tenant Support**: Secure merchant-to-storefront mapping
+    - **Incremental Sync**: Only sync new or updated orders
+    - **Error Handling**: Comprehensive error reporting with partial success support
+
+    ## Authentication
+    All endpoints require API key authentication via `X-API-Key` header:
+    ```
+    X-API-Key: your_api_key_here
+    ```
+
+    ## Rate Limiting
+    - **Default**: 100 requests per minute per merchant
+    - Rate limit headers included in responses:
+      - `X-RateLimit-Limit`: Request limit per window
+      - `X-RateLimit-Remaining`: Remaining requests
+      - `X-RateLimit-Reset`: Unix timestamp when limit resets
+
+    ## Idempotency
+    Synchronization is idempotent - orders are matched by `external_id` (Kirimku order ID).
+    Multiple sync calls with the same orders will update existing records rather than create duplicates.
+
+  version: 1.0.0
+  contact:
+    name: SmartSeller API Support
+    email: api-support@kirimku.com
+    url: https://smartseller.kirimku.com/docs
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Local development server
+  - url: https://api.smartseller.kirimku.com/api/v1
+    description: Production server
+  - url: https://staging-api.smartseller.kirimku.com/api/v1
+    description: Staging server
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Order Synchronization
+    description: Order sync operations from Kirimku B2B
+  - name: Sync Status
+    description: Track synchronization status and metrics
+
+paths:
+  /kirimku/orders/sync:
+    post:
+      summary: Synchronize orders from Kirimku B2B
+      description: |
+        Fetch and synchronize orders from Kirimku B2B platform for a specific merchant.
+
+        **Process:**
+        1. Validates merchant-to-storefront mapping
+        2. Fetches orders from Kirimku B2B API
+        3. Transforms orders to SmartSeller format
+        4. Creates or updates customers (with email-based deduplication)
+        5. Creates or updates orders in SmartSeller database
+        6. Returns sync statistics
+
+        **Order Matching:**
+        - Orders are matched by `external_id` (Kirimku order ID)
+        - Existing orders are updated with latest data
+        - New orders are created with full details
+
+        **Customer Handling:**
+        - Customers are matched by email address
+        - Existing customers are reused
+        - New customers are created automatically
+
+        **Partial Success:**
+        - If some orders fail to sync, the operation continues
+        - Response includes details of successful and failed syncs
+        - Errors are returned in the `errors` array
+      tags:
+        - Order Synchronization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncRequest'
+            examples:
+              basicSync:
+                summary: Basic order sync
+                value:
+                  merchant_id: "merchant-123"
+                  storefront_id: "550e8400-e29b-41d4-a716-446655440000"
+              syncWithFilters:
+                summary: Sync with date range filter
+                value:
+                  merchant_id: "merchant-123"
+                  storefront_id: "550e8400-e29b-41d4-a716-446655440000"
+                  start_date: "2024-01-01T00:00:00Z"
+                  end_date: "2024-01-31T23:59:59Z"
+                  status: "completed"
+              syncWithPagination:
+                summary: Sync with pagination
+                value:
+                  merchant_id: "merchant-123"
+                  storefront_id: "550e8400-e29b-41d4-a716-446655440000"
+                  limit: 100
+                  page: 1
+      responses:
+        '200':
+          description: Orders synchronized successfully (full or partial success)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResponse'
+              examples:
+                fullSuccess:
+                  summary: All orders synced successfully
+                  value:
+                    success: true
+                    message: "Orders synchronized successfully"
+                    data:
+                      synced_count: 15
+                      updated_count: 5
+                      skipped_count: 0
+                      errors: []
+                      meta:
+                        request_id: "req_abc123"
+                        timestamp: "2024-01-15T10:30:00Z"
+                        sync_duration_ms: 2340
+                partialSuccess:
+                  summary: Some orders failed to sync
+                  value:
+                    success: true
+                    message: "Orders synchronized with some errors"
+                    data:
+                      synced_count: 13
+                      updated_count: 5
+                      skipped_count: 0
+                      errors:
+                        - "order-789: Invalid customer email format"
+                        - "order-456: Missing required shipping address"
+                      meta:
+                        request_id: "req_def456"
+                        timestamp: "2024-01-15T10:30:00Z"
+                        sync_duration_ms: 2890
+        '400':
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingMerchantId:
+                  summary: Missing merchant_id
+                  value:
+                    success: false
+                    message: "Validation failed"
+                    error: "bad_request"
+                    meta:
+                      validation_errors:
+                        - field: "merchant_id"
+                          message: "merchant_id is required"
+                invalidStorefrontId:
+                  summary: Invalid storefront_id format
+                  value:
+                    success: false
+                    message: "Validation failed"
+                    error: "bad_request"
+                    meta:
+                      validation_errors:
+                        - field: "storefront_id"
+                          message: "storefront_id must be a valid UUID"
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Invalid API key"
+                error: "unauthorized"
+        '404':
+          description: Merchant mapping not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Merchant not found: failed to get active merchant mapping"
+                error: "not_found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Failed to sync orders"
+                error: "internal_error"
+
+  /kirimku/orders/sync/status:
+    get:
+      summary: Get order synchronization status
+      description: |
+        Retrieve synchronization status and statistics for a specific merchant.
+
+        **Returns:**
+        - Total orders synced from Kirimku B2B
+        - Last sync timestamp
+        - Sync status (active, error, etc.)
+        - Recent sync history
+      tags:
+        - Sync Status
+      parameters:
+        - name: merchant_id
+          in: query
+          required: true
+          description: Kirimku B2B merchant ID
+          schema:
+            type: string
+          example: "merchant-123"
+      responses:
+        '200':
+          description: Sync status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatusResponse'
+              example:
+                success: true
+                message: "Sync status retrieved successfully"
+                data:
+                  merchant_id: "merchant-123"
+                  synced_count: 250
+                  last_sync_at: "2024-01-15T10:30:00Z"
+                  sync_status: "active"
+                  last_sync_message: "Successfully synced 50 orders"
+                  sync_history:
+                    - sync_id: "sync_123"
+                      timestamp: "2024-01-15T10:30:00Z"
+                      status: "success"
+                      orders_synced: 50
+                      duration_ms: 2100
+                    - sync_id: "sync_122"
+                      timestamp: "2024-01-15T09:00:00Z"
+                      status: "success"
+                      orders_synced: 75
+                      duration_ms: 3200
+        '400':
+          description: Bad request - Missing merchant_id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "merchant_id is required"
+                error: "bad_request"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    SyncRequest:
+      type: object
+      required:
+        - merchant_id
+        - storefront_id
+      properties:
+        merchant_id:
+          type: string
+          description: Kirimku B2B merchant ID
+          example: "merchant-123"
+        storefront_id:
+          type: string
+          format: uuid
+          description: SmartSeller storefront ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        start_date:
+          type: string
+          format: date-time
+          description: Filter orders created after this date (ISO 8601)
+          example: "2024-01-01T00:00:00Z"
+        end_date:
+          type: string
+          format: date-time
+          description: Filter orders created before this date (ISO 8601)
+          example: "2024-01-31T23:59:59Z"
+        status:
+          type: string
+          description: Filter by order status
+          enum: [pending, processing, completed, cancelled, failed]
+          example: "completed"
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Maximum number of orders to fetch
+          example: 100
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+          example: 1
+
+    SyncResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation completed successfully (may include partial success)
+          example: true
+        message:
+          type: string
+          description: Human-readable message
+          example: "Orders synchronized successfully"
+        data:
+          $ref: '#/components/schemas/SyncData'
+
+    SyncData:
+      type: object
+      properties:
+        synced_count:
+          type: integer
+          description: Number of new orders created
+          example: 15
+        updated_count:
+          type: integer
+          description: Number of existing orders updated
+          example: 5
+        skipped_count:
+          type: integer
+          description: Number of orders skipped (duplicates, etc.)
+          example: 0
+        errors:
+          type: array
+          description: List of errors for failed orders (if any)
+          items:
+            type: string
+          example: ["order-789: Invalid customer email format"]
+        meta:
+          $ref: '#/components/schemas/SyncMeta'
+
+    SyncMeta:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2024-01-15T10:30:00Z"
+        sync_duration_ms:
+          type: integer
+          description: Sync operation duration in milliseconds
+          example: 2340
+
+    SyncStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Sync status retrieved successfully"
+        data:
+          $ref: '#/components/schemas/SyncStatusData'
+
+    SyncStatusData:
+      type: object
+      properties:
+        merchant_id:
+          type: string
+          description: Kirimku B2B merchant ID
+          example: "merchant-123"
+        synced_count:
+          type: integer
+          description: Total number of orders synced
+          example: 250
+        last_sync_at:
+          type: string
+          format: date-time
+          description: Timestamp of last successful sync
+          example: "2024-01-15T10:30:00Z"
+        sync_status:
+          type: string
+          description: Current sync status
+          enum: [active, error, never_synced, in_progress]
+          example: "active"
+        last_sync_message:
+          type: string
+          description: Message from last sync attempt
+          example: "Successfully synced 50 orders"
+        sync_history:
+          type: array
+          description: Recent sync history (last 10 syncs)
+          items:
+            $ref: '#/components/schemas/SyncHistoryItem'
+
+    SyncHistoryItem:
+      type: object
+      properties:
+        sync_id:
+          type: string
+          description: Unique sync identifier
+          example: "sync_123"
+        timestamp:
+          type: string
+          format: date-time
+          description: Sync timestamp
+          example: "2024-01-15T10:30:00Z"
+        status:
+          type: string
+          description: Sync status
+          enum: [success, error, partial_success]
+          example: "success"
+        orders_synced:
+          type: integer
+          description: Number of orders synced in this attempt
+          example: 50
+        duration_ms:
+          type: integer
+          description: Sync duration in milliseconds
+          example: 2100
+        error_message:
+          type: string
+          description: Error message if sync failed
+          example: null
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Validation failed"
+        error:
+          type: string
+          description: Machine-readable error code
+          enum: [bad_request, unauthorized, forbidden, not_found, internal_error]
+          example: "bad_request"
+        meta:
+          type: object
+          description: Additional error details
+          properties:
+            validation_errors:
+              type: array
+              description: List of validation errors
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: "merchant_id"
+                  message:
+                    type: string
+                    example: "merchant_id is required"
+            request_id:
+              type: string
+              description: Request identifier for debugging
+              example: "req_xyz789"
+            timestamp:
+              type: string
+              format: date-time
+              example: "2024-01-15T10:30:00Z"

@@ -3405,7 +3405,7 @@ paths:
           example: false
         - name: include
           in: query
-          description: Include related data (comma-separated: images, variants, category)
+          description: "Include related data (comma-separated: images, variants, category)"
           schema:
             type: string
           example: "images"
@@ -4509,59 +4509,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /api/v1/admin/sub-accounts/{user_id}:
-    get:
-      tags:
-        - admin-sub-accounts
-      summary: Get sub-account details
-      description: |
-        Retrieve detailed information about a specific sub-account including
-        user details, membership information, and drop point assignment (if applicable).
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Target sub-account user ID
-        - in: query
-          name: storefront_id
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: Optional storefront ID; inferred from admin membership when omitted.
-        - in: query
-          name: storefront_slug
-          required: false
-          schema:
-            type: string
-          description: Optional storefront slug to resolve tenant context.
-      responses:
-        '200':
-          description: Sub-account details retrieved
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/SubAccountResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
   /api/v1/admin/sub-accounts/{user_id}/assign-drop-point:
     post:
       tags:
@@ -4916,6 +4863,136 @@ paths:
                 error: "unauthorized"
                 message: "Authentication required"
                 success: false
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/admin/shopify/test-orders:
+    post:
+      tags:
+        - Admin Shopify
+      summary: Create test order in Shopify
+      description: |
+        Creates a test order in Shopify with optional voucher and referral codes. 
+        **System admin only.**
+        
+        This endpoint is designed for testing purposes to validate:
+        - Shopify order creation workflow
+        - Voucher code application
+        - Referral code tracking
+        - Order synchronization flow
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - storefront_id
+                - quantity
+                - email
+              properties:
+                storefront_id:
+                  type: string
+                  format: uuid
+                  example: "b0ea82e3-366d-49a4-8c03-316a1ac2a2c4"
+                variant_id:
+                  type: integer
+                  format: int64
+                  example: 52427481481583
+                quantity:
+                  type: integer
+                  minimum: 1
+                  example: 1
+                email:
+                  type: string
+                  format: email
+                  example: "buyer@example.com"
+                voucher_code:
+                  type: string
+                  example: "DISCOUNT50"
+                referral_code:
+                  type: string
+                  example: "REF-ABC123"
+                total_price:
+                  type: string
+                  example: "100000.00"
+                currency:
+                  type: string
+                  example: "IDR"
+      responses:
+        '201':
+          description: Test order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Test order created successfully"
+                  data:
+                    type: object
+                    properties:
+                      order_id:
+                        type: integer
+                        format: int64
+                        example: 11846102810991
+                      order_name:
+                        type: string
+                        example: "#1022"
+                      order_number:
+                        type: integer
+                        example: 1022
+                      total_price:
+                        type: string
+                        example: "449000.00"
+                      currency:
+                        type: string
+                        example: "IDR"
+                      email:
+                        type: string
+                        example: "buyer@example.com"
+                      voucher_code:
+                        type: string
+                        example: "DISCOUNT50"
+                      referral_code:
+                        type: string
+                        example: "REF-ABC123"
+                      shopify_url:
+                        type: string
+                        format: uri
+                        example: "https://kirimku.myshopify.com/admin/orders/11846102810991"
+                      created_at:
+                        type: string
+                        format: date-time
+                        example: "2026-01-01T09:00:00Z"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - System admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Internal Server Error
           content:

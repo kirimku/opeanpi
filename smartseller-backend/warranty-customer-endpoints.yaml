@@ -1796,6 +1796,61 @@ components:
                       example: "2025-03-01T10:00:00Z"
             repair_tracking:
               $ref: ''./schemas.yaml#/schemas/CustomerRepairTrackingDTO'
+            shipping_payment_responsibility:
+              type: string
+              enum: [admin, user]
+              nullable: true
+              example: "user"
+              description: Who is responsible for return shipping payment
+            shipping_payment_completed_at:
+              type: string
+              format: date-time
+              nullable: true
+              example: "2024-01-15T10:30:00Z"
+              description: Timestamp when customer completed shipping payment (null if not paid)
+            shipping_payment_action:
+              type: object
+              nullable: true
+              description: Action required for shipping payment (only present when user must pay)
+              properties:
+                required:
+                  type: boolean
+                  example: true
+                  description: Whether payment is required
+                amount:
+                  type: integer
+                  format: int64
+                  example: 15000
+                  description: Payment amount in minor currency units (cents/rons)
+                currency:
+                  type: string
+                  example: "IDR"
+                  description: Payment currency code
+                payment_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  example: "https://payment.example.com/pay/abc123"
+                  description: Payment URL for completing QRIS payment
+                qr_code:
+                  type: string
+                  nullable: true
+                  example: "00020101021226580016ID.CO.QRIS.WWW01189360052002000000000303UMI51440014ID.CO.QRIS.WWW0215ID102000000000000303UMI5204581253033605802ID5910SmartSeller6007Jakarta6105101106304AB12"
+                  description: QRIS QR code data for payment
+                expires_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  example: "2024-01-15T12:00:00Z"
+                  description: Payment expiration timestamp
+                message:
+                  type: string
+                  example: "Complete payment to book return shipping"
+                  description: User-friendly message about payment requirement
+                can_proceed_to_ship:
+                  type: boolean
+                  example: false
+                  description: Whether shipment booking can proceed (true only after payment completed)
 
     CustomerClaimSummaryDTO:
       type: object

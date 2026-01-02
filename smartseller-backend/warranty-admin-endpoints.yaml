@@ -1579,6 +1579,186 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /api/v1/admin/warranty/claims/{id}/shipping-payment:
+    put:
+      tags:
+        - Admin Warranty Claims
+      summary: Configure shipping payment responsibility
+      description: |
+        Configure who is responsible for paying return shipping costs.
+
+        **Business Rules:**
+        - Can only be configured for claims in 'repaired' status
+        - Once payment is marked as completed, the configuration becomes locked
+        - When user is responsible, payment must be completed before shipment can be booked
+        - Creates a timeline event when configured
+
+        **Payment Responsibility:**
+        - `admin`: Business/store pays for return shipping
+        - `user`: Customer must pay via QRIS before return shipping
+
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Warranty claim ID
+          schema:
+            type: string
+            format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - responsibility
+              properties:
+                responsibility:
+                  type: string
+                  enum: [admin, user]
+                  description: Who is responsible for shipping payment
+                  example: "user"
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Reason for the payment responsibility choice (stored in internal notes)
+                  example: "Customer requested expedited shipping"
+            examples:
+              user_pays:
+                summary: Customer pays for shipping
+                value:
+                  responsibility: "user"
+                  reason: "Customer requested expedited shipping, they will cover the cost"
+              admin_pays:
+                summary: Business pays for shipping
+                value:
+                  responsibility: "admin"
+                  reason: "Complimentary return shipping under warranty policy"
+      responses:
+        '200':
+          description: Shipping payment configured successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Shipping payment responsibility configured successfully"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      claim_number:
+                        type: string
+                        example: "WC-2024-001234"
+                      shipping_payment_responsibility:
+                        type: string
+                        enum: [admin, user]
+                        example: "user"
+                        description: Who is responsible for payment
+                      shipping_payment_required:
+                        type: boolean
+                        example: true
+                        description: Whether payment is required (true for user, false for admin)
+                      shipping_payment_completed_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                        description: Timestamp when payment was completed (null if not paid)
+                      shipping_payment_locked:
+                        type: boolean
+                        example: false
+                        description: Whether payment configuration can still be changed
+                      status:
+                        type: string
+                        example: "repaired"
+              examples:
+                user_pays_configured:
+                  summary: Customer configured to pay
+                  value:
+                    success: true
+                    message: "Shipping payment responsibility configured successfully"
+                    data:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      claim_number: "WC-2024-001234"
+                      shipping_payment_responsibility: "user"
+                      shipping_payment_required: true
+                      shipping_payment_completed_at: null
+                      shipping_payment_locked: false
+                      status: "repaired"
+                admin_pays_configured:
+                  summary: Business configured to pay
+                  value:
+                    success: true
+                    message: "Shipping payment responsibility configured successfully"
+                    data:
+                      id: "123e4567-e89b-12d3-a456-426614174000"
+                      claim_number: "WC-2024-001234"
+                      shipping_payment_responsibility: "admin"
+                      shipping_payment_required: false
+                      shipping_payment_completed_at: null
+                      shipping_payment_locked: false
+                      status: "repaired"
+        '400':
+          description: Bad Request - Invalid claim status or payment already locked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "cannot configure shipping payment"
+                  message:
+                    type: string
+                    example: "cannot configure shipping payment for claim with status: pending"
+              examples:
+                invalid_status:
+                  summary: Claim not in repaired status
+                  value:
+                    success: false
+                    error: "cannot configure shipping payment"
+                    message: "cannot configure shipping payment for claim with status: pending. Claim must be in 'repaired' status"
+                payment_locked:
+                  summary: Payment configuration locked
+                  value:
+                    success: false
+                    error: "cannot configure shipping payment"
+                    message: "cannot change payment method: payment is locked"
+                invalid_responsibility:
+                  summary: Invalid responsibility value
+                  value:
+                    success: false
+                    error: "validation failed"
+                    message: "responsibility must be either 'admin' or 'user'"
+        '404':
+          description: Claim not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   # Batch Operations
   /api/v1/admin/warranty/batches:
     get:
