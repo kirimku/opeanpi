@@ -1,0 +1,541 @@
+openapi: 3.0.3
+info:
+  title: SmartSeller Admin Shopify Order Fetch API
+  description: |
+    Admin-only endpoints for fetching orders directly from Shopify API.
+    These endpoints are for testing and debugging purposes only - they do not modify any data in the SmartSeller system.
+
+    **Authentication**: Bearer token required
+    **Authorization**: System admin only
+    **Purpose**: Read-only testing/debugging
+  version: 1.0.0
+  contact:
+    name: SmartSeller API Team
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Local development server
+  - url: https://api.smartseller.com/api/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Admin Shopify
+    description: System admin Shopify operations (testing only)
+
+paths:
+  /admin/shopify/orders/fetch:
+    get:
+      tags:
+        - Admin Shopify
+      summary: List Shopify orders (testing only)
+      description: |
+        Fetches orders directly from Shopify API.
+        Returns order details including note_attributes (referral_code, voucher_code).
+
+        **System admin only**
+        **Read-only - no database modifications**
+
+        Supports pagination via Shopify's cursor-based pagination.
+      operationId: listShopifyOrders
+      parameters:
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront UUID to fetch Shopify orders from
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        - name: limit
+          in: query
+          description: Number of orders to return (1-250)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          example: 50
+        - name: status
+          in: query
+          description: Order status filter
+          schema:
+            type: string
+            enum: [open, closed, cancelled, any]
+            default: any
+          example: "any"
+        - name: page_info
+          in: query
+          description: Pagination cursor from previous response
+          schema:
+            type: string
+          example: "eyJjdXJzb3IiO..."
+      responses:
+        '200':
+          description: Orders fetched successfully from Shopify
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          orders:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ShopifyOrder'
+                          pagination:
+                            $ref: '#/components/schemas/ShopifyPagination'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    message: "Orders fetched successfully from Shopify"
+                    data:
+                      orders:
+                        - id: 123456789
+                          order_number: 1001
+                          name: "#1001"
+                          email: "customer@example.com"
+                          financial_status: "paid"
+                          fulfillment_status: "fulfilled"
+                          total_price: "150000.00"
+                          currency: "IDR"
+                          created_at: "2026-01-07T10:00:00Z"
+                          updated_at: "2026-01-07T10:00:00Z"
+                          customer:
+                            id: 987654321
+                            email: "customer@example.com"
+                            first_name: "John"
+                            last_name: "Doe"
+                          line_items:
+                            - id: 111111111
+                              product_id: 222222222
+                              variant_id: 333333333
+                              name: "Test Product"
+                              title: "Test Product"
+                              quantity: 2
+                              price: "75000.00"
+                          note_attributes:
+                            - name: "referral_code"
+                              value: "REF-ABC123"
+                            - name: "voucher_code"
+                              value: "DISCOUNT50"
+                          referral_code: "REF-ABC123"
+                          voucher_code: "DISCOUNT50"
+                          tags: "smartseller-test"
+                          shopify_url: "https://kirimku.myshopify.com/admin/orders/123456789"
+                      pagination:
+                        has_next_page: true
+                        next_page_info: "eyJjdXJzb3IiO..."
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '502':
+          description: Failed to connect to Shopify or Shopify API error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Failed to connect to Shopify"
+                error: "shopify not found"
+
+  /admin/shopify/orders/fetch/{orderID}:
+    get:
+      tags:
+        - Admin Shopify
+      summary: Get Shopify order details (testing only)
+      description: |
+        Fetches a single order directly from Shopify API.
+        Returns full order details including note_attributes (referral_code, voucher_code).
+
+        **System admin only**
+        **Read-only - no database modifications**
+      operationId: getShopifyOrder
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          description: Shopify Order ID (numeric)
+          schema:
+            type: integer
+            format: int64
+          example: 123456789
+        - name: storefront_id
+          in: query
+          required: true
+          description: Storefront UUID to fetch Shopify order from
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Order fetched successfully from Shopify
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ShopifyOrder'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    message: "Order fetched successfully from Shopify"
+                    data:
+                      id: 123456789
+                      order_number: 1001
+                      name: "#1001"
+                      email: "customer@example.com"
+                      financial_status: "paid"
+                      fulfillment_status: "fulfilled"
+                      total_price: "150000.00"
+                      subtotal_price: "150000.00"
+                      total_tax: "0.00"
+                      currency: "IDR"
+                      created_at: "2026-01-07T10:00:00Z"
+                      updated_at: "2026-01-07T10:00:00Z"
+                      processed_at: "2026-01-07T10:00:00Z"
+                      customer:
+                        id: 987654321
+                        email: "customer@example.com"
+                        first_name: "John"
+                        last_name: "Doe"
+                        phone: "+628123456789"
+                      line_items:
+                        - id: 111111111
+                          product_id: 222222222
+                          variant_id: 333333333
+                          name: "Test Product"
+                          title: "Test Product"
+                          quantity: 2
+                          price: "75000.00"
+                          sku: "TEST-001"
+                      note_attributes:
+                        - name: "referral_code"
+                          value: "REF-ABC123"
+                        - name: "voucher_code"
+                          value: "DISCOUNT50"
+                        - name: "custom_field"
+                          value: "custom_value"
+                      referral_code: "REF-ABC123"
+                      voucher_code: "DISCOUNT50"
+                      tags: "smartseller-test, referral"
+                      note: "Customer note"
+                      shopify_url: "https://kirimku.myshopify.com/admin/orders/123456789"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Order not found in Shopify
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Order not found in Shopify"
+        '502':
+          description: Failed to connect to Shopify or Shopify API error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Failed to fetch order from Shopify API"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from system admin login
+
+  schemas:
+    SuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Success"
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+        error:
+          type: string
+          example: "Detailed error information"
+
+    ShopifyOrder:
+      type: object
+      required:
+        - id
+        - order_number
+        - name
+        - email
+        - financial_status
+        - total_price
+        - currency
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Shopify Order ID
+          example: 123456789
+        order_number:
+          type: integer
+          description: Order number
+          example: 1001
+        name:
+          type: string
+          description: Order name (e.g., "#1001")
+          example: "#1001"
+        email:
+          type: string
+          format: email
+          description: Customer email
+          example: "customer@example.com"
+        financial_status:
+          type: string
+          enum: [pending, authorized, paid, partially_paid, voided, refunded]
+          description: Payment status
+          example: "paid"
+        fulfillment_status:
+          type: string
+          enum: [fulfilled, null, partial, restocked]
+          description: Fulfillment status
+          example: "fulfilled"
+        total_price:
+          type: string
+          description: Total order price
+          example: "150000.00"
+        subtotal_price:
+          type: string
+          description: Subtotal price
+          example: "150000.00"
+        total_tax:
+          type: string
+          description: Total tax amount
+          example: "0.00"
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: "IDR"
+        created_at:
+          type: string
+          format: date-time
+          description: Order creation timestamp
+          example: "2026-01-07T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2026-01-07T10:00:00Z"
+        processed_at:
+          type: string
+          format: date-time
+          description: Order processing timestamp
+          example: "2026-01-07T10:00:00Z"
+        customer:
+          $ref: '#/components/schemas/ShopifyCustomer'
+        line_items:
+          type: array
+          description: Order line items
+          items:
+            $ref: '#/components/schemas/ShopifyLineItem'
+        note_attributes:
+          type: array
+          description: Order note attributes (includes referral and voucher codes)
+          items:
+            $ref: '#/components/schemas/ShopifyNoteAttribute'
+        referral_code:
+          type: string
+          description: Extracted referral code from note_attributes
+          example: "REF-ABC123"
+        voucher_code:
+          type: string
+          description: Extracted voucher code from note_attributes
+          example: "DISCOUNT50"
+        tags:
+          type: string
+          description: Order tags
+          example: "smartseller-test, referral"
+        note:
+          type: string
+          description: Customer note
+          example: "Please deliver carefully"
+        shopify_url:
+          type: string
+          description: Shopify admin URL for this order
+          example: "https://kirimku.myshopify.com/admin/orders/123456789"
+
+    ShopifyCustomer:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Shopify Customer ID
+          example: 987654321
+        email:
+          type: string
+          format: email
+          example: "customer@example.com"
+        first_name:
+          type: string
+          example: "John"
+        last_name:
+          type: string
+          example: "Doe"
+        phone:
+          type: string
+          example: "+628123456789"
+
+    ShopifyLineItem:
+      type: object
+      required:
+        - id
+        - name
+        - title
+        - quantity
+        - price
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Line item ID
+          example: 111111111
+        product_id:
+          type: integer
+          format: int64
+          description: Product ID
+          example: 222222222
+        variant_id:
+          type: integer
+          format: int64
+          description: Variant ID
+          example: 333333333
+        name:
+          type: string
+          description: Line item name
+          example: "Test Product"
+        title:
+          type: string
+          description: Line item title
+          example: "Test Product"
+        quantity:
+          type: integer
+          description: Quantity ordered
+          example: 2
+        price:
+          type: string
+          description: Unit price
+          example: "75000.00"
+        sku:
+          type: string
+          description: SKU code
+          example: "TEST-001"
+
+    ShopifyNoteAttribute:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+          description: Attribute name
+          example: "referral_code"
+        value:
+          type: string
+          description: Attribute value
+          example: "REF-ABC123"
+
+    ShopifyPagination:
+      type: object
+      properties:
+        has_next_page:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        next_page_info:
+          type: string
+          description: Cursor for next page
+          example: "eyJjdXJzb3IiO..."
+        has_previous_page:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+        prev_page_info:
+          type: string
+          description: Cursor for previous page
+          example: "eyJwcmV2Ijo..."
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Invalid request parameters"
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "Authentication required"
+
+    Forbidden:
+      description: Forbidden - system admin access required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: "System admin access required"
