@@ -103,6 +103,9 @@ schemas:
 
   ProductSummaryDTO:
     type: object
+    description: |
+      Summary information about a product included in order items.
+      This is populated when include_items=true in order list requests.
     properties:
       id:
         type: string
@@ -114,17 +117,24 @@ schemas:
       sku:
         type: string
         example: "PWH-001"
+      description:
+        type: string
+        nullable: true
+        example: "High-quality wireless headphones with noise cancellation"
       image_url:
         type: string
         format: uri
+        nullable: true
         example: "https://example.com/images/headphones.jpg"
-      price:
-        type: number
-        format: decimal
-        example: 50000.00
+        description: |
+          Primary product image URL. If no image is marked as primary,
+          the first image URL is returned. Null if product has no images.
 
   ProductVariantSummaryDTO:
     type: object
+    description: |
+      Summary information about a product variant included in order items.
+      This is populated when include_items=true and the item has a variant.
     properties:
       id:
         type: string
@@ -132,14 +142,22 @@ schemas:
         example: "012e3456-e89b-12d3-a456-426614174000"
       name:
         type: string
+        nullable: true
         example: "Black - Large"
       sku:
         type: string
+        nullable: true
         example: "PWH-001-BLK-L"
-      price:
-        type: number
-        format: decimal
-        example: 55000.00
+      attributes:
+        type: object
+        nullable: true
+        additionalProperties: true
+        example:
+          color: "Black"
+          size: "Large"
+        description: |
+          Variant options as key-value pairs (e.g., color, size).
+          Format depends on product configuration.
 
   # Order Schemas
   OrderDTO:
@@ -232,6 +250,9 @@ schemas:
 
   OrderItemDTO:
     type: object
+    description: |
+      Order item with optional product and variant details.
+      The product and product_variant fields are populated when include_items=true.
     properties:
       id:
         type: string
@@ -263,8 +284,18 @@ schemas:
         format: decimal
         example: 100000.00
       product:
+        description: |
+          Product details (id, name, sku, description, image_url).
+          Only populated when include_items=true in the request.
+          Null if product has been deleted.
+        nullable: true
         $ref: '#/components/schemas/ProductSummaryDTO'
       product_variant:
+        description: |
+          Product variant details (id, name, sku, attributes).
+          Only populated when include_items=true and the item has a variant.
+          Null if the variant has been deleted or the item has no variant.
+        nullable: true
         $ref: '#/components/schemas/ProductVariantSummaryDTO'
 
   AddressDTO:
