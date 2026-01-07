@@ -330,12 +330,6 @@ paths:
                               points_value: 500
                               priority: 10
                               is_active: true
-                          voucher_codes:
-                            - code: "DOUBLEPTS2024"
-                              voucher_id: "b2c3d4e5-f6a7-8901-bcde-f23456789012"
-                              voucher_name: "Double Points Promotion"
-                              status: "active"
-                              created_at: "2024-01-01T00:00:00+07:00"
                         - customer_id: "9aec4999-c858-422f-b27e-88246ea547d5"
                           customer_name: "Jane Smith"
                           customer_email: "jane.smith@example.com"
@@ -346,7 +340,6 @@ paths:
                           joined_at: "2024-06-20T09:15:00+07:00"
                           last_referral_date: "2024-11-15T11:45:00+07:00"
                           special_rules: []
-                          voucher_codes: []
                       pagination:
                         page: 1
                         per_page: 20
@@ -718,12 +711,6 @@ components:
           items:
             $ref: '#/components/schemas/AffiliateSpecialRule'
           example: []
-        voucher_codes:
-          type: array
-          description: List of voucher codes associated with this affiliate
-          items:
-            $ref: '#/components/schemas/AffiliateVoucherCode'
-          example: []
       required:
         - customer_id
         - customer_name
@@ -777,40 +764,6 @@ components:
         - points_value
         - priority
         - is_active
-
-    AffiliateVoucherCode:
-      type: object
-      description: A voucher code associated with an affiliate
-      properties:
-        code:
-          type: string
-          description: The voucher code
-          example: "DOUBLEPTS2024"
-        voucher_id:
-          type: string
-          format: uuid
-          description: Unique voucher identifier
-          example: "b2c3d4e5-f6a7-8901-bcde-f23456789012"
-        voucher_name:
-          type: string
-          description: Name of the voucher
-          example: "Double Points Promotion"
-        status:
-          type: string
-          enum: [active, inactive, expired, scheduled]
-          description: Current status of the voucher code
-          example: "active"
-        created_at:
-          type: string
-          format: date-time
-          description: When the voucher code was created (ISO 8601)
-          example: "2024-01-01T00:00:00+07:00"
-      required:
-        - code
-        - voucher_id
-        - voucher_name
-        - status
-        - created_at
 
     PaginationInfo:
       type: object
