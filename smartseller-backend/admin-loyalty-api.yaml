@@ -45,6 +45,15 @@ components:
           type: string
           format: uuid
           description: Customer unique identifier
+        customer_name:
+          type: string
+          nullable: true
+          description: Customer full name
+        customer_email:
+          type: string
+          format: email
+          nullable: true
+          description: Customer email address
         type:
           type: string
           enum: [earn, redeem, expire, adjustment, bonus, refund, reversal]
@@ -91,6 +100,52 @@ components:
           format: uuid
           nullable: true
           description: Admin who created the transaction (for manual adjustments)
+        rule_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the loyalty rule applied to this transaction
+        rule_name:
+          type: string
+          nullable: true
+          description: Name of the loyalty rule applied to this transaction
+        calculation_type:
+          type: string
+          enum: [fixed, percentage, multiplier]
+          nullable: true
+          description: Type of calculation used for points (fixed, percentage, or multiplier)
+        calculation_breakdown:
+          type: object
+          nullable: true
+          description: Detailed breakdown of how points were calculated
+          properties:
+            base_points:
+              type: integer
+              description: Points from base calculation (e.g., order amount × rate)
+            rule_bonus_points:
+              type: integer
+              description: Additional points earned from loyalty rules
+            tier_multiplier:
+              type: number
+              format: float
+              nullable: true
+              description: Tier multiplier applied (e.g., 1.5 for gold tier)
+            tier_bonus_points:
+              type: integer
+              description: Points earned from tier bonus
+            total_points:
+              type: integer
+              description: Total points awarded (sum of all components)
+            percentage_rate:
+              type: number
+              format: float
+              nullable: true
+              description: Percentage rate used for calculation (e.g., 1.5 for 150%)
+          required:
+            - base_points
+            - rule_bonus_points
+            - tier_bonus_points
+            - total_points
         created_at:
           type: string
           format: date-time
@@ -326,6 +381,8 @@ paths:
                         - id: "tx-uuid-1"
                           account_id: "b0713dea-5b83-4184-ba52-8a42174534f4"
                           customer_id: "550e8400-e29b-41d4-a716-446655440000"
+                          customer_name: "Test Customer"
+                          customer_email: "test@example.com"
                           type: earn
                           status: completed
                           points: 4490
@@ -335,11 +392,23 @@ paths:
                           source: order
                           order_id: "fb6ff4d7-aa24-40c6-8258-d26a938e5e20"
                           idempotency_key: "order_completed_fb6ff4d7-..."
+                          rule_id: "abc123-def4-5678-90ab-cdef12345678"
+                          rule_name: "Double Points Promo"
+                          calculation_type: percentage
+                          calculation_breakdown:
+                            base_points: 2000
+                            rule_bonus_points: 2490
+                            tier_multiplier: 1.0
+                            tier_bonus_points: 0
+                            total_points: 4490
+                            percentage_rate: 1.5
                           is_reversed: false
                           created_at: "2026-01-08T22:31:37Z"
                         - id: "tx-uuid-2"
                           account_id: "acc-uuid-2"
                           customer_id: "customer-uuid-2"
+                          customer_name: "Another Customer"
+                          customer_email: "another@example.com"
                           type: earn
                           status: completed
                           points: 1000
